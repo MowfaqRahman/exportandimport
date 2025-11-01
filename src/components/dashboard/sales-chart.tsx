@@ -15,7 +15,7 @@ export default function SalesChart({ data }: SalesChartProps) {
   return (
     <Card className="col-span-full lg:col-span-2">
       <CardHeader>
-        <CardTitle>Sales & Expenses Trend</CardTitle>
+        <CardTitle>Company Sales & Expenses Trend (Last 7 Days)</CardTitle>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={350}>
@@ -41,14 +41,14 @@ export default function SalesChart({ data }: SalesChartProps) {
             <Line 
               type="monotone" 
               dataKey="sales" 
-              stroke="hsl(var(--chart-1))" 
+              stroke="hsl(var(--chart-2))" 
               strokeWidth={2}
               name="Sales"
             />
             <Line 
               type="monotone" 
               dataKey="expenses" 
-              stroke="hsl(var(--chart-2))" 
+              stroke="hsl(var(--chart-1))" 
               strokeWidth={2}
               name="Expenses"
             />

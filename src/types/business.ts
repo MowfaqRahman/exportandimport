@@ -16,6 +16,7 @@ export interface Sale {
   user_id?: string;
   created_at?: string;
   updated_at?: string;
+  user_email: string | null;
 }
 
 export interface Expense {
@@ -25,4 +26,8 @@ export interface Expense {
   description: string;
   category: string;
   vendor: string;
+  user_id?: string;
+  created_at?: string;
+  updated_at?: string;
+  user_email: string | null;
 }

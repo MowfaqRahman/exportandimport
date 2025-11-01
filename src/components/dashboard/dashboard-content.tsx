@@ -52,8 +52,9 @@ export default function DashboardContent({ initialSales, initialExpenses }: Dash
     };
   });
 
-  // Prepare expense breakdown data
-  const expensesByCategory = expenses.reduce((acc, expense) => {
+  // Prepare expense breakdown data - filter to last 7 days to match trend chart
+  const expensesLast7Days = expenses.filter(expense => last7Days.includes(expense.date));
+  const expensesByCategory = expensesLast7Days.reduce((acc, expense) => {
     const category = expense.category || 'Other';
     acc[category] = (acc[category] || 0) + Number(expense.amount);
     return acc;

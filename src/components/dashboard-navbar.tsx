@@ -23,6 +23,12 @@ export default function DashboardNavbar() {
           <Link href="/" prefetch className="text-xl font-bold">
             Logo
           </Link>
+          <Link href="/dashboard" prefetch className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+            Dashboard
+          </Link>
+          <Link href="/company-overview" prefetch className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+            Company Overview
+          </Link>
         </div>
         <div className="flex gap-4 items-center">
           <DropdownMenu>
