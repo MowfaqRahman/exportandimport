@@ -38,9 +38,8 @@ export default function SalesTable({ initialSales, onDataChange }: SalesTablePro
 
   useEffect(() => {
     const filtered = sales.filter(sale =>
-      sale.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       sale.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      sale.category?.toLowerCase().includes(searchTerm.toLowerCase())
+      sale.items?.some(item => item.description?.toLowerCase().includes(searchTerm.toLowerCase()))
     );
     setFilteredSales(filtered);
   }, [searchTerm, sales]);
@@ -83,6 +82,14 @@ export default function SalesTable({ initialSales, onDataChange }: SalesTablePro
     setDeleteId(null);
   };
 
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${month}/${day}/${year}`;
+  };
+
   return (
     <>
       <Card>
@@ -110,31 +117,35 @@ export default function SalesTable({ initialSales, onDataChange }: SalesTablePro
                 <TableRow>
                   <TableHead>Date</TableHead>
                   <TableHead>Customer</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead>Items</TableHead>
+                  <TableHead className="text-right">Grand Total</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredSales.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                       No sales found. Add your first sale to get started.
                     </TableCell>
                   </TableRow>
                 ) : (
                   filteredSales.map((sale) => (
                     <TableRow key={sale.id}>
-                      <TableCell>{new Date(sale.date).toLocaleDateString()}</TableCell>
+                      <TableCell>{formatDate(sale.date)}</TableCell>
                       <TableCell>{sale.customer_name || '-'}</TableCell>
                       <TableCell>
-                        <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-primary/10 text-primary">
-                          {sale.category || 'N/A'}
-                        </span>
+                        {sale.items && sale.items.length > 0 ? (
+                          <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-primary/10 text-primary">
+                            {sale.items.length} item{sale.items.length !== 1 ? 's' : ''}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
                       </TableCell>
-                      <TableCell className="max-w-[200px] truncate">{sale.description || '-'}</TableCell>
-                      <TableCell className="text-right font-medium">${Number(sale.amount).toFixed(2)}</TableCell>
+                      <TableCell className="text-right font-medium">
+                        ${Number(sale.grand_total || 0).toFixed(2)}
+                      </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button

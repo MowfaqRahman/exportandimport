@@ -20,7 +20,7 @@ export default function DashboardContent({ initialSales, initialExpenses }: Dash
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
 
   // Calculate metrics
-  const totalSales = sales.reduce((sum, sale) => sum + Number(sale.amount), 0);
+  const totalSales = sales.reduce((sum, sale) => sum + Number(sale.grand_total || 0), 0);
   const totalExpenses = expenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
   const profit = totalSales - totalExpenses;
 
@@ -28,7 +28,7 @@ export default function DashboardContent({ initialSales, initialExpenses }: Dash
   const today = new Date().toISOString().split('T')[0];
   const todaySales = sales
     .filter(sale => sale.date === today)
-    .reduce((sum, sale) => sum + Number(sale.amount), 0);
+    .reduce((sum, sale) => sum + Number(sale.grand_total || 0), 0);
 
   // Prepare chart data
   const last7Days = Array.from({ length: 7 }, (_, i) => {
@@ -40,7 +40,7 @@ export default function DashboardContent({ initialSales, initialExpenses }: Dash
   const chartData = last7Days.map(date => {
     const daySales = sales
       .filter(sale => sale.date === date)
-      .reduce((sum, sale) => sum + Number(sale.amount), 0);
+      .reduce((sum, sale) => sum + Number(sale.grand_total || 0), 0);
     const dayExpenses = expenses
       .filter(expense => expense.date === date)
       .reduce((sum, expense) => sum + Number(expense.amount), 0);
