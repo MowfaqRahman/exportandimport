@@ -24,8 +24,6 @@ const DashboardNavbar: React.FC<DashboardNavbarProps> = ({ activeTab, setActiveT
   const router = useRouter()
   const pathname = usePathname();
 
-  const isCompanyOverviewPage = pathname === '/company-overview';
-
   return (
     <nav className="w-full border-b border-gray-200 bg-white py-4">
       <div className="container mx-auto px-4 flex justify-between items-center">
@@ -33,20 +31,17 @@ const DashboardNavbar: React.FC<DashboardNavbarProps> = ({ activeTab, setActiveT
           <Link href="/" prefetch className="text-xl font-bold">
             Logo
           </Link>
-          <Link href="/dashboard" prefetch className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+          <Link href="/dashboard" prefetch className={`text-sm font-medium transition-colors ${
+            pathname === "/dashboard" ? "text-primary" : "text-muted-foreground hover:text-primary"
+          }`}>
             Dashboard
           </Link>
-          <Link href="/company-overview" prefetch className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+          <Link href="/company-overview" prefetch className={`text-sm font-medium transition-colors ${pathname === "/company-overview"
+              ? "text-primary"
+              : "text-muted-foreground hover:text-primary"
+            }`}>
             Company Overview
           </Link>
-          {isCompanyOverviewPage && (
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="ml-4">
-              <TabsList>
-                <TabsTrigger value="sales">Sales Transactions</TabsTrigger>
-                <TabsTrigger value="expenses">Expenses</TabsTrigger>
-              </TabsList>
-            </Tabs>
-          )}
         </div>
         <div className="flex gap-4 items-center">
           <DropdownMenu>

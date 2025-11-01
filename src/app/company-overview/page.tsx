@@ -175,12 +175,18 @@ export default function CompanyOverviewPage() {
           </div>
 
           <div className="space-y-4">
-            {activeTab === "sales" && (
-              <AllSalesTable initialSales={companySales} />
-            )}
-            {activeTab === "expenses" && (
-              <AllExpensesTable initialExpenses={companyExpenses} />
-            )}
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+              <TabsList>
+                <TabsTrigger value="sales">Sales Transactions</TabsTrigger>
+                <TabsTrigger value="expenses">Expenses</TabsTrigger>
+              </TabsList>
+              {activeTab === "sales" && (
+                <AllSalesTable initialSales={companySales} />
+              )}
+              {activeTab === "expenses" && (
+                <AllExpensesTable initialExpenses={companyExpenses} />
+              )}
+            </Tabs>
           </div>
 
         </div>
