@@ -10,6 +10,7 @@ import { Plus } from "lucide-react";
 import { createClient } from "../../../supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { Sale, InvoiceItem } from "@/types/business";
+import { generateInvoicePDF } from "@/utils/generateInvoicePDF";
 
 interface AddSaleDialogProps {
   onSaleAdded: () => void;
@@ -73,9 +74,28 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
         variant: "destructive",
       });
     } else {
+      // Generate and download PDF invoice
+      try {
+        generateInvoicePDF({
+          date: data.date,
+          customer_name: data.customer_name || '',
+          items: data.items,
+          grand_total: data.grand_total,
+          salesman_name_footer: data.salesman_name_footer || '',
+          customer_phone_footer: data.customer_phone_footer || '',
+        });
+      } catch (pdfError) {
+        console.error('Error generating PDF:', pdfError);
+        toast({
+          title: "Warning",
+          description: "Sale saved but PDF generation failed",
+          variant: "default",
+        });
+      }
+
       toast({
         title: "Success",
-        description: "Sale added successfully",
+        description: "Sale added successfully and invoice downloaded",
       });
       setOpen(false);
       onSaleAdded();
