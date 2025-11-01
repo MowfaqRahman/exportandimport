@@ -16,6 +16,7 @@ export default function CompanyOverviewPage() {
   const [companySales, setCompanySales] = useState<Sale[]>([]);
   const [companyExpenses, setCompanyExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("sales"); // State to manage active tab for Sales/Expenses
   const supabase = createClient();
 
   useEffect(() => {
@@ -128,13 +129,15 @@ export default function CompanyOverviewPage() {
 
   return (
     <>
-      <DashboardNavbar />
+      <DashboardNavbar activeTab={activeTab} setActiveTab={setActiveTab} />
       <main className="w-full min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8 space-y-8">
           <h1 className="text-3xl font-bold tracking-tight">Company Overview</h1>
-          <p className="text-muted-foreground mt-2">
+          <p className="text-muted-foreground mt-2 mb-4">
             Combined financial performance across all users
           </p>
+
+          {/* Tabs component moved to DashboardNavbar */}
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <MetricCard
@@ -171,18 +174,14 @@ export default function CompanyOverviewPage() {
             <ExpenseChart data={companyExpenseChartData} />
           </div>
 
-          <Tabs defaultValue="sales" className="space-y-4">
-            <TabsList>
-              <TabsTrigger value="sales">All User Sales Transactions</TabsTrigger>
-              <TabsTrigger value="expenses">All User Expenses</TabsTrigger>
-            </TabsList>
-            <TabsContent value="sales" className="space-y-4">
+          <div className="space-y-4">
+            {activeTab === "sales" && (
               <AllSalesTable initialSales={companySales} />
-            </TabsContent>
-            <TabsContent value="expenses" className="space-y-4">
+            )}
+            {activeTab === "expenses" && (
               <AllExpensesTable initialExpenses={companyExpenses} />
-            </TabsContent>
-          </Tabs>
+            )}
+          </div>
 
         </div>
       </main>

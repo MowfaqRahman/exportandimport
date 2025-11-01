@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,17 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
   const { toast } = useToast();
   const supabase = createClient();
   const [invoiceItems, setInvoiceItems] = useState<InvoiceItem[]>([{ no: 1, description: '', qty: 0, unitPrice: 0 }]);
+  const [salesmanEmail, setSalesmanEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchUserEmail = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email) {
+        setSalesmanEmail(user.email);
+      }
+    };
+    fetchUserEmail();
+  }, []);
 
   const handleItemChange = (index: number, field: keyof InvoiceItem, value: any) => {
     const newItems = [...invoiceItems];
@@ -57,7 +68,7 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
       customer_name: formData.get('customer_name') as string,
       items: invoiceItems.filter(item => item.description !== ''),
       grand_total: calculateGrandTotal(),
-      salesman_name_footer: formData.get('salesman_name_footer') as string,
+      salesman_name_footer: salesmanEmail || '',
       customer_phone_footer: formData.get('customer_phone_footer') as string,
     };
 
@@ -205,11 +216,13 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
 
           <div className="grid grid-cols-2 gap-4 border-t pt-4 mt-4">
             <div className="space-y-2">
-              <Label htmlFor="salesman_name_footer">Salesman Name</Label>
+              <Label htmlFor="salesman_name_footer">Salesman Email</Label>
               <Input
                 id="salesman_name_footer"
                 name="salesman_name_footer"
-                placeholder="Salesman Name"
+                placeholder="Salesman Email"
+                value={salesmanEmail || ''}
+                readOnly
               />
             </div>
             <div className="space-y-2">

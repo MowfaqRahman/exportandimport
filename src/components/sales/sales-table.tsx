@@ -21,6 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { generateInvoicePDF } from "@/utils/generateInvoicePDF"; // Import generateInvoicePDF
 
 interface SalesTableProps {
   initialSales: Sale[];
@@ -90,6 +91,30 @@ export default function SalesTable({ initialSales, onDataChange }: SalesTablePro
     return `${month}/${day}/${year}`;
   };
 
+  const handleGenerateInvoice = (sale: Sale) => {
+    try {
+      generateInvoicePDF({
+        date: sale.date,
+        customer_name: sale.customer_name || '',
+        items: sale.items || [],
+        grand_total: sale.grand_total || 0,
+        salesman_name_footer: sale.salesman_name_footer || '',
+        customer_phone_footer: sale.customer_phone_footer || '',
+      });
+      toast({
+        title: "Success",
+        description: "Invoice downloaded successfully",
+      });
+    } catch (pdfError) {
+      console.error('Error generating PDF:', pdfError);
+      toast({
+        title: "Error",
+        description: "Failed to generate PDF invoice",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <>
       <Card>
@@ -119,6 +144,7 @@ export default function SalesTable({ initialSales, onDataChange }: SalesTablePro
                   <TableHead>Customer</TableHead>
                   <TableHead>Items</TableHead>
                   <TableHead className="text-right">Grand Total</TableHead>
+                  <TableHead className="text-right">Invoice</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -145,6 +171,15 @@ export default function SalesTable({ initialSales, onDataChange }: SalesTablePro
                       </TableCell>
                       <TableCell className="text-right font-medium">
                         ${Number(sale.grand_total || 0).toFixed(2)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleGenerateInvoice(sale)}
+                        >
+                          Invoice
+                        </Button>
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">

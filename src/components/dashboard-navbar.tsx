@@ -10,11 +10,21 @@ import {
 } from './ui/dropdown-menu'
 import { Button } from './ui/button'
 import { UserCircle, Home } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import React from 'react'; // Import React
 
-export default function DashboardNavbar() {
+interface DashboardNavbarProps {
+  activeTab?: string;
+  setActiveTab?: (tab: string) => void;
+}
+
+const DashboardNavbar: React.FC<DashboardNavbarProps> = ({ activeTab, setActiveTab }) => {
   const supabase = createClient()
   const router = useRouter()
+  const pathname = usePathname();
+
+  const isCompanyOverviewPage = pathname === '/company-overview';
 
   return (
     <nav className="w-full border-b border-gray-200 bg-white py-4">
@@ -29,6 +39,14 @@ export default function DashboardNavbar() {
           <Link href="/company-overview" prefetch className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
             Company Overview
           </Link>
+          {isCompanyOverviewPage && (
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="ml-4">
+              <TabsList>
+                <TabsTrigger value="sales">Sales Transactions</TabsTrigger>
+                <TabsTrigger value="expenses">Expenses</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          )}
         </div>
         <div className="flex gap-4 items-center">
           <DropdownMenu>
@@ -51,3 +69,5 @@ export default function DashboardNavbar() {
     </nav>
   )
 }
+
+export default DashboardNavbar;
