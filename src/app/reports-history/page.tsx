@@ -105,7 +105,7 @@ export default function ReportsHistoryPage() {
           query = query.gte('date', startDate).lte('date', endDate);
         }
 
-        const { data, error } = await query.order('date', { ascending: true });
+        const { data, error } = await query.order('date', { ascending: false });
 
         if (error) {
           console.error("Error fetching sales data:", error);
@@ -367,7 +367,7 @@ export default function ReportsHistoryPage() {
 
       return () => clearTimeout(debounceTimeout);
     });
-  }, [selectedProduct]);
+  }, [selectedProduct, sales]);
 
   useEffect(() => {
     const supabase = createClient();

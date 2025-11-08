@@ -162,6 +162,7 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
           grand_total: data.grand_total,
           salesman_name_footer: data.salesman_name_footer || '',
           customer_phone_footer: data.customer_phone_footer || '',
+          invoice_no: data.invoice_no,
         });
       } catch (pdfError) {
         console.error('Error generating PDF:', pdfError);

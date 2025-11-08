@@ -36,7 +36,7 @@ const DashboardNavbar: React.FC<DashboardNavbarProps> = ({ activeTab, setActiveT
           }`}>
             Dashboard
           </Link>
-          <Link href="/company-overview" prefetch className={`text-sm font-medium transition-colors ${pathname === "/company-overview"
+          <Link href="/company-overview" className={`text-sm font-medium transition-colors ${pathname === "/company-overview"
               ? "text-primary"
               : "text-muted-foreground hover:text-primary"
             }`}>

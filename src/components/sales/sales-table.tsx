@@ -100,6 +100,7 @@ export default function SalesTable({ initialSales, onDataChange }: SalesTablePro
         grand_total: sale.grand_total || 0,
         salesman_name_footer: sale.salesman_name_footer || '',
         customer_phone_footer: sale.customer_phone_footer || '',
+        invoice_no: sale.invoice_no || '',
       });
       toast({
         title: "Success",

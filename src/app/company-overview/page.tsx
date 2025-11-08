@@ -15,13 +15,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 export default function CompanyOverviewPage() {
   const [companySales, setCompanySales] = useState<Sale[]>([]);
   const [companyExpenses, setCompanyExpenses] = useState<Expense[]>([]);
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("sales"); // State to manage active tab for Sales/Expenses
   const supabase = createClient();
 
   useEffect(() => {
     const fetchCompanyData = async () => {
-      setLoading(true);
       
       const [salesData, expensesData, usersData] = await Promise.all([
         supabase
@@ -67,7 +65,6 @@ export default function CompanyOverviewPage() {
       if (expensesData.data) {
         setCompanyExpenses(expensesWithUserEmail as Expense[]);
       }
-      setLoading(false);
     };
 
     fetchCompanyData();
@@ -118,14 +115,6 @@ export default function CompanyOverviewPage() {
     name,
     value,
   }));
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <p>Loading company data...</p>
-      </div>
-    );
-  }
 
   return (
     <>

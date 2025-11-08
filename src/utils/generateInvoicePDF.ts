@@ -6,6 +6,7 @@ interface InvoiceData {
   customer_name: string;
   items: InvoiceItem[];
   grand_total: number;
+  invoice_no: string;
   salesman_name_footer?: string;
   customer_phone_footer?: string;
 }
@@ -23,7 +24,7 @@ export function generateInvoicePDF(invoiceData: InvoiceData): void {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     const year = date.getFullYear();
-    return `${month}/${day}/${year}`;
+    return `${day}/${month}/${year}`;
   };
 
   // Header
@@ -138,7 +139,7 @@ export function generateInvoicePDF(invoiceData: InvoiceData): void {
   const customerName = invoiceData.customer_name 
     ? invoiceData.customer_name.replace(/[^a-z0-9]/gi, '_').substring(0, 20)
     : 'Invoice';
-  const filename = `Invoice_${customerName}_${formattedDate}.pdf`;
+  const filename = `Invoice_${invoiceData.invoice_no}_${customerName}_${formattedDate}.pdf`;
 
   // Save the PDF
   doc.save(filename);
