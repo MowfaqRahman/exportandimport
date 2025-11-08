@@ -18,6 +18,7 @@ import { useEffect, useState } from "react";
 import DashboardNavbar from "@/components/dashboard-navbar";
 import MetricCard from "@/components/dashboard/metric-card";
 import { DollarSign, LineChart as LineChartIcon, Wallet } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 // Helper function to format date
 const formatDate = (dateString: string) => {
@@ -45,13 +46,14 @@ export default function ReportsHistoryPage() {
   const [monthlyExpensesTotal, setMonthlyExpensesTotal] = useState<number>(0);
   const [loadingAggregates, setLoadingAggregates] = useState(false);
 
-  const [productSearchText, setProductSearchText] = useState("");
   const [productStats, setProductStats] = useState<any>(null);
   const [loadingProductStats, setLoadingProductStats] = useState(false);
   const [monthlyUnitsSold, setMonthlyUnitsSold] = useState<any[]>([]);
   const [loadingMonthlyUnitsSold, setLoadingMonthlyUnitsSold] = useState(false);
   const [productSalesHistory, setProductSalesHistory] = useState<any[]>([]);
   const [loadingProductSalesHistory, setLoadingProductSalesHistory] = useState(false);
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState("all"); // "all" for all categories or category.id
 
   const years = Array.from({ length: 5 }, (_, i) => currentYear - i); // Last 5 years
   const months = [
@@ -69,6 +71,8 @@ export default function ReportsHistoryPage() {
     { value: "11", label: "Nov" },
     { value: "12", label: "Dec" },
   ];
+
+  const { toast } = useToast();
 
   useEffect(() => {
     const supabase = createClient();
@@ -266,13 +270,6 @@ export default function ReportsHistoryPage() {
       }
 
       const fetchProductHistory = async () => {
-        if (!productSearchText) {
-          setProductStats(null);
-          setMonthlyUnitsSold([]);
-          setProductSalesHistory([]);
-          return;
-        }
-
         setLoadingProductStats(true);
         setLoadingMonthlyUnitsSold(true);
         setLoadingProductSalesHistory(true);
@@ -297,9 +294,10 @@ export default function ReportsHistoryPage() {
         }
 
         const filteredSales = allSales?.filter((sale: any) =>
-          sale.items.some((item: any) =>
-            typeof item.productName === 'string' && item.productName.toLowerCase().includes(productSearchText.toLowerCase())
-          )
+          sale.items.some((item: any) => {
+            const matchesCategory = selectedCategory !== "all" ? (item.category_id === selectedCategory) : true;
+            return matchesCategory;
+          })
         ) || [];
 
         // Calculate product statistics
@@ -312,20 +310,21 @@ export default function ReportsHistoryPage() {
 
         filteredSales.forEach((sale: any) => {
           sale.items.forEach((item: any) => {
-            if (item.productName.toLowerCase().includes(productSearchText.toLowerCase())) {
-              totalUnitsSold += item.quantity;
-              totalRevenue += item.quantity * item.price;
+            const matchesCategory = selectedCategory !== "all" ? (item.category_id === selectedCategory) : true;
+            if (matchesCategory) {
+              totalUnitsSold += item.qty;
+              totalRevenue += item.qty * item.unitPrice;
               productSpecificSales.push({
-                id: `${sale.id}-${item.productName}`,
+                id: `${sale.id}-${item.description}`,
                 date: sale.date,
                 customer_name: sale.customer_name,
-                quantity: item.quantity,
-                price: item.price,
-                total: item.quantity * item.price,
+                quantity: item.qty,
+                price: item.unitPrice,
+                total: item.qty * item.unitPrice,
               });
 
               const monthYear = sale.date.substring(0, 7); // YYYY-MM
-              monthlyUnitsMap[monthYear] = (monthlyUnitsMap[monthYear] || 0) + item.quantity;
+              monthlyUnitsMap[monthYear] = (monthlyUnitsMap[monthYear] || 0) + item.qty;
 
               if (!firstSaleDate || sale.date < firstSaleDate) {
                 firstSaleDate = sale.date;
@@ -361,7 +360,37 @@ export default function ReportsHistoryPage() {
 
       return () => clearTimeout(debounceTimeout);
     });
-  }, [productSearchText]);
+  }, [selectedCategory]);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        console.error("User not authenticated.");
+        return;
+      }
+
+      const fetchCategories = async () => {
+        const { data, error } = await supabase.from('category').select('id, name');
+        if (error) {
+          console.error("Error fetching categories:", error);
+          toast({
+            title: "Error",
+            description: "Failed to load categories.",
+            variant: "destructive",
+          });
+        } else {
+          setCategories([{ id: "all", name: "All Categories" }, ...data]);
+          toast({
+            title: "Success",
+            description: `${data.length} categories loaded.`,
+          });
+        }
+      };
+
+      fetchCategories();
+    });
+  }, []);
 
   return (
     <>
@@ -440,27 +469,21 @@ export default function ReportsHistoryPage() {
                       <TableHead>Date</TableHead>
                       <TableHead>Customer</TableHead>
                       <TableHead>Items</TableHead>
-                      <TableHead>Product List</TableHead>
                       <TableHead>Grand Total</TableHead>
-                      <TableHead>Invoice No</TableHead>
-                      <TableHead>Invoice Button</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {loadingSales ? (
-                      <TableRow><TableCell colSpan={7} className="text-center">Loading sales...</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={4} className="text-center">Loading sales...</TableCell></TableRow>
                     ) : sales.length === 0 ? (
-                      <TableRow><TableCell colSpan={7} className="text-center">No sales found for the selected period.</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={4} className="text-center">No sales found for the selected period.</TableCell></TableRow>
                     ) : (
                       sales.map((sale) => (
                         <TableRow key={sale.id}>
                           <TableCell>{formatDate(sale.date)}</TableCell>
                           <TableCell>{sale.customer_name}</TableCell>
                           <TableCell>{sale.items.length}</TableCell>
-                          <TableCell>{sale.items.map((item: any) => item.productName).join(", ")}</TableCell>
                           <TableCell>${Number(sale.grand_total).toFixed(2)}</TableCell>
-                          <TableCell>{sale.invoice_no}</TableCell>
-                          <TableCell><Button variant="outline">View Invoice</Button></TableCell>
                         </TableRow>
                       ))
                     )}
@@ -519,15 +542,18 @@ export default function ReportsHistoryPage() {
               <div className="rounded-lg border p-4 shadow-sm">
                 <h2 className="text-2xl font-semibold mb-4">Product History</h2>
                 <div className="mb-4">
-                  <label htmlFor="product-search" className="sr-only">Search Product</label>
-                  <input
-                    type="text"
-                    id="product-search"
-                    placeholder="Search product name..."
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    value={productSearchText}
-                    onChange={(e) => setProductSearchText(e.target.value)}
-                  />
+                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Select Category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

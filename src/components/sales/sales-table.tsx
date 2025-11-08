@@ -88,7 +88,7 @@ export default function SalesTable({ initialSales, onDataChange }: SalesTablePro
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     const year = date.getFullYear();
-    return `${month}/${day}/${year}`;
+    return `${day}/${month}/${year}`;
   };
 
   const handleGenerateInvoice = (sale: Sale) => {
@@ -144,6 +144,7 @@ export default function SalesTable({ initialSales, onDataChange }: SalesTablePro
                   <TableHead>Customer</TableHead>
                   <TableHead>Items</TableHead>
                   <TableHead className="text-right">Grand Total</TableHead>
+                  <TableHead className="text-right">Invoice No</TableHead>
                   <TableHead className="text-right">Invoice</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -151,7 +152,7 @@ export default function SalesTable({ initialSales, onDataChange }: SalesTablePro
               <TableBody>
                 {filteredSales.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                       No sales found. Add your first sale to get started.
                     </TableCell>
                   </TableRow>
@@ -171,6 +172,9 @@ export default function SalesTable({ initialSales, onDataChange }: SalesTablePro
                       </TableCell>
                       <TableCell className="text-right font-medium">
                         ${Number(sale.grand_total || 0).toFixed(2)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {sale.invoice_no}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button

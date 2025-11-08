@@ -6,6 +6,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Plus } from "lucide-react";
 import { createClient } from "../../../supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -25,6 +32,7 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
   const [salesmanEmail, setSalesmanEmail] = useState<string | null>(null);
   const [salesmanName, setSalesmanName] = useState<string | null>(null);
   const [invoiceNo, setInvoiceNo] = useState<string | null>(null);
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
 
   const generateNextInvoiceNumber = async () => {
     const { data, error } = await supabase
@@ -76,6 +84,17 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
     const fetchInitialData = async () => {
       const nextInvoiceNum = await generateNextInvoiceNumber();
       setInvoiceNo(nextInvoiceNum);
+      const { data, error } = await supabase.from('category').select('id, name');
+      if (error) {
+        console.error("Error fetching categories:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load categories.",
+          variant: "destructive",
+        });
+      } else {
+        setCategories(data);
+      }
     };
 
     fetchUserAndSalesmanName();
@@ -238,11 +257,21 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
                   <TableRow key={item.no}>
                     <TableCell>{item.no}</TableCell>
                     <TableCell>
-                      <Input
+                      <Select
                         value={item.description}
-                        onChange={(e) => handleItemChange(index, 'description', e.target.value)}
-                        placeholder="Item Name"
-                      />
+                        onValueChange={(value) => handleItemChange(index, 'description', value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select an item" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map((category) => (
+                            <SelectItem key={category.id} value={category.name}>
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </TableCell>
                     <TableCell>
                       <Input
