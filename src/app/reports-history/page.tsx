@@ -52,8 +52,8 @@ export default function ReportsHistoryPage() {
   const [loadingMonthlyUnitsSold, setLoadingMonthlyUnitsSold] = useState(false);
   const [productSalesHistory, setProductSalesHistory] = useState<any[]>([]);
   const [loadingProductSalesHistory, setLoadingProductSalesHistory] = useState(false);
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState("all"); // "all" for all categories or category.id
+  const [products, setProducts] = useState<{ id: string; name: string }[]>([]);
+  const [selectedProduct, setSelectedProduct] = useState("all"); // "all" for all products or product.id
 
   const years = Array.from({ length: 5 }, (_, i) => currentYear - i); // Last 5 years
   const months = [
@@ -273,9 +273,10 @@ export default function ReportsHistoryPage() {
         setLoadingProductStats(true);
         setLoadingMonthlyUnitsSold(true);
         setLoadingProductSalesHistory(true);
-
         // Fetch all sales to filter by product name locally for now
         // TODO: Implement more efficient backend filtering for product name (Supabase equivalent of $regex)
+        const allSales = sales; // Use existing sales state
+/*
         const { data: allSales, error: salesError } = await supabase
           .from('sales')
           .select('*')
@@ -292,11 +293,14 @@ export default function ReportsHistoryPage() {
           setLoadingProductSalesHistory(false);
           return;
         }
-
+*/
         const filteredSales = allSales?.filter((sale: any) =>
-          sale.items.some((item: any) => {
-            const matchesCategory = selectedCategory !== "all" ? (item.category_id === selectedCategory) : true;
-            return matchesCategory;
+          sale.items && sale.items.some((item: any) => {
+            // Temporarily commenting out category filter as item.category_id is not in sales.items JSONB
+            // const matchesCategory = selectedCategory !== "all" ? (item.category_id === selectedCategory) : true;
+            const matchesProduct = selectedProduct !== "all" ? (item.description === selectedProduct) : true; // Filter by item.description
+            // console.log("Item Category ID:", item.category_id, "Matches Category:", matchesCategory);
+            return matchesProduct; // Only filtering by product for now
           })
         ) || [];
 
@@ -310,8 +314,11 @@ export default function ReportsHistoryPage() {
 
         filteredSales.forEach((sale: any) => {
           sale.items.forEach((item: any) => {
-            const matchesCategory = selectedCategory !== "all" ? (item.category_id === selectedCategory) : true;
-            if (matchesCategory) {
+            // Temporarily commenting out category filter as item.category_id is not in sales.items JSONB
+            // const matchesCategory = selectedCategory !== "all" ? (item.category_id === selectedCategory) : true;
+            const matchesProduct = selectedProduct !== "all" ? (item.description === selectedProduct) : true; // Filter by item.description
+            // console.log("Item Category ID:", item.category_id, "Matches Category:", matchesCategory);
+            if (matchesProduct) {
               totalUnitsSold += item.qty;
               totalRevenue += item.qty * item.unitPrice;
               productSpecificSales.push({
@@ -360,7 +367,7 @@ export default function ReportsHistoryPage() {
 
       return () => clearTimeout(debounceTimeout);
     });
-  }, [selectedCategory]);
+  }, [selectedProduct]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -370,27 +377,30 @@ export default function ReportsHistoryPage() {
         return;
       }
 
-      const fetchCategories = async () => {
-        const { data, error } = await supabase.from('category').select('id, name');
-        if (error) {
-          console.error("Error fetching categories:", error);
-          toast({
-            title: "Error",
-            description: "Failed to load categories.",
-            variant: "destructive",
-          });
-        } else {
-          setCategories([{ id: "all", name: "All Categories" }, ...data]);
-          toast({
-            title: "Success",
-            description: `${data.length} categories loaded.`,
-          });
-        }
+      const fetchProducts = async () => {
+        const uniqueProductDescriptions = new Set<string>();
+        sales.forEach(sale => {
+          if (sale.items) {
+            const items = sale.items;
+            items.forEach((item: any) => {
+              if (item.description) {
+                uniqueProductDescriptions.add(item.description);
+              }
+            });
+          }
+        });
+
+        const productsData = Array.from(uniqueProductDescriptions).map(desc => ({ id: desc, name: desc }));
+        setProducts([{ id: "all", name: "All Products" }, ...productsData]);
+        toast({
+          title: "Success",
+          description: `${productsData.length} products loaded.`,
+        });
       };
 
-      fetchCategories();
+      fetchProducts();
     });
-  }, []);
+  }, [sales]);
 
   return (
     <>
@@ -542,14 +552,14 @@ export default function ReportsHistoryPage() {
               <div className="rounded-lg border p-4 shadow-sm">
                 <h2 className="text-2xl font-semibold mb-4">Product History</h2>
                 <div className="mb-4">
-                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <Select value={selectedProduct} onValueChange={setSelectedProduct}>
                     <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Select Category" />
+                      <SelectValue placeholder="Select Product" />
                     </SelectTrigger>
                     <SelectContent>
-                      {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
+                      {products.map((product) => (
+                        <SelectItem key={product.id} value={product.id}>
+                          {product.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
