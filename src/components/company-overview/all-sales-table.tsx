@@ -25,7 +25,7 @@ export default function AllSalesTable({ initialSales }: AllSalesTableProps) {
   const filteredSales = initialSales.filter(sale =>
     sale.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     sale.items?.some(item => item.description?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (sale.user_email?.toLowerCase() || '').includes(searchTerm.toLowerCase())
+    (sale.salesman_name_footer?.toLowerCase() || '').includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -51,7 +51,7 @@ export default function AllSalesTable({ initialSales }: AllSalesTableProps) {
                 <TableHead>Customer</TableHead>
                 <TableHead>Items</TableHead>
                 <TableHead>Grand Total</TableHead>
-                <TableHead>User Email</TableHead>
+                <TableHead>Salesman Name</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -78,7 +78,7 @@ export default function AllSalesTable({ initialSales }: AllSalesTableProps) {
                     <TableCell className="font-medium">
                       ${Number(sale.grand_total || 0).toFixed(2)}
                     </TableCell>
-                    <TableCell>{sale.user_email || 'N/A'}</TableCell>
+                    <TableCell>{sale.salesman_name_footer || 'N/A'}</TableCell>
                   </TableRow>
                 ))
               )}

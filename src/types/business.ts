@@ -17,6 +17,7 @@ export interface Sale {
   created_at?: string;
   updated_at?: string;
   user_email: string | null;
+  invoice_no?: string;
 }
 
 export interface Expense {

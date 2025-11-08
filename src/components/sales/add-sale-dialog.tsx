@@ -23,15 +23,63 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
   const supabase = createClient();
   const [invoiceItems, setInvoiceItems] = useState<InvoiceItem[]>([{ no: 1, description: '', qty: 0, unitPrice: 0 }]);
   const [salesmanEmail, setSalesmanEmail] = useState<string | null>(null);
+  const [salesmanName, setSalesmanName] = useState<string | null>(null);
+  const [invoiceNo, setInvoiceNo] = useState<string | null>(null);
+
+  const generateNextInvoiceNumber = async () => {
+    const { data, error } = await supabase
+      .from('sales')
+      .select('invoice_no')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found
+      console.error("Error fetching last invoice number:", error);
+      return "INV-0001";
+    } else if (data && data.invoice_no) {
+      const lastNumberMatch = data.invoice_no.match(/INV-(\d+)/);
+      if (lastNumberMatch) {
+        const lastNumber = parseInt(lastNumberMatch[1], 10);
+        const nextNumber = lastNumber + 1;
+        return `INV-${String(nextNumber).padStart(4, '0')}`;
+      } else {
+        return "INV-0001";
+      }
+    } else {
+      return "INV-0001";
+    }
+  };
 
   useEffect(() => {
-    const fetchUserEmail = async () => {
+    const fetchUserAndSalesmanName = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user?.email) {
-        setSalesmanEmail(user.email);
+      if (user) {
+        setSalesmanEmail(user.email || null);
+        const { data: userData, error } = await supabase
+          .from('users')
+          .select('full_name')
+          .eq('id', user.id)
+          .single();
+
+        if (error) {
+          console.error("Error fetching user full name:", error);
+          setSalesmanName(user.email || null); // Fallback to email if name not found
+        } else if (userData?.full_name) {
+          setSalesmanName(userData.full_name);
+        } else {
+          setSalesmanName(user.email || null); // Fallback to email if full_name is null
+        }
       }
     };
-    fetchUserEmail();
+
+    const fetchInitialData = async () => {
+      const nextInvoiceNum = await generateNextInvoiceNumber();
+      setInvoiceNo(nextInvoiceNum);
+    };
+
+    fetchUserAndSalesmanName();
+    fetchInitialData();
   }, []);
 
   const handleItemChange = (index: number, field: keyof InvoiceItem, value: any) => {
@@ -68,8 +116,9 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
       customer_name: formData.get('customer_name') as string,
       items: invoiceItems.filter(item => item.description !== ''),
       grand_total: calculateGrandTotal(),
-      salesman_name_footer: salesmanEmail || '',
+      salesman_name_footer: salesmanName || salesmanEmail || '',
       customer_phone_footer: formData.get('customer_phone_footer') as string,
+      invoice_no: invoiceNo || '',
     };
 
     const { data: userData } = await supabase.auth.getUser();
@@ -112,6 +161,8 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
       onSaleAdded();
       (e.target as HTMLFormElement).reset();
       setInvoiceItems([{ no: 1, description: '', qty: 0, unitPrice: 0 }]);
+      const nextInvoiceNum = await generateNextInvoiceNumber();
+      setInvoiceNo(nextInvoiceNum);
     }
 
     setLoading(false);
@@ -132,6 +183,15 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
+              <Label htmlFor="invoice_no">Invoice No.</Label>
+              <Input
+                id="invoice_no"
+                name="invoice_no"
+                value={invoiceNo || ''}
+                readOnly
+              />
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="date">Date *</Label>
               <Input
                 id="date"
@@ -141,12 +201,23 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
                 defaultValue={new Date().toISOString().split('T')[0]}
               />
             </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="customer_name">Customer Name</Label>
               <Input
                 id="customer_name"
                 name="customer_name"
                 placeholder="Customer Name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="customer_phone_footer">Tel. No.</Label>
+              <Input
+                id="customer_phone_footer"
+                name="customer_phone_footer"
+                placeholder="Customer Phone Number"
               />
             </div>
           </div>
@@ -214,27 +285,16 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
             </Table>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 border-t pt-4 mt-4">
-            <div className="space-y-2">
-              <Label htmlFor="salesman_name_footer">Salesman Email</Label>
-              <Input
-                id="salesman_name_footer"
-                name="salesman_name_footer"
-                placeholder="Salesman Email"
-                value={salesmanEmail || ''}
-                readOnly
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="customer_phone_footer">Tel. No.</Label>
-              <Input
-                id="customer_phone_footer"
-                name="customer_phone_footer"
-                placeholder="Customer Phone Number"
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="salesman_name_footer">Salesman Name</Label>
+            <Input
+              id="salesman_name_footer"
+              name="salesman_name_footer"
+              placeholder="Salesman Name"
+              value={salesmanName || ''}
+              readOnly
+            />
           </div>
-
           <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancel

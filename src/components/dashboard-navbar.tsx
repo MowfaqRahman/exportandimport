@@ -42,6 +42,12 @@ const DashboardNavbar: React.FC<DashboardNavbarProps> = ({ activeTab, setActiveT
             }`}>
             Company Overview
           </Link>
+          <Link href="/reports-history" prefetch className={`text-sm font-medium transition-colors ${pathname === "/reports-history"
+              ? "text-primary"
+              : "text-muted-foreground hover:text-primary"
+            }`}>
+            Reports & History
+          </Link>
         </div>
         <div className="flex gap-4 items-center">
           <DropdownMenu>

@@ -23,15 +23,30 @@ export default function EditSaleDialog({ sale, open, onClose, onSaleUpdated }: E
   const supabase = createClient();
   const [invoiceItems, setInvoiceItems] = useState<InvoiceItem[]>(sale.items || [{ no: 1, description: '', qty: 0, unitPrice: 0 }]);
   const [salesmanEmail, setSalesmanEmail] = useState<string | null>(null);
+  const [salesmanName, setSalesmanName] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchUserEmail = async () => {
+    const fetchUserAndSalesmanName = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user?.email) {
-        setSalesmanEmail(user.email);
+      if (user) {
+        setSalesmanEmail(user.email || null);
+        const { data: userData, error } = await supabase
+          .from('users')
+          .select('full_name')
+          .eq('id', user.id)
+          .single();
+
+        if (error) {
+          console.error("Error fetching user full name:", error);
+          setSalesmanName(user.email || null); // Fallback to email if name not found
+        } else if (userData?.full_name) {
+          setSalesmanName(userData.full_name);
+        } else {
+          setSalesmanName(user.email || null); // Fallback to email if full_name is null
+        }
       }
     };
-    fetchUserEmail();
+    fetchUserAndSalesmanName();
   }, []);
 
   const handleItemChange = (index: number, field: keyof InvoiceItem, value: any) => {
@@ -68,7 +83,7 @@ export default function EditSaleDialog({ sale, open, onClose, onSaleUpdated }: E
       customer_name: formData.get('customer_name') as string,
       items: invoiceItems.filter(item => item.description !== ''),
       grand_total: calculateGrandTotal(),
-      salesman_name_footer: salesmanEmail || '',
+      salesman_name_footer: salesmanName || sale.salesman_name_footer || salesmanEmail || '',
       customer_phone_footer: formData.get('customer_phone_footer') as string,
       updated_at: new Date().toISOString(),
     };
@@ -190,12 +205,12 @@ export default function EditSaleDialog({ sale, open, onClose, onSaleUpdated }: E
 
           <div className="grid grid-cols-2 gap-4 border-t pt-4 mt-4">
             <div className="space-y-2">
-              <Label htmlFor="salesman_name_footer">Salesman Email</Label>
+              <Label htmlFor="salesman_name_footer">Salesman Name</Label>
               <Input
                 id="salesman_name_footer"
                 name="salesman_name_footer"
-                placeholder="Salesman Email"
-                value={salesmanEmail || ''}
+                placeholder="Salesman Name"
+                value={salesmanName || sale.salesman_name_footer || ''}
                 readOnly
               />
             </div>
