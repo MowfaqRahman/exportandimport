@@ -26,7 +26,7 @@ export default function AllExpensesTable({ initialExpenses }: AllExpensesTablePr
     expense.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     expense.vendor?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     expense.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (expense.user_email?.toLowerCase() || '').includes(searchTerm.toLowerCase())
+    (expense.user_name?.toLowerCase() || '').includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -53,7 +53,7 @@ export default function AllExpensesTable({ initialExpenses }: AllExpensesTablePr
                 <TableHead>Category</TableHead>
                 <TableHead>Description</TableHead>
                 <TableHead>Amount</TableHead>
-                <TableHead>User Email</TableHead>
+                <TableHead>Salesman Name</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -77,7 +77,7 @@ export default function AllExpensesTable({ initialExpenses }: AllExpensesTablePr
                     <TableCell className="font-medium">
                       ${Number(expense.amount || 0).toFixed(2)}
                     </TableCell>
-                    <TableCell>{expense.user_email || 'N/A'}</TableCell>
+                    <TableCell>{expense.user_name || 'N/A'}</TableCell>
                   </TableRow>
                 ))
               )}

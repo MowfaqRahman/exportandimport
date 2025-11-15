@@ -30,7 +30,7 @@ export default function CompanyOverviewPage() {
           .select('*'),
         supabase
           .from('users')
-          .select('id, email'),
+          .select('id, name, email, full_name'),
       ]);
 
       if (salesData.error) {
@@ -47,23 +47,18 @@ export default function CompanyOverviewPage() {
       console.log("Fetched expenses data:", expensesData.data);
       console.log("Fetched users data:", usersData.data);
 
-      const usersMap = new Map(usersData?.data?.map((user: any) => [user.id, user.email]) || []);
+      const usersMap = new Map(usersData?.data?.map((user: any) => [user.id, user.full_name || user.name || user.email]) || []);
 
-      const salesWithUserEmail = salesData.data ? salesData.data.map((sale: any) => ({
-        ...sale,
-        user_email: usersMap.get(sale.user_id) || null,
-      })) : [];
-
-      const expensesWithUserEmail = expensesData.data ? expensesData.data.map((expense: any) => ({
+      const expensesWithUserName = expensesData.data ? expensesData.data.map((expense: any) => ({
         ...expense,
-        user_email: usersMap.get(expense.user_id) || null,
+        user_name: usersMap.get(expense.user_id) || null,
       })) : [];
 
       if (salesData.data) {
-        setCompanySales(salesWithUserEmail as Sale[]);
+        setCompanySales(salesData.data as Sale[]);
       }
       if (expensesData.data) {
-        setCompanyExpenses(expensesWithUserEmail as Expense[]);
+        setCompanyExpenses(expensesWithUserName as Expense[]);
       }
     };
 

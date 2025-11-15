@@ -28,7 +28,7 @@ export default function AllSalesTable({ initialSales }: AllSalesTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const { toast } = useToast();
-  const supabase = createClient();
+  const [supabase] = useState(createClient());
 
   const filteredSales = initialSales.filter(sale =>
     sale.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||

@@ -10,13 +10,12 @@ export interface Sale {
   date: string;
   customer_name: string;
   items: InvoiceItem[];
-  grand_total: number;
-  salesman_name_footer: string;
+  grand_total: any;
+  salesman_name_footer: string | null;
   customer_phone_footer: string;
   user_id?: string;
   created_at?: string;
   updated_at?: string;
-  user_email: string | null;
   invoice_no?: string;
 }
 
@@ -30,5 +29,5 @@ export interface Expense {
   user_id?: string;
   created_at?: string;
   updated_at?: string;
-  user_email: string | null;
+  user_name: string | null;
 }
