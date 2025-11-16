@@ -23,14 +23,12 @@ export default async function Dashboard() {
     supabase
       .from('sales')
       .select('*')
-      .eq('user_id', user.id)
       .gte('date', firstDayOfMonth.toISOString().split('T')[0])
       .lte('date', lastDayOfMonth.toISOString().split('T')[0])
       .order('date', { ascending: true }),
     supabase
       .from('expenses')
       .select('*')
-      .eq('user_id', user.id)
       .gte('date', firstDayOfMonth.toISOString().split('T')[0])
       .lte('date', lastDayOfMonth.toISOString().split('T')[0])
       .order('date', { ascending: true }),

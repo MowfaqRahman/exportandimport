@@ -34,7 +34,8 @@ export default function AllSalesTable({ initialSales }: AllSalesTableProps) {
     .filter(sale =>
       sale.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       sale.items?.some(item => item.description?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (sale.salesman_name_footer?.toLowerCase() || '').includes(searchTerm.toLowerCase())
+      (sale.salesman_name_footer?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (sale.invoice_no?.toLowerCase() || '').includes(searchTerm.toLowerCase())
     )
     .sort((a, b) => {
       const dateA = new Date(a.created_at || a.date);
@@ -70,9 +71,9 @@ export default function AllSalesTable({ initialSales }: AllSalesTableProps) {
   return (
     <>
       <Card>
-        <CardHeader>
-          <CardTitle>All User Sales Transactions</CardTitle>
-          <div className="relative w-full sm:w-[250px]">
+        <CardHeader className="flex flex-row justify-between items-center space-y-0 pb-2">
+          <CardTitle className="text-2xl font-bold">All User Sales Transactions</CardTitle>
+          <div className="relative w-full max-w-sm sm:w-[250px]">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search sales..."

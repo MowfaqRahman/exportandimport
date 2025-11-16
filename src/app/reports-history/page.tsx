@@ -100,7 +100,7 @@ export default function ReportsHistoryPage() {
 
         if (selectedUser && selectedUser !== "all") {
           query = query.eq('user_id', selectedUser);
-        } else if (session?.user?.id) {
+        } else if (session?.user?.id && selectedUser !== "all") {
           query = query.eq('user_id', session.user.id);
         }
 
@@ -158,7 +158,7 @@ export default function ReportsHistoryPage() {
           query = query.eq('user_id', selectedUser);
         } else if (selectedUser === "all") {
           // No user_id filter applied when "All Users" is selected
-        } else if (session?.user?.id) {
+        } else if (session?.user?.id && selectedUser !== "all") {
           query = query.eq('user_id', session.user.id);
         }
 
@@ -247,7 +247,7 @@ export default function ReportsHistoryPage() {
 
         if (selectedUser && selectedUser !== "all") {
           salesQuery = salesQuery.eq('user_id', selectedUser);
-        } else if (session?.user?.id) {
+        } else if (session?.user?.id && selectedUser !== "all") {
           salesQuery = salesQuery.eq('user_id', session.user.id);
         }
         // Fetch yearly sales total
@@ -271,7 +271,7 @@ export default function ReportsHistoryPage() {
           expensesQuery = expensesQuery.eq('user_id', selectedUser);
         } else if (selectedUser === "all") {
           // No user_id filter applied when "All Users" is selected
-        } else if (session?.user?.id) {
+        } else if (session?.user?.id && selectedUser !== "all") {
           expensesQuery = expensesQuery.eq('user_id', session.user.id);
         }
 
@@ -300,7 +300,6 @@ export default function ReportsHistoryPage() {
           const { data: monthlySalesData, error: monthlySalesError } = await supabase
             .from('sales')
             .select('grand_total')
-            .eq('user_id', session.user.id)
             .gte('date', monthStart)
             .lte('date', monthEnd);
 
@@ -316,9 +315,7 @@ export default function ReportsHistoryPage() {
 
           if (selectedUser && selectedUser !== "all") {
             monthlyExpensesQuery = monthlyExpensesQuery.eq('user_id', selectedUser);
-          } else if (selectedUser === "all") {
-            // No user_id filter applied when "All Users" is selected
-          } else if (session?.user?.id) {
+          } else if (session?.user?.id && selectedUser !== "all") {
             monthlyExpensesQuery = monthlyExpensesQuery.eq('user_id', session.user.id);
           }
 

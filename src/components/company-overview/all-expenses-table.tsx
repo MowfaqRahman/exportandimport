@@ -35,9 +35,9 @@ export default function AllExpensesTable({ initialExpenses }: AllExpensesTablePr
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>All User Expenses</CardTitle>
-        <div className="relative w-full sm:w-[250px]">
+      <CardHeader className="flex flex-row justify-between items-center space-y-0 pb-2">
+        <CardTitle className="text-2xl font-bold">All User Expenses</CardTitle>
+        <div className="relative w-full max-w-sm sm:w-[250px]">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search expenses..."
