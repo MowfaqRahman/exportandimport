@@ -20,6 +20,9 @@ import DashboardNavbar from "@/components/dashboard-navbar";
 import MetricCard from "@/components/dashboard/metric-card";
 import { DollarSign, LineChart as LineChartIcon, Wallet, Pencil, Trash2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import AllSalesTable from "@/components/company-overview/all-sales-table";
+import AllExpensesTable from "@/components/company-overview/all-expenses-table";
+import { Sale, Expense } from "@/types/business";
 
 // Helper function to format date
 const formatDate = (dateString: string) => {
@@ -58,7 +61,9 @@ export default function ReportsHistoryPage() {
   const [users, setUsers] = useState<{ id: string; name: string, email: string }[]>([]);
   const [selectedUser, setSelectedUser] = useState("all"); // "all" for all users or user.id
   const [loadingUsers, setLoadingUsers] = useState(false);
-  
+  const [allExpensesWithUsers, setAllExpensesWithUsers] = useState<any[]>([]);
+  const [allUsers, setAllUsers] = useState<{ id: string; name: string, email: string, full_name?: string }[]>([]);
+
   const years = Array.from({ length: 5 }, (_, i) => currentYear - i); // Last 5 years
   const months = [
     { value: "all", label: "All" },
@@ -151,6 +156,8 @@ export default function ReportsHistoryPage() {
 
         if (selectedUser && selectedUser !== "all") {
           query = query.eq('user_id', selectedUser);
+        } else if (selectedUser === "all") {
+          // No user_id filter applied when "All Users" is selected
         } else if (session?.user?.id) {
           query = query.eq('user_id', session.user.id);
         }
@@ -184,6 +191,40 @@ export default function ReportsHistoryPage() {
       fetchExpenses();
     });
   }, [selectedYear, selectedMonth, selectedUser]);
+
+  useEffect(() => {
+    const supabase = createClient();
+    const fetchAllExpensesAndUsers = async () => {
+      setLoadingUsers(true);
+      setLoadingExpenses(true);
+
+      const [expensesData, usersData] = await Promise.all([
+        supabase.from('expenses').select('*').order('created_at', { ascending: false }).order('date', { ascending: false }),
+        supabase.from('users').select('id, name, email, full_name'),
+      ]);
+
+      if (expensesData.error) {
+        console.error("Error fetching all expenses:", expensesData.error);
+        setAllExpensesWithUsers([]);
+      }
+      if (usersData.error) {
+        console.error("Error fetching users:", usersData.error);
+        setAllUsers([]);
+      }
+
+      const usersMap = new Map(usersData?.data?.map((user: any) => [user.id, user.full_name || user.name || user.email]) || []);
+      setAllUsers([{ id: "all", name: "All Users", email: "" }, ...(usersData.data || [])]);
+
+      const expensesWithUserName = expensesData.data ? expensesData.data.map((expense: any) => ({
+        ...expense,
+        user_name: usersMap.get(expense.user_id) || null,
+      })) : [];
+      setAllExpensesWithUsers(expensesWithUserName);
+      setLoadingUsers(false);
+      setLoadingExpenses(false);
+    };
+    fetchAllExpensesAndUsers();
+  }, []);
 
   useEffect(() => {
     const supabase = createClient();
@@ -222,11 +263,20 @@ export default function ReportsHistoryPage() {
           setYearSalesTotal(total);
         }
 
-        // Fetch yearly expenses total
-        const { data: yearExpensesData, error: yearExpensesError } = await supabase
+        let expensesQuery = supabase
           .from('expenses')
-          .select('amount')
-          .eq('user_id', session.user.id)
+          .select('amount');
+
+        if (selectedUser && selectedUser !== "all") {
+          expensesQuery = expensesQuery.eq('user_id', selectedUser);
+        } else if (selectedUser === "all") {
+          // No user_id filter applied when "All Users" is selected
+        } else if (session?.user?.id) {
+          expensesQuery = expensesQuery.eq('user_id', session.user.id);
+        }
+
+        // Fetch yearly expenses total
+        const { data: yearExpensesData, error: yearExpensesError } = await expensesQuery
           .gte('date', yearStart)
           .lte('date', yearEnd);
 
@@ -260,10 +310,19 @@ export default function ReportsHistoryPage() {
             currentMonthlySalesTotal = monthlySalesData?.reduce((sum, sale) => sum + Number(sale.grand_total || 0), 0) || 0;
           }
 
-          const { data: monthlyExpensesData, error: monthlyExpensesError } = await supabase
+          let monthlyExpensesQuery = supabase
             .from('expenses')
-            .select('amount')
-            .eq('user_id', session.user.id)
+            .select('amount');
+
+          if (selectedUser && selectedUser !== "all") {
+            monthlyExpensesQuery = monthlyExpensesQuery.eq('user_id', selectedUser);
+          } else if (selectedUser === "all") {
+            // No user_id filter applied when "All Users" is selected
+          } else if (session?.user?.id) {
+            monthlyExpensesQuery = monthlyExpensesQuery.eq('user_id', session.user.id);
+          }
+
+          const { data: monthlyExpensesData, error: monthlyExpensesError } = await monthlyExpensesQuery
             .gte('date', monthStart)
             .lte('date', monthEnd);
 
@@ -470,49 +529,6 @@ export default function ReportsHistoryPage() {
     fetchUsers();
   }, []);
 
-  const handleDownloadInvoice = async (invoiceId: string) => {
-    const supabase = createClient();
-    const { data, error } = await supabase
-      .from('sales')
-      .select('invoice_content')
-      .eq('id', invoiceId)
-      .single();
-
-    if (error) {
-      console.error("Error fetching invoice content:", error);
-      toast({
-        title: "Error",
-        description: "Failed to download invoice.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!data || !data.invoice_content) {
-      toast({
-        title: "Error",
-        description: "Invoice content not found.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const blob = new Blob([data.invoice_content], { type: 'application/pdf' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `invoice_${invoiceId}.pdf`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-
-    toast({
-      title: "Success",
-      description: "Invoice downloaded successfully.",
-    });
-  };
-
   return (
     <>
       <DashboardNavbar />
@@ -578,109 +594,18 @@ export default function ReportsHistoryPage() {
 
           <Tabs defaultValue="sales" className="mt-8">
             <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="sales">Sales</TabsTrigger>
+              <TabsTrigger value="sales">Sales Transactions</TabsTrigger>
               <TabsTrigger value="expenses">Expenses</TabsTrigger>
               <TabsTrigger value="product-history">Product History</TabsTrigger>
             </TabsList>
+            
             <TabsContent value="sales">
-              <div className="rounded-lg border p-4 shadow-sm">
-                <h2 className="text-2xl font-semibold mb-4">Sales Report</h2>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Customer</TableHead>
-                      <TableHead>Items</TableHead>
-                      <TableHead>Grand Total</TableHead>
-                      <TableHead>Invoice No</TableHead>
-                      <TableHead>Invoice</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {loadingSales ? (
-                      <TableRow><TableCell colSpan={7} className="text-center">Loading sales...</TableCell></TableRow>
-                    ) : sales.length === 0 ? (
-                      <TableRow><TableCell colSpan={7} className="text-center">No sales found for the selected period.</TableCell></TableRow>
-                    ) : (
-                      sales.map((sale) => (
-                        <TableRow key={sale.id}>
-                          <TableCell>{formatDate(sale.date)}</TableCell>
-                          <TableCell>{sale.customer_name || '-'}</TableCell>
-                          <TableCell>{sale.items ? `${sale.items.length} items` : '0 items'}</TableCell>
-                          <TableCell>${Number(sale.grand_total).toFixed(2)}</TableCell>
-                          <TableCell>{sale.invoice_no || 'N/A'}</TableCell>
-                          <TableCell>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDownloadInvoice(sale.id)}
-                            >
-                              Invoice
-                            </Button>
-                          </TableCell>
-                          <TableCell className="flex items-center space-x-2">
-                            <Button variant="outline" size="icon" onClick={() => { /* Handle edit */ toast({ title: "Edit clicked", description: `Edit sale ${sale.id}` }) }}>
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button variant="secondary" size="icon" onClick={() => { /* Handle delete */ toast({ title: "Delete clicked", description: `Delete sale ${sale.id}` }) }}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-                <div className="flex justify-center mt-4">
-                  {/* Pagination controls will go here */}
-                  <Button variant="outline" className="mx-1">Previous</Button>
-                  <Button variant="outline" className="mx-1">1</Button>
-                  <Button variant="outline" className="mx-1">2</Button>
-                  <Button variant="outline" className="mx-1">Next</Button>
-                </div>
-              </div>
+              <AllSalesTable initialSales={sales} />
             </TabsContent>
             <TabsContent value="expenses">
-              <div className="rounded-lg border p-4 shadow-sm">
-                <h2 className="text-2xl font-semibold mb-4">Expenses Report</h2>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Note</TableHead>
-                      <TableHead>User</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {loadingExpenses ? (
-                      <TableRow><TableCell colSpan={5} className="text-center">Loading expenses...</TableCell></TableRow>
-                    ) : expenses.length === 0 ? (
-                      <TableRow><TableCell colSpan={5} className="text-center">No expenses found for the selected period.</TableCell></TableRow>
-                    ) : (
-                      expenses.map((expense) => (
-                        <TableRow key={expense.id}>
-                          <TableCell>{formatDate(expense.date)}</TableCell>
-                          <TableCell>{expense.category}</TableCell>
-                          <TableCell>${Number(expense.amount).toFixed(2)}</TableCell>
-                          <TableCell>{expense.note}</TableCell>
-                          <TableCell>{users.find(user => user.id === expense.user_id)?.name || users.find(user => user.id === expense.user_id)?.email || expense.user_id}</TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-                <div className="flex justify-center mt-4">
-                  {/* Pagination controls will go here */}
-                  <Button variant="outline" className="mx-1">Previous</Button>
-                  <Button variant="outline" className="mx-1">1</Button>
-                  <Button variant="outline" className="mx-1">2</Button>
-                  <Button variant="outline" className="mx-1">Next</Button>
-                </div>
-              </div>
+              <AllExpensesTable initialExpenses={expenses} />
             </TabsContent>
+            
             <TabsContent value="product-history">
               <div className="rounded-lg border p-4 shadow-sm">
                 <h2 className="text-2xl font-semibold mb-4">Product History</h2>
@@ -787,15 +712,6 @@ export default function ReportsHistoryPage() {
                           <TableCell>${Number(sale.price).toFixed(2)}</TableCell>
                           <TableCell>${Number(sale.total).toFixed(2)}</TableCell>
                           <TableCell>{sale.invoice_id}</TableCell>
-                          <TableCell>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDownloadInvoice(sale.invoice_id)}
-                            >
-                              Download Invoice
-                            </Button>
-                          </TableCell>
                         </TableRow>
                       ))
                     )}

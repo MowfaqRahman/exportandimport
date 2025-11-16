@@ -4,3 +4,4 @@ ALTER COLUMN grand_total TYPE DECIMAL(10, 2) USING grand_total::text::DECIMAL(10
 
 
 
+
