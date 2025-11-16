@@ -41,7 +41,11 @@ export default function SalesTable({ initialSales, onDataChange }: SalesTablePro
     const filtered = sales.filter(sale =>
       sale.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       sale.items?.some(item => item.description?.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
+    ).sort((a, b) => {
+      const dateA = new Date(a.created_at || a.date);
+      const dateB = new Date(b.created_at || b.date);
+      return dateB.getTime() - dateA.getTime();
+    });
     setFilteredSales(filtered);
   }, [searchTerm, sales]);
 

@@ -41,7 +41,11 @@ export default function ExpensesTable({ initialExpenses, onDataChange }: Expense
       expense.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       expense.vendor?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       expense.category?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    ).sort((a, b) => {
+      const dateA = new Date(a.created_at || a.date);
+      const dateB = new Date(b.created_at || b.date);
+      return dateB.getTime() - dateA.getTime();
+    });
     setFilteredExpenses(filtered);
   }, [searchTerm, expenses]);
 

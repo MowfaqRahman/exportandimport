@@ -30,11 +30,17 @@ export default function AllSalesTable({ initialSales }: AllSalesTableProps) {
   const { toast } = useToast();
   const [supabase] = useState(createClient());
 
-  const filteredSales = initialSales.filter(sale =>
-    sale.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    sale.items?.some(item => item.description?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (sale.salesman_name_footer?.toLowerCase() || '').includes(searchTerm.toLowerCase())
-  );
+  const filteredSales = initialSales
+    .filter(sale =>
+      sale.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      sale.items?.some(item => item.description?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (sale.salesman_name_footer?.toLowerCase() || '').includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => {
+      const dateA = new Date(a.created_at || a.date);
+      const dateB = new Date(b.created_at || b.date);
+      return dateB.getTime() - dateA.getTime();
+    });
 
   const handleDelete = async () => {
     if (!deleteId) return;
