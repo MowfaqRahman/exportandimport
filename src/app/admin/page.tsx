@@ -270,19 +270,19 @@ const AdminPage = () => {
                     <TableCell>{user.email}</TableCell>
                     <TableCell>{user.role}</TableCell>
                     <TableCell className="text-right">
-                      <Tabs defaultValue={user.is_blocked ? "allow" : "pending"} className="w-[150px]">
+                      <Tabs defaultValue={user.is_blocked ? "pending" : "allow"} className="w-[150px]">
                         <TabsList className="grid w-full grid-cols-2 h-9 rounded-full p-1 bg-gray-200">
                           <TabsTrigger
                             value="pending"
                             className="text-sm font-medium rounded-full data-[state=active]:bg-white data-[state=active]:shadow data-[state=active]:text-gray-900 data-[state=inactive]:text-gray-500 transition-all"
-                            onClick={() => handleUnblockUser(user.id)}
+                            onClick={() => handleBlockUser(user.id)}
                           >
                             Pending
                           </TabsTrigger>
                           <TabsTrigger
                             value="allow"
                             className="text-sm font-medium rounded-full data-[state=active]:bg-white data-[state=active]:shadow data-[state=active]:text-gray-900 data-[state=inactive]:text-gray-500 transition-all"
-                            onClick={() => handleBlockUser(user.id)}
+                            onClick={() => handleUnblockUser(user.id)}
                           >
                             Allow
                           </TabsTrigger>
