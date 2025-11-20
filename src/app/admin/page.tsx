@@ -259,8 +259,7 @@ const AdminPage = () => {
                   <TableHead>Full Name</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Role</TableHead>
-                  <TableHead className="text-right">Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -288,11 +287,6 @@ const AdminPage = () => {
                           </TabsTrigger>
                         </TabsList>
                       </Tabs>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="outline" size="sm" onClick={() => handleViewDetails(user.id)}>
-                        View Details
-                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}

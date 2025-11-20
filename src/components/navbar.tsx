@@ -9,7 +9,6 @@ export default async function Navbar() {
 
   const { data: { user } } = await (await supabase).auth.getUser()
 
-  const isAdmin = user?.app_metadata?.user_role === 'admin'
 
   return (
     <nav className="w-full border-b border-gray-200 bg-white py-2">
@@ -28,7 +27,7 @@ export default async function Navbar() {
                   Dashboard
                 </Button>
               </Link>
-              <UserProfile isAdmin={isAdmin} />
+              <UserProfile  />
             </>
           ) : (
             <>

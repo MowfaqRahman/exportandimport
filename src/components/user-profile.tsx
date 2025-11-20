@@ -4,13 +4,8 @@ import { Button } from './ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu'
 import { createClient } from '../../supabase/client'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 
-interface UserProfileProps {
-  isAdmin: boolean;
-}
-
-export default function UserProfile({ isAdmin }: UserProfileProps) {
+export default function UserProfile() {
     const supabase = createClient()
     const router = useRouter()
 
@@ -22,13 +17,6 @@ export default function UserProfile({ isAdmin }: UserProfileProps) {
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-                {isAdmin && (
-                  <DropdownMenuItem asChild>
-                    <Link href="/admin">
-                      Admin Page
-                    </Link>
-                  </DropdownMenuItem>
-                )}
                 <DropdownMenuItem onClick={async () => {
                     await supabase.auth.signOut()
                     router.refresh()

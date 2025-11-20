@@ -24,3 +24,6 @@ DROP TRIGGER IF EXISTS on_public_user_role_updated ON public.users;
 CREATE TRIGGER on_public_user_role_updated
   AFTER UPDATE OF role ON public.users
   FOR EACH ROW EXECUTE FUNCTION public.update_auth_user_app_metadata_role();
+
+
+

@@ -12,7 +12,7 @@ import { Button } from './ui/button'
 import { UserCircle, Home } from 'lucide-react'
 import { useRouter, usePathname } from 'next/navigation'
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import React from 'react'; // Import React
+import React, { useEffect, useState } from 'react'; // Import React, useEffect, useState
 
 interface DashboardNavbarProps {
   activeTab?: string;
@@ -23,6 +23,28 @@ const DashboardNavbar: React.FC<DashboardNavbarProps> = ({ activeTab, setActiveT
   const supabase = createClient()
   const router = useRouter()
   const pathname = usePathname();
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data, error } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+
+        if (error) {
+          console.error('Error fetching user role:', error);
+        } else if (data) {
+          setUserRole(data.role);
+        }
+      }
+    };
+
+    fetchUserRole();
+  }, [supabase]);
 
   return (
     <nav className="w-full border-b border-gray-200 bg-white py-4">
@@ -57,6 +79,11 @@ const DashboardNavbar: React.FC<DashboardNavbarProps> = ({ activeTab, setActiveT
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              {userRole === 'admin' && (
+                <DropdownMenuItem onClick={() => router.push('/admin')}>
+                  Admin
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem onClick={async () => {
                 await supabase.auth.signOut()
                 router.refresh()

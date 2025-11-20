@@ -9,3 +9,6 @@ ON public.users
 FOR UPDATE 
 USING (auth.uid()::text = user_id OR auth.role() = 'admin')
 WITH CHECK (auth.uid()::text = user_id OR auth.role() = 'admin');
+
+
+
