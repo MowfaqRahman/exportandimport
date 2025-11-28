@@ -88,6 +88,117 @@ const AdminPage = () => {
     setEditedCategoryName("");
   };
 
+  // State for Customer Management
+  const [newCustomerName, setNewCustomerName] = useState("");
+  const [newCustomerPhone, setNewCustomerPhone] = useState("");
+  const [newCustomerEmail, setNewCustomerEmail] = useState("");
+  const [newCustomerAddress, setNewCustomerAddress] = useState("");
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [editingCustomer, setEditingCustomer] = useState<any>(null);
+  const [editedCustomerName, setEditedCustomerName] = useState("");
+  const [editedCustomerPhone, setEditedCustomerPhone] = useState("");
+  const [editedCustomerEmail, setEditedCustomerEmail] = useState("");
+  const [editedCustomerAddress, setEditedCustomerAddress] = useState("");
+
+  const fetchCustomers = async () => {
+    const { data, error } = await supabase
+      .from('customers')
+      .select('customer_id, customer_name, phone_number, email, address');
+    if (error) {
+      console.error("Error fetching customers:", error);
+    } else {
+      setCustomers(data || []);
+    }
+  };
+
+  useEffect(() => {
+    fetchCategories();
+    fetchManagedUsers();
+    fetchCustomers(); // Fetch customers on component mount
+  }, []);
+
+  const handleAddCustomer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCustomerName.trim()) return;
+
+    const { error } = await supabase
+      .from('customers')
+      .insert([
+        { 
+          customer_name: newCustomerName.trim(),
+          phone_number: newCustomerPhone.trim() || null,
+          email: newCustomerEmail.trim() || null,
+          address: newCustomerAddress.trim() || null,
+        }
+      ]);
+
+    if (error) {
+      console.error("Error adding customer:", error);
+    } else {
+      setNewCustomerName("");
+      setNewCustomerPhone("");
+      setNewCustomerEmail("");
+      setNewCustomerAddress("");
+      fetchCustomers();
+    }
+  };
+
+  const handleDeleteCustomer = async (customerId: string) => {
+    if (window.confirm("Are you sure you want to delete this customer?")) {
+      const { error } = await supabase
+        .from('customers')
+        .delete()
+        .eq('customer_id', customerId);
+
+      if (error) {
+        console.error("Error deleting customer:", error);
+      } else {
+        fetchCustomers();
+      }
+    }
+  };
+
+  const handleEditCustomerClick = (customer: any) => {
+    setEditingCustomer(customer);
+    setEditedCustomerName(customer.customer_name);
+    setEditedCustomerPhone(customer.phone_number || "");
+    setEditedCustomerEmail(customer.email || "");
+    setEditedCustomerAddress(customer.address || "");
+  };
+
+  const handleSaveCustomerEdit = async (customerId: string) => {
+    if (!editedCustomerName.trim()) return;
+
+    const { error } = await supabase
+      .from('customers')
+      .update({ 
+        customer_name: editedCustomerName.trim(),
+        phone_number: editedCustomerPhone.trim() || null,
+        email: editedCustomerEmail.trim() || null,
+        address: editedCustomerAddress.trim() || null,
+      })
+      .eq('customer_id', customerId);
+
+    if (error) {
+      console.error("Error saving customer edit:", error);
+    } else {
+      setEditingCustomer(null);
+      setEditedCustomerName("");
+      setEditedCustomerPhone("");
+      setEditedCustomerEmail("");
+      setEditedCustomerAddress("");
+      fetchCustomers();
+    }
+  };
+
+  const handleCancelCustomerEdit = () => {
+    setEditingCustomer(null);
+    setEditedCustomerName("");
+    setEditedCustomerPhone("");
+    setEditedCustomerEmail("");
+    setEditedCustomerAddress("");
+  };
+
   const [users, setUsers] = useState<any[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
 
@@ -242,6 +353,143 @@ const AdminPage = () => {
               </ul>
             ) : (
               <p className="text-gray-600">No categories found.</p>
+            )
+          }
+        </section>
+
+        {/* Add Customer Section */}
+        <section className="bg-white shadow-md rounded-lg p-6 mb-8">
+          <h2 className="text-2xl font-semibold text-gray-700 mb-4">Add Customer</h2>
+          <form onSubmit={handleAddCustomer} className="space-y-4">
+            <div>
+              <label htmlFor="customerName" className="block text-sm font-medium text-gray-700">Customer Name</label>
+              <input
+                type="text"
+                id="customerName"
+                name="customerName"
+                value={newCustomerName}
+                onChange={(e) => setNewCustomerName(e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="customerPhone" className="block text-sm font-medium text-gray-700">Phone Number</label>
+              <input
+                type="text"
+                id="customerPhone"
+                name="customerPhone"
+                value={newCustomerPhone}
+                onChange={(e) => setNewCustomerPhone(e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              />
+            </div>
+            <div>
+              <label htmlFor="customerEmail" className="block text-sm font-medium text-gray-700">Email</label>
+              <input
+                type="email"
+                id="customerEmail"
+                name="customerEmail"
+                value={newCustomerEmail}
+                onChange={(e) => setNewCustomerEmail(e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              />
+            </div>
+            <div>
+              <label htmlFor="customerAddress" className="block text-sm font-medium text-gray-700">Address</label>
+              <input
+                type="text"
+                id="customerAddress"
+                name="customerAddress"
+                value={newCustomerAddress}
+                onChange={(e) => setNewCustomerAddress(e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              />
+            </div>
+            <button
+              type="submit"
+              className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              Add Customer
+            </button>
+          </form>
+
+          <h3 className="text-xl font-semibold text-gray-700 mt-8 mb-4">Existing Customers</h3>
+          {
+            customers.length > 0 ? (
+              <ul className="divide-y divide-gray-200">
+                {customers.map((customer) => (
+                  <li key={customer.customer_id} className="py-3 flex items-center justify-between">
+                    {
+                      editingCustomer?.customer_id === customer.customer_id ? (
+                        <div className="flex flex-col space-y-2 w-full">
+                          <input
+                            type="text"
+                            value={editedCustomerName}
+                            onChange={(e) => setEditedCustomerName(e.target.value)}
+                            className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                          />
+                          <input
+                            type="text"
+                            value={editedCustomerPhone}
+                            onChange={(e) => setEditedCustomerPhone(e.target.value)}
+                            className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                          />
+                          <input
+                            type="email"
+                            value={editedCustomerEmail}
+                            onChange={(e) => setEditedCustomerEmail(e.target.value)}
+                            className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                          />
+                          <input
+                            type="text"
+                            value={editedCustomerAddress}
+                            onChange={(e) => setEditedCustomerAddress(e.target.value)}
+                            className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                          />
+                          <div className="flex space-x-2 mt-2">
+                            <button
+                              onClick={() => handleSaveCustomerEdit(customer.customer_id)}
+                              className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-full shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                            >
+                              Save
+                            </button>
+                            <button
+                              onClick={handleCancelCustomerEdit}
+                              className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-full shadow-sm text-gray-700 bg-gray-200 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col">
+                          <span className="text-lg font-medium text-gray-800">{customer.customer_name}</span>
+                          {customer.phone_number && <span className="text-sm text-gray-600">Phone: {customer.phone_number}</span>}
+                          {customer.email && <span className="text-sm text-gray-600">Email: {customer.email}</span>}
+                          {customer.address && <span className="text-sm text-gray-600">Address: {customer.address}</span>}
+                          <div className="flex space-x-2 mt-2">
+                            <button
+                              onClick={() => handleEditCustomerClick(customer)}
+                              className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-full shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteCustomer(customer.customer_id)}
+                              className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-full shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    }
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-gray-600">No customers found.</p>
             )
           }
         </section>
