@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { createClient } from "../../../supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { Sale, InvoiceItem } from "@/types/business";
@@ -33,6 +33,8 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
   const [salesmanName, setSalesmanName] = useState<string | null>(null);
   const [invoiceNo, setInvoiceNo] = useState<string | null>(null);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [customers, setCustomers] = useState<string[]>([]); // New state for customer names
+  const [selectedCustomerName, setSelectedCustomerName] = useState<string>(''); // New state for selected customer
 
   const generateNextInvoiceNumber = async () => {
     const { data, error } = await supabase
@@ -95,6 +97,23 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
       } else {
         setCategories(data);
       }
+
+      // Fetch distinct customer names from public.customers
+      const { data: customerData, error: customerError } = await supabase
+        .from('customers') // Changed from 'invoices' to 'customers'
+        .select('customer_name');
+
+      if (customerError) {
+        console.error("Error fetching customer names:", customerError);
+        toast({
+          title: "Error",
+          description: "Failed to load customer names.",
+          variant: "destructive",
+        });
+      } else {
+        const uniqueCustomerNames = Array.from(new Set(customerData?.map(c => c.customer_name).filter(Boolean)));
+        setCustomers(uniqueCustomerNames as string[]);
+      }
     };
 
     fetchUserAndSalesmanName();
@@ -111,6 +130,13 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
     if (invoiceItems.length < 20) {
       setInvoiceItems([...invoiceItems, { no: invoiceItems.length + 1, description: '', qty: 0, unitPrice: 0 }]);
     }
+  };
+
+  const handleDeleteItem = (indexToDelete: number) => {
+    const newItems = invoiceItems.filter((_, index) => index !== indexToDelete);
+    // Re-index the items to maintain sequential 'no' values
+    const reIndexedItems = newItems.map((item, index) => ({ ...item, no: index + 1 }));
+    setInvoiceItems(reIndexedItems);
   };
 
   const calculateTotal = (item: InvoiceItem) => {
@@ -132,7 +158,7 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
     const formData = new FormData(e.currentTarget);
     const data = {
       date: formData.get('date') as string,
-      customer_name: formData.get('customer_name') as string,
+      customer_name: selectedCustomerName, // Use selectedCustomerName
       items: invoiceItems.filter(item => item.description !== ''),
       grand_total: calculateGrandTotal(),
       salesman_name_footer: salesmanName || salesmanEmail || '',
@@ -226,11 +252,21 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="customer_name">Customer Name</Label>
-              <Input
-                id="customer_name"
-                name="customer_name"
-                placeholder="Customer Name"
-              />
+              <Select
+                value={selectedCustomerName}
+                onValueChange={setSelectedCustomerName}
+              >
+                <SelectTrigger id="customer_name" name="customer_name">
+                  <SelectValue placeholder="Select a customer" />
+                </SelectTrigger>
+                <SelectContent>
+                  {customers.map((customer) => (
+                    <SelectItem key={customer} value={customer}>
+                      {customer}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="customer_phone_footer">Tel. No.</Label>
@@ -251,6 +287,7 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
                   <TableHead className="w-[100px]">Quantity</TableHead>
                   <TableHead className="text-right">Amount ($)</TableHead>
                   <TableHead className="text-right">Sum ($)</TableHead>
+                  <TableHead className="text-center">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -294,11 +331,21 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
                       />
                     </TableCell>
                     <TableCell className="text-right">{calculateTotal(item).toFixed(2)}</TableCell>
+                    <TableCell className="text-center">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDeleteItem(index)}
+                        className="text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
                 {invoiceItems.length < 20 && (
                   <TableRow>
-                    <TableCell colSpan={5}>
+                    <TableCell colSpan={6}> {/* Changed colSpan from 5 to 6 */}
                       <Button type="button" variant="outline" onClick={handleAddItem} className="w-full">
                         Add Item
                       </Button>
@@ -308,7 +355,7 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
               </TableBody>
               <TableFooter>
                 <TableRow>
-                  <TableCell colSpan={4} className="text-right text-base font-semibold">Grand Total</TableCell>
+                  <TableCell colSpan={5} className="text-right text-base font-semibold">Grand Total</TableCell> {/* Changed colSpan from 4 to 5 */}
                   <TableCell className="text-right text-base font-semibold">${calculateGrandTotal().toFixed(2)}</TableCell>
                 </TableRow>
               </TableFooter>

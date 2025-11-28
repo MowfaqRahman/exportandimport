@@ -63,6 +63,10 @@ export default function ReportsHistoryPage() {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [allExpensesWithUsers, setAllExpensesWithUsers] = useState<any[]>([]);
   const [allUsers, setAllUsers] = useState<{ id: string; name: string, email: string, full_name?: string }[]>([]);
+  const [customers, setCustomers] = useState<{ customer_id: string; customer_name: string }[]>([]);
+  const [loadingCustomers, setLoadingCustomers] = useState(false);
+  const [customerStatements, setCustomerStatements] = useState<any[]>([]);
+  const [loadingCustomerStatements, setLoadingCustomerStatements] = useState(false);
 
   const years = Array.from({ length: 5 }, (_, i) => currentYear - i); // Last 5 years
   const months = [
@@ -197,10 +201,12 @@ export default function ReportsHistoryPage() {
     const fetchAllExpensesAndUsers = async () => {
       setLoadingUsers(true);
       setLoadingExpenses(true);
+      setLoadingCustomers(true);
 
-      const [expensesData, usersData] = await Promise.all([
+      const [expensesData, usersData, customersData] = await Promise.all([
         supabase.from('expenses').select('*').order('created_at', { ascending: false }).order('date', { ascending: false }),
         supabase.from('users').select('id, name, email, full_name'),
+        supabase.from('customers').select('customer_id, customer_name'),
       ]);
 
       if (expensesData.error) {
@@ -211,9 +217,14 @@ export default function ReportsHistoryPage() {
         console.error("Error fetching users:", usersData.error);
         setAllUsers([]);
       }
+      if (customersData.error) {
+        console.error("Error fetching customers:", customersData.error);
+        setCustomers([]);
+      }
 
       const usersMap = new Map(usersData?.data?.map((user: any) => [user.id, user.full_name || user.name || user.email]) || []);
       setAllUsers([{ id: "all", name: "All Users", email: "" }, ...(usersData.data || [])]);
+      setCustomers([{ customer_id: "all", customer_name: "All Customers" }, ...(customersData.data || [])]);
 
       const expensesWithUserName = expensesData.data ? expensesData.data.map((expense: any) => ({
         ...expense,
@@ -222,6 +233,7 @@ export default function ReportsHistoryPage() {
       setAllExpensesWithUsers(expensesWithUserName);
       setLoadingUsers(false);
       setLoadingExpenses(false);
+      setLoadingCustomers(false);
     };
     fetchAllExpensesAndUsers();
   }, []);
@@ -526,6 +538,60 @@ export default function ReportsHistoryPage() {
     fetchUsers();
   }, []);
 
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        console.error("User not authenticated.");
+        setLoadingCustomerStatements(false);
+        return;
+      }
+
+      const fetchCustomerStatements = async () => {
+        if (selectedUser === "all") {
+          setCustomerStatements([]);
+          setLoadingCustomerStatements(false);
+          return;
+        }
+
+        setLoadingCustomerStatements(true);
+
+        const [salesData, expensesData] = await Promise.all([
+          supabase.from('sales').select('date, grand_total, customer_name, items').eq('customer_id', selectedUser).order('date', { ascending: false }),
+          supabase.from('expenses').select('date, amount, description').eq('customer_id', selectedUser).order('date', { ascending: false }),
+        ]);
+
+        if (salesData.error) {
+          console.error("Error fetching customer sales:", salesData.error);
+        }
+        if (expensesData.error) {
+          console.error("Error fetching customer expenses:", expensesData.error);
+        }
+
+        const salesStatements = salesData.data?.map(sale => ({
+          date: sale.date,
+          type: "Sale",
+          description: `Sale to ${sale.customer_name || 'N/A'}`,
+          amount: sale.grand_total,
+        })) || [];
+
+        const expenseStatements = expensesData.data?.map(expense => ({
+          date: expense.date,
+          type: "Expense",
+          description: expense.description || "N/A",
+          amount: -expense.amount, // Represent expenses as negative amounts
+        })) || [];
+
+        const combinedStatements = [...salesStatements, ...expenseStatements].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+        setCustomerStatements(combinedStatements);
+        setLoadingCustomerStatements(false);
+      };
+
+      fetchCustomerStatements();
+    });
+  }, [selectedUser]);
+
   return (
     <>
       <DashboardNavbar />
@@ -590,10 +656,11 @@ export default function ReportsHistoryPage() {
           </div>
 
           <Tabs defaultValue="sales" className="mt-8">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="sales">Sales Transactions</TabsTrigger>
               <TabsTrigger value="expenses">Expenses</TabsTrigger>
               <TabsTrigger value="product-history">Product History</TabsTrigger>
+              <TabsTrigger value="customer-statement">Customer Statement</TabsTrigger>
             </TabsList>
             
             <TabsContent value="sales">
@@ -721,6 +788,62 @@ export default function ReportsHistoryPage() {
                   <Button variant="outline" className="mx-1">2</Button>
                   <Button variant="outline" className="mx-1">Next</Button>
                 </div>
+              </div>
+            </TabsContent>
+            <TabsContent value="customer-statement">
+              <div className="rounded-lg border p-4 shadow-sm">
+                <h2 className="text-2xl font-semibold mb-4">Customer Statement</h2>
+                {/* Customer selection dropdown */}
+                <div className="mb-4">
+                  <Select value={selectedUser} onValueChange={setSelectedUser}>
+                    <SelectTrigger className="w-[240px]">
+                      <SelectValue placeholder="Select Customer" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {loadingCustomers ? (
+                        <SelectItem value="loading" disabled>Loading customers...</SelectItem>
+                      ) : (
+                        customers.filter(customer => customer.customer_id !== "all").map((customer) => (
+                          <SelectItem key={customer.customer_id} value={customer.customer_id}>
+                            {customer.customer_name}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {selectedUser && selectedUser !== "all" && (
+                  <div className="mb-4">
+                    <h3 className="text-xl font-semibold mb-4">Statement for {customers.find(c => c.customer_id === selectedUser)?.customer_name}</h3>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Description</TableHead>
+                          <TableHead className="text-right">Amount</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {loadingCustomerStatements ? (
+                          <TableRow><TableCell colSpan={4} className="text-center">Loading statements...</TableCell></TableRow>
+                        ) : customerStatements.length === 0 ? (
+                          <TableRow><TableCell colSpan={4} className="text-center">No statements found for this customer.</TableCell></TableRow>
+                        ) : (
+                          customerStatements.map((statement, index) => (
+                            <TableRow key={index}>
+                              <TableCell>{formatDate(statement.date)}</TableCell>
+                              <TableCell>{statement.type}</TableCell>
+                              <TableCell>{statement.description}</TableCell>
+                              <TableCell className="text-right">${Number(statement.amount).toFixed(2)}</TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
               </div>
             </TabsContent>
           </Tabs>

@@ -11,6 +11,7 @@ import { Pencil, Trash2 } from "lucide-react";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger, AlertDialogFooter, AlertDialogAction, AlertDialogCancel, AlertDialogDescription } from "@/components/ui/alert-dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { createClient } from "../../../supabase/client";
+import AddSaleDialog from "@/components/sales/add-sale-dialog"; // Import AddSaleDialog
 
 interface AllSalesTableProps {
   initialSales: Sale[];
@@ -73,14 +74,17 @@ export default function AllSalesTable({ initialSales }: AllSalesTableProps) {
       <Card>
         <CardHeader className="flex flex-row justify-between items-center space-y-0 pb-2">
           <CardTitle className="text-2xl font-bold">All User Sales Transactions</CardTitle>
-          <div className="relative w-full max-w-sm sm:w-[250px]">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search sales..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-8 w-full"
-            />
+          <div className="flex items-center space-x-2">
+            <div className="relative w-full max-w-sm sm:w-[250px]">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search sales..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-8 w-full"
+              />
+            </div>
+            <AddSaleDialog onSaleAdded={() => { /* TODO: Re-fetch sales after adding */ }} />
           </div>
         </CardHeader>
         <CardContent>
