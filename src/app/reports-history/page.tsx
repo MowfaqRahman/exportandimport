@@ -554,11 +554,39 @@ export default function ReportsHistoryPage() {
           return;
         }
 
+        const selectedCustomerName = customers.find(c => c.customer_id === selectedUser)?.customer_name;
+        if (!selectedCustomerName) {
+          console.error("Selected customer name not found.");
+          setCustomerStatements([]);
+          setLoadingCustomerStatements(false);
+          return;
+        }
+
         setLoadingCustomerStatements(true);
 
+        let salesQuery = supabase.from('sales').select('date, grand_total, customer_name, items, invoice_no, id').eq('customer_name', selectedCustomerName);
+        let expensesQuery = supabase.from('expenses').select('date, amount, description').eq('customer_id', selectedUser);
+
+        // Apply year filter
+        if (selectedYear !== "all") {
+          const startDate = `${selectedYear}-01-01`;
+          const endDate = `${selectedYear}-12-31`;
+          salesQuery = salesQuery.gte('date', startDate).lte('date', endDate);
+          expensesQuery = expensesQuery.gte('date', startDate).lte('date', endDate);
+        }
+
+        // Apply month filter
+        if (selectedMonth !== "all") {
+          const monthNumber = parseInt(selectedMonth, 10);
+          const startDate = new Date(parseInt(selectedYear), monthNumber - 1, 1).toISOString().split('T')[0];
+          const endDate = new Date(parseInt(selectedYear), monthNumber, 0).toISOString().split('T')[0];
+          salesQuery = salesQuery.gte('date', startDate).lte('date', endDate);
+          expensesQuery = expensesQuery.gte('date', startDate).lte('date', endDate);
+        }
+
         const [salesData, expensesData] = await Promise.all([
-          supabase.from('sales').select('date, grand_total, customer_name, items').eq('customer_id', selectedUser).order('date', { ascending: false }),
-          supabase.from('expenses').select('date, amount, description').eq('customer_id', selectedUser).order('date', { ascending: false }),
+          salesQuery.order('date', { ascending: false }),
+          expensesQuery.order('date', { ascending: false }),
         ]);
 
         if (salesData.error) {
@@ -571,8 +599,9 @@ export default function ReportsHistoryPage() {
         const salesStatements = salesData.data?.map(sale => ({
           date: sale.date,
           type: "Sale",
-          description: `Sale to ${sale.customer_name || 'N/A'}`,
-          amount: sale.grand_total,
+          description: sale.invoice_no || sale.id,
+          amount: Number(sale.grand_total || 0),
+          invoice_id: sale.id,
         })) || [];
 
         const expenseStatements = expensesData.data?.map(expense => ({
@@ -589,8 +618,8 @@ export default function ReportsHistoryPage() {
       };
 
       fetchCustomerStatements();
-    });
-  }, [selectedUser]);
+    }, [selectedUser, selectedYear, selectedMonth]);
+  }, [selectedUser, selectedYear, selectedMonth]);
 
   return (
     <>
@@ -821,7 +850,7 @@ export default function ReportsHistoryPage() {
                         <TableRow>
                           <TableHead>Date</TableHead>
                           <TableHead>Type</TableHead>
-                          <TableHead>Description</TableHead>
+                          <TableHead>Invoice</TableHead>
                           <TableHead className="text-right">Amount</TableHead>
                         </TableRow>
                       </TableHeader>
