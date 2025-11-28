@@ -23,6 +23,7 @@ import { useToast } from "@/components/ui/use-toast";
 import AllSalesTable from "@/components/company-overview/all-sales-table";
 import AllExpensesTable from "@/components/company-overview/all-expenses-table";
 import { Sale, Expense } from "@/types/business";
+import { jsPDF } from 'jspdf';
 
 // Helper function to format date
 const formatDate = (dateString: string) => {
@@ -63,10 +64,100 @@ export default function ReportsHistoryPage() {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [allExpensesWithUsers, setAllExpensesWithUsers] = useState<any[]>([]);
   const [allUsers, setAllUsers] = useState<{ id: string; name: string, email: string, full_name?: string }[]>([]);
-  const [customers, setCustomers] = useState<{ customer_id: string; customer_name: string }[]>([]);
+  const [customers, setCustomers] = useState<{ customer_id: number | string; customer_name: string; phone_number?: string; email?: string; address?: string }[]>([]);
   const [loadingCustomers, setLoadingCustomers] = useState(false);
   const [customerStatements, setCustomerStatements] = useState<any[]>([]);
   const [loadingCustomerStatements, setLoadingCustomerStatements] = useState(false);
+
+  const handleDownloadStatement = () => {
+    if (customerStatements.length === 0) {
+      toast({
+        title: "No data to download",
+        description: "There are no customer statements to download.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const selectedCustomer = customers.find(c => c.customer_id === Number(selectedUser));
+    const customerName = selectedCustomer ? selectedCustomer.customer_name : "Customer";
+    const fileName = `${customerName}_Statement_${selectedYear}${selectedMonth === "all" ? "" : `-${selectedMonth}`}.pdf`;
+
+    const doc = new jsPDF();
+
+    // Company Header
+    doc.setFontSize(10);
+    doc.text("EDEN FARM", 20, 20);
+    doc.text("Doha, Qatar 15718 QAT", 20, 25);
+    doc.text("h.hamdi@edenfarm.qa", 20, 30);
+    doc.text("www.oryxmushrooms.com", 20, 35);
+
+    // Statement Title
+    doc.setFontSize(18);
+    doc.text("Statement", 20, 50);
+
+    // TO section
+    doc.setFontSize(10);
+    doc.text("TO", 20, 70);
+    doc.text(`${selectedCustomer?.customer_name || ""}`, 20, 75);
+    doc.text(`${selectedCustomer?.address || ""}`, 20, 80);
+    doc.text(`Phone: ${selectedCustomer?.phone_number || ""}`, 20, 85);
+
+    // Statement Details (right side)
+    doc.setFontSize(10);
+    doc.text(`DATE ${formatDate(new Date().toISOString().split('T')[0])}`, 150, 80);
+
+    // Table Headers
+    let yPos = 100;
+    doc.setFontSize(10);
+    doc.text("DATE", 20, yPos);
+    doc.text("ACTIVITY", 60, yPos);
+    doc.text("AMOUNT", 140, yPos, { align: "right" });
+    doc.text("RECEIVED", 180, yPos, { align: "right" });
+
+    // Table Rows
+    yPos += 7; // Adjust for header height
+    customerStatements.forEach((statement) => {
+      doc.text(formatDate(statement.date), 20, yPos);
+      doc.text(statement.description, 60, yPos);
+      doc.text(Number(statement.amount).toFixed(2), 140, yPos, { align: "right" });
+      // Assuming "Received" is always 0.00 for now based on the image
+      doc.text("0.00", 180, yPos, { align: "right" });
+      yPos += 5;
+    });
+
+    // Totals
+    yPos += 10; // Space after table
+    const totalAmount = customerStatements.reduce((sum, statement) => sum + Number(statement.amount || 0), 0);
+    const totalReceived = 0; // Based on the image, received is always 0.00
+
+    doc.setFontSize(10);
+    doc.text("TOTAL", 140, yPos, { align: "right" });
+    doc.text("TOTAL", 180, yPos, { align: "right" });
+    yPos += 5;
+    doc.text("AMOUNT", 140, yPos, { align: "right" });
+    doc.text("RECEIVED", 180, yPos, { align: "right" });
+    yPos += 5;
+    doc.text(`QR${totalAmount.toFixed(2)}`, 140, yPos, { align: "right" });
+    doc.text(`QR${totalReceived.toFixed(2)}`, 180, yPos, { align: "right" });
+
+    // Terms Footer
+    yPos += 20; // Space before terms
+    doc.setFontSize(8);
+    doc.text("TERMS:", 20, yPos);
+    yPos += 5;
+    doc.text("All Payments to be made in favour of \" EDEN FARM\"", 20, yPos);
+    yPos += 4;
+    doc.text("OR by Bank Transfer as per Purchase & Sales Agreement", 20, yPos);
+
+    // Save the PDF
+    doc.save(fileName);
+
+    toast({
+      title: "Download Initiated",
+      description: "Customer statement is being downloaded in PDF format.",
+    });
+  };
 
   const years = Array.from({ length: 5 }, (_, i) => currentYear - i); // Last 5 years
   const months = [
@@ -206,7 +297,7 @@ export default function ReportsHistoryPage() {
       const [expensesData, usersData, customersData] = await Promise.all([
         supabase.from('expenses').select('*').order('created_at', { ascending: false }).order('date', { ascending: false }),
         supabase.from('users').select('id, name, email, full_name'),
-        supabase.from('customers').select('customer_id, customer_name'),
+        supabase.from('customers').select('customer_id, customer_name, phone_number, email, address'),
       ]);
 
       if (expensesData.error) {
@@ -539,86 +630,98 @@ export default function ReportsHistoryPage() {
   }, []);
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const fetchCustomerStatements = async () => {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+
       if (!session) {
         console.error("User not authenticated.");
         setLoadingCustomerStatements(false);
         return;
       }
 
-      const fetchCustomerStatements = async () => {
-        if (selectedUser === "all") {
-          setCustomerStatements([]);
-          setLoadingCustomerStatements(false);
-          return;
-        }
-
-        const selectedCustomerName = customers.find(c => c.customer_id === selectedUser)?.customer_name;
-        if (!selectedCustomerName) {
-          console.error("Selected customer name not found.");
-          setCustomerStatements([]);
-          setLoadingCustomerStatements(false);
-          return;
-        }
-
-        setLoadingCustomerStatements(true);
-
-        let salesQuery = supabase.from('sales').select('date, grand_total, customer_name, items, invoice_no, id').eq('customer_name', selectedCustomerName);
-        let expensesQuery = supabase.from('expenses').select('date, amount, description').eq('customer_id', selectedUser);
-
-        // Apply year filter
-        if (selectedYear !== "all") {
-          const startDate = `${selectedYear}-01-01`;
-          const endDate = `${selectedYear}-12-31`;
-          salesQuery = salesQuery.gte('date', startDate).lte('date', endDate);
-          expensesQuery = expensesQuery.gte('date', startDate).lte('date', endDate);
-        }
-
-        // Apply month filter
-        if (selectedMonth !== "all") {
-          const monthNumber = parseInt(selectedMonth, 10);
-          const startDate = new Date(parseInt(selectedYear), monthNumber - 1, 1).toISOString().split('T')[0];
-          const endDate = new Date(parseInt(selectedYear), monthNumber, 0).toISOString().split('T')[0];
-          salesQuery = salesQuery.gte('date', startDate).lte('date', endDate);
-          expensesQuery = expensesQuery.gte('date', startDate).lte('date', endDate);
-        }
-
-        const [salesData, expensesData] = await Promise.all([
-          salesQuery.order('date', { ascending: false }),
-          expensesQuery.order('date', { ascending: false }),
-        ]);
-
-        if (salesData.error) {
-          console.error("Error fetching customer sales:", salesData.error);
-        }
-        if (expensesData.error) {
-          console.error("Error fetching customer expenses:", expensesData.error);
-        }
-
-        const salesStatements = salesData.data?.map(sale => ({
-          date: sale.date,
-          type: "Sale",
-          description: sale.invoice_no || sale.id,
-          amount: Number(sale.grand_total || 0),
-          invoice_id: sale.id,
-        })) || [];
-
-        const expenseStatements = expensesData.data?.map(expense => ({
-          date: expense.date,
-          type: "Expense",
-          description: expense.description || "N/A",
-          amount: -expense.amount, // Represent expenses as negative amounts
-        })) || [];
-
-        const combinedStatements = [...salesStatements, ...expenseStatements].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-        setCustomerStatements(combinedStatements);
+      if (selectedUser === "all") {
+        setCustomerStatements([]);
         setLoadingCustomerStatements(false);
-      };
+        return;
+      }
 
-      fetchCustomerStatements();
-    }, [selectedUser, selectedYear, selectedMonth]);
+      const selectedCustomerName = customers.find(c => c.customer_id === Number(selectedUser))?.customer_name;
+      if (!selectedCustomerName) {
+        console.error("Selected customer name not found.");
+        setCustomerStatements([]);
+        setLoadingCustomerStatements(false);
+        return;
+      }
+
+      setLoadingCustomerStatements(true);
+
+      let salesQuery = supabase.from('sales').select('date, grand_total, customer_name, items, invoice_no, id').eq('customer_name', selectedCustomerName);
+      let expensesQuery = supabase.from('expenses').select('date, amount, description').eq('customer_id', Number(selectedUser));
+
+      // Apply year filter
+      if (selectedYear !== "all") {
+        const startDate = `${selectedYear}-01-01`;
+        const endDate = `${selectedYear}-12-31`;
+        salesQuery = salesQuery.gte('date', startDate).lte('date', endDate);
+        expensesQuery = expensesQuery.gte('date', startDate).lte('date', endDate);
+      }
+
+      // Apply month filter
+      if (selectedMonth !== "all") {
+        const monthNumber = parseInt(selectedMonth, 10);
+        const startDate = new Date(parseInt(selectedYear), monthNumber - 1, 1).toISOString().split('T')[0];
+        const endDate = new Date(parseInt(selectedYear), monthNumber, 0).toISOString().split('T')[0];
+        salesQuery = salesQuery.gte('date', startDate).lte('date', endDate);
+        expensesQuery = expensesQuery.gte('date', startDate).lte('date', endDate);
+      }
+
+      const [salesData, expensesData] = await Promise.all([
+        salesQuery.order('date', { ascending: false }),
+        expensesQuery.order('date', { ascending: false }),
+      ]);
+
+      if (salesData.error) {
+        console.error("Error fetching customer sales:", salesData.error);
+      }
+      if (expensesData.error) {
+        console.error("Error fetching customer expenses:", expensesData.error);
+      }
+
+      const salesStatements = salesData.data?.map(sale => ({
+        date: sale.date,
+        type: "Sale",
+        description: sale.invoice_no || sale.id,
+        amount: Number(sale.grand_total || 0),
+        invoice_id: sale.id,
+      })) || [];
+
+      const expenseStatements = expensesData.data?.map(expense => ({
+        date: expense.date,
+        type: "Expense",
+        description: expense.description || "N/A",
+        amount: -expense.amount, // Represent expenses as negative amounts
+      })) || [];
+
+      const combinedStatements = [...salesStatements, ...expenseStatements].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+      setCustomerStatements(combinedStatements);
+      setLoadingCustomerStatements(false);
+    };
+
+    const fetchSessionAndStatements = async () => {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session) {
+        console.error("User not authenticated.");
+        setLoadingCustomerStatements(false);
+        return;
+      }
+      await fetchCustomerStatements();
+    };
+
+    fetchSessionAndStatements();
   }, [selectedUser, selectedYear, selectedMonth]);
 
   return (
@@ -821,7 +924,10 @@ export default function ReportsHistoryPage() {
             </TabsContent>
             <TabsContent value="customer-statement">
               <div className="rounded-lg border p-4 shadow-sm">
-                <h2 className="text-2xl font-semibold mb-4">Customer Statement</h2>
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-2xl font-semibold">Customer Statement</h2>
+                  <Button onClick={handleDownloadStatement}>Download Statement</Button>
+                </div>
                 {/* Customer selection dropdown */}
                 <div className="mb-4">
                   <Select value={selectedUser} onValueChange={setSelectedUser}>
@@ -833,7 +939,7 @@ export default function ReportsHistoryPage() {
                         <SelectItem value="loading" disabled>Loading customers...</SelectItem>
                       ) : (
                         customers.filter(customer => customer.customer_id !== "all").map((customer) => (
-                          <SelectItem key={customer.customer_id} value={customer.customer_id}>
+                          <SelectItem key={customer.customer_id} value={String(customer.customer_id)}>
                             {customer.customer_name}
                           </SelectItem>
                         ))
@@ -844,7 +950,7 @@ export default function ReportsHistoryPage() {
 
                 {selectedUser && selectedUser !== "all" && (
                   <div className="mb-4">
-                    <h3 className="text-xl font-semibold mb-4">Statement for {customers.find(c => c.customer_id === selectedUser)?.customer_name}</h3>
+                    <h3 className="text-xl font-semibold mb-4">Statement for {customers.find(c => c.customer_id === Number(selectedUser))?.customer_name}</h3>
                     <Table>
                       <TableHeader>
                         <TableRow>
