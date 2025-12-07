@@ -10,23 +10,28 @@ import SalesChart from "@/components/dashboard/sales-chart"; // Reusing SalesCha
 import ExpenseChart from "@/components/dashboard/expense-chart"; // Reusing ExpenseChart
 import AllSalesTable from "@/components/company-overview/all-sales-table";
 import AllExpensesTable from "@/components/company-overview/all-expenses-table";
+import AllPurchasesTable from "@/components/company-overview/all-purchases-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function CompanyOverviewPage() {
   const [companySales, setCompanySales] = useState<Sale[]>([]);
   const [companyExpenses, setCompanyExpenses] = useState<Expense[]>([]);
+  const [companyPurchases, setCompanyPurchases] = useState<Purchase[]>([]);
   const [activeTab, setActiveTab] = useState("sales"); // State to manage active tab for Sales/Expenses
   const supabase = createClient();
 
   useEffect(() => {
     const fetchCompanyData = async () => {
       
-      const [salesData, expensesData, usersData] = await Promise.all([
+      const [salesData, expensesData, purchasesData, usersData] = await Promise.all([
         supabase
           .from('sales')
           .select('*'),
         supabase
           .from('expenses')
+          .select('*'),
+        supabase
+          .from('purchases')
           .select('*'),
         supabase
           .from('users')
@@ -39,12 +44,16 @@ export default function CompanyOverviewPage() {
       if (expensesData.error) {
         console.error("Error fetching expenses data:", expensesData.error);
       }
+      if (purchasesData.error) {
+        console.error("Error fetching purchases data:", purchasesData.error);
+      }
       if (usersData.error) {
         console.error("Error fetching users data:", usersData.error);
       }
 
       console.log("Fetched sales data:", salesData.data);
       console.log("Fetched expenses data:", expensesData.data);
+      console.log("Fetched purchases data:", purchasesData.data);
       console.log("Fetched users data:", usersData.data);
 
       const usersMap = new Map(usersData?.data?.map((user: any) => [user.id, user.full_name || user.name || user.email]) || []);
@@ -54,11 +63,19 @@ export default function CompanyOverviewPage() {
         user_name: usersMap.get(expense.user_id) || null,
       })) : [];
 
+      const purchasesWithUserName = purchasesData.data ? purchasesData.data.map((purchase: any) => ({
+        ...purchase,
+        user_name: usersMap.get(purchase.user_id) || null,
+      })) : [];
+
       if (salesData.data) {
         setCompanySales(salesData.data as Sale[]);
       }
       if (expensesData.data) {
         setCompanyExpenses(expensesWithUserName as Expense[]);
+      }
+      if (purchasesData.data) {
+        setCompanyPurchases(purchasesWithUserName as Purchase[]);
       }
     };
 
@@ -68,7 +85,8 @@ export default function CompanyOverviewPage() {
   // Calculate company-wide metrics
   const totalCompanySales = companySales.reduce((sum, sale) => sum + Number(sale.grand_total || 0), 0);
   const totalCompanyExpenses = companyExpenses.reduce((sum, expense) => sum + Number(expense.amount || 0), 0);
-  const companyProfit = totalCompanySales - totalCompanyExpenses;
+  const totalCompanyPurchases = companyPurchases.reduce((sum, purchase) => sum + Number(purchase.price || 0), 0);
+  const companyProfit = totalCompanySales - totalCompanyExpenses - totalCompanyPurchases;
 
   // Get today's company sales
   const today = new Date().toISOString().split('T')[0];
@@ -90,11 +108,15 @@ export default function CompanyOverviewPage() {
     const dayExpenses = companyExpenses
       .filter(expense => expense.date === date)
       .reduce((sum, expense) => sum + Number(expense.amount || 0), 0);
+    const dayPurchases = companyPurchases
+      .filter(purchase => purchase.date === date)
+      .reduce((sum, purchase) => sum + Number(purchase.price || 0), 0);
 
     return {
       date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
       sales: daySales,
       expenses: dayExpenses,
+      purchases: dayPurchases,
     };
   });
 
@@ -143,6 +165,15 @@ export default function CompanyOverviewPage() {
               description="Total expenses this month across the company"
             />
             <MetricCard
+              title="Monthly Company Purchases"
+              value={`$${totalCompanyPurchases.toFixed(2)}`}
+              icon={TrendingDown}
+              description="Total purchases this month across the company"
+            />
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <MetricCard
+              className="lg:col-start-2 lg:col-span-2"
               title="Company Net Profit"
               value={`$${companyProfit.toFixed(2)}`}
               icon={Wallet}
@@ -162,6 +193,7 @@ export default function CompanyOverviewPage() {
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
               <TabsList>
                 <TabsTrigger value="sales">Sales Transactions</TabsTrigger>
+                <TabsTrigger value="purchase">Purchase</TabsTrigger>
                 <TabsTrigger value="expenses">Expenses</TabsTrigger>
               </TabsList>
               {activeTab === "sales" && (
@@ -169,6 +201,9 @@ export default function CompanyOverviewPage() {
               )}
               {activeTab === "expenses" && (
                 <AllExpensesTable initialExpenses={companyExpenses} />
+              )}
+              {activeTab === "purchase" && (
+                <AllPurchasesTable initialPurchases={companyPurchases} />
               )}
             </Tabs>
           </div>

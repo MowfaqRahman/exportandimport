@@ -24,9 +24,9 @@ export default function DashboardContent({ initialSales, initialExpenses, initia
 
   // Calculate metrics
   const totalSales = sales.reduce((sum, sale) => sum + Number(sale.grand_total || 0), 0);
-  const totalExpenses = expenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
-  const totalPurchases = purchases.reduce((sum, purchase) => sum + Number(purchase.price), 0);
-  const profit = totalSales - totalExpenses - totalPurchases;
+    const totalExpenses = expenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
+    const totalPurchases = purchases.reduce((sum, purchase) => sum + Number(purchase.price), 0);
+    const profit = totalSales - totalExpenses - totalPurchases;
 
   // Get today's sales
   const today = new Date().toISOString().split('T')[0];
@@ -48,11 +48,15 @@ export default function DashboardContent({ initialSales, initialExpenses, initia
     const dayExpenses = expenses
       .filter(expense => expense.date === date)
       .reduce((sum, expense) => sum + Number(expense.amount), 0);
+    const dayPurchases = purchases
+      .filter(purchase => purchase.date === date)
+      .reduce((sum, purchase) => sum + Number(purchase.price), 0);
 
     return {
       date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
       sales: daySales,
       expenses: dayExpenses,
+      purchases: dayPurchases,
     };
   });
 
@@ -105,7 +109,10 @@ export default function DashboardContent({ initialSales, initialExpenses, initia
           icon={TrendingDown}
           description="Total purchases this month"
         />
+      </div>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard
+          className="lg:col-start-2 lg:col-span-2"
           title="Net Profit"
           value={`$${profit.toFixed(2)}`}
           icon={Wallet}

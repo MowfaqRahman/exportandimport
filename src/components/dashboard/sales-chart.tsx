@@ -8,6 +8,7 @@ interface SalesChartProps {
     date: string;
     sales: number;
     expenses: number;
+    purchases: number;
   }>;
 }
 
@@ -51,6 +52,13 @@ export default function SalesChart({ data }: SalesChartProps) {
               stroke="hsl(var(--chart-1))" 
               strokeWidth={2}
               name="Expenses"
+            />
+            <Line
+              type="monotone"
+              dataKey="purchases"
+              stroke="#8b0000" 
+              strokeWidth={2}
+              name="Purchases"
             />
           </LineChart>
         </ResponsiveContainer>
