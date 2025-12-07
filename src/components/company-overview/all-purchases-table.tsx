@@ -18,10 +18,11 @@ import { Expense } from "@/types/business";
 interface Purchase {
   id: string;
   date: string;
-  supplier_name: string;
-  grand_total: number;
-  payment_status: string;
-  user_name?: string;
+  product_name: string;
+  company_name: string;
+  unit: string;
+  price: number;
+  user_id?: string;
 }
 
 interface AllPurchasesTableProps {
@@ -40,9 +41,8 @@ export function AllPurchasesTable({ initialPurchases }: AllPurchasesTableProps) 
   const [searchTerm, setSearchTerm] = useState("");
 
   const filteredPurchases = initialPurchases.filter(purchase =>
-    purchase.supplier_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    purchase.payment_status?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (purchase.user_name?.toLowerCase() || '').includes(searchTerm.toLowerCase())
+    purchase.product_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    purchase.company_name?.toLowerCase().includes(searchTerm.toLowerCase())
   ).sort((a, b) => {
     const dateA = new Date(a.date);
     const dateB = new Date(b.date);
@@ -69,10 +69,10 @@ export function AllPurchasesTable({ initialPurchases }: AllPurchasesTableProps) 
             <TableHeader>
               <TableRow>
                 <TableHead>Date</TableHead>
-                <TableHead>Supplier</TableHead>
-                <TableHead>Total Amount</TableHead>
-                <TableHead>Payment Status</TableHead>
-                <TableHead>User</TableHead>
+                <TableHead>Product</TableHead>
+                <TableHead>Company</TableHead>
+                <TableHead>Unit</TableHead>
+                <TableHead>Price</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -86,10 +86,10 @@ export function AllPurchasesTable({ initialPurchases }: AllPurchasesTableProps) 
                 filteredPurchases.map((purchase) => (
                   <TableRow key={purchase.id}>
                     <TableCell>{format(new Date(purchase.date), "dd/MM/yyyy")}</TableCell>
-                    <TableCell className="max-w-[200px] truncate">{purchase.supplier_name}</TableCell>
-                    <TableCell className="font-medium">${purchase.grand_total ? purchase.grand_total.toFixed(2) : '0.00'}</TableCell>
-                    <TableCell>{purchase.payment_status}</TableCell>
-                    <TableCell>{purchase.user_name || "N/A"}</TableCell>
+                    <TableCell className="max-w-[200px] truncate">{purchase.product_name}</TableCell>
+                    <TableCell className="max-w-[200px] truncate">{purchase.company_name}</TableCell>
+                    <TableCell>{purchase.unit}</TableCell>
+                    <TableCell className="font-medium">${purchase.price ? purchase.price.toFixed(2) : '0.00'}</TableCell>
                   </TableRow>
                 ))
               )}

@@ -13,16 +13,7 @@ import { ProductHistoryTab } from "./components/ProductHistoryTab";
 import { CustomerStatementTab } from "./components/CustomerStatementTab";
 import { useToast } from "@/components/ui/use-toast";
 import { AllPurchasesTable } from "@/components/company-overview/all-purchases-table";
-
-// Helper function to format date
-export const formatDate = (dateString: string) => {
-  if (!dateString) return "N/A";
-  const date = new Date(dateString);
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
-  return `${day}/${month}/${year}`;
-};
+import { formatDate } from "@/lib/utils";
 
 export default function ReportsHistoryPage() {
   const currentYear = new Date().getFullYear();
