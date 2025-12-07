@@ -20,18 +20,24 @@ export default async function Dashboard() {
   const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
   const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
-  const { data: salesData } = await supabase.from("sales").select("*").order("date", { ascending: false });
-  const { data: expensesData } = await supabase.from("expenses").select("*").order("date", { ascending: false });
-  const { data: purchasesData } = await supabase.from("purchase").select("*").order("date", { ascending: false });
+  const { data: salesData, error: salesError } = await supabase.from("sales").select("*").order("date", { ascending: false });
+  const { data: expensesData, error: expensesError } = await supabase.from("expenses").select("*").order("date", { ascending: false });
+  const { data: purchasesData, error: purchasesError } = await supabase.from("purchase").select("*").order("date", { ascending: false });
+
+  if (salesError || expensesError || purchasesError) {
+    console.error("Error fetching dashboard data:", salesError, expensesError, purchasesError);
+    // Handle error appropriately, e.g., display an error message or redirect
+    // For now, we'll proceed with empty arrays to prevent crashing
+  }
 
   return (
     <>
       <DashboardNavbar />
       <main className="w-full min-h-screen bg-background">
         <DashboardContent 
-          initialSales={salesData.data || []}
-          initialExpenses={expensesData.data || []}
-          initialPurchases={purchasesData.data || []}
+          initialSales={salesData?.data || []}
+          initialExpenses={expensesData?.data || []}
+          initialPurchases={purchasesData?.data || []}
         />
       </main>
     </>
