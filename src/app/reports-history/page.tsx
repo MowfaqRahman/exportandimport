@@ -1,32 +1,20 @@
+
 'use client'
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
-} from 'recharts';
 import { createClient } from "../../../supabase/client";
 import { useEffect, useState } from "react";
 import DashboardNavbar from "@/components/dashboard-navbar";
-import MetricCard from "@/components/dashboard/metric-card";
-import { DollarSign, LineChart as LineChartIcon, Wallet, Pencil, Trash2 } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
 import AllSalesTable from "@/components/company-overview/all-sales-table";
 import AllExpensesTable from "@/components/company-overview/all-expenses-table";
-import { Sale, Expense } from "@/types/business";
-import { jsPDF } from 'jspdf';
+import { ReportsFilter } from "./components/ReportsFilter";
+import { MetricCardsDisplay } from "./components/MetricCardsDisplay";
+import { ProductHistoryTab } from "./components/ProductHistoryTab";
+import { CustomerStatementTab } from "./components/CustomerStatementTab";
+import { useToast } from "@/components/ui/use-toast";
 
 // Helper function to format date
-const formatDate = (dateString: string) => {
+export const formatDate = (dateString: string) => {
   if (!dateString) return "N/A";
   const date = new Date(dateString);
   const day = String(date.getDate()).padStart(2, '0');
@@ -69,113 +57,6 @@ export default function ReportsHistoryPage() {
   const [customerStatements, setCustomerStatements] = useState<any[]>([]);
   const [loadingCustomerStatements, setLoadingCustomerStatements] = useState(false);
 
-  const handleDownloadStatement = () => {
-    if (customerStatements.length === 0) {
-      toast({
-        title: "No data to download",
-        description: "There are no customer statements to download.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const selectedCustomer = customers.find(c => c.customer_id === Number(selectedUser));
-    const customerName = selectedCustomer ? selectedCustomer.customer_name : "Customer";
-    const fileName = `${customerName}_Statement_${selectedYear}${selectedMonth === "all" ? "" : `-${selectedMonth}`}.pdf`;
-
-    const doc = new jsPDF();
-
-    // Company Header
-    doc.setFontSize(10);
-    doc.text("EDEN FARM", 20, 20);
-    doc.text("Doha, Qatar 15718 QAT", 20, 25);
-    doc.text("h.hamdi@edenfarm.qa", 20, 30);
-    doc.text("www.oryxmushrooms.com", 20, 35);
-
-    // Statement Title
-    doc.setFontSize(18);
-    doc.text("Statement", 20, 50);
-
-    // TO section
-    doc.setFontSize(10);
-    doc.text("TO", 20, 70);
-    doc.text(`${selectedCustomer?.customer_name || ""}`, 20, 75);
-    doc.text(`${selectedCustomer?.address || ""}`, 20, 80);
-    doc.text(`Phone: ${selectedCustomer?.phone_number || ""}`, 20, 85);
-
-    // Statement Details (right side)
-    doc.setFontSize(10);
-    doc.text(`DATE ${formatDate(new Date().toISOString().split('T')[0])}`, 150, 80);
-
-    // Table Headers
-    let yPos = 100;
-    doc.setFontSize(10);
-    doc.text("DATE", 20, yPos);
-    doc.text("ACTIVITY", 60, yPos);
-    doc.text("AMOUNT", 140, yPos, { align: "right" });
-    doc.text("RECEIVED", 180, yPos, { align: "right" });
-
-    // Table Rows
-    yPos += 7; // Adjust for header height
-    customerStatements.forEach((statement) => {
-      doc.text(formatDate(statement.date), 20, yPos);
-      doc.text(statement.description, 60, yPos);
-      doc.text(Number(statement.amount).toFixed(2), 140, yPos, { align: "right" });
-      // Assuming "Received" is always 0.00 for now based on the image
-      doc.text("0.00", 180, yPos, { align: "right" });
-      yPos += 5;
-    });
-
-    // Totals
-    yPos += 10; // Space after table
-    const totalAmount = customerStatements.reduce((sum, statement) => sum + Number(statement.amount || 0), 0);
-    const totalReceived = 0; // Based on the image, received is always 0.00
-
-    doc.setFontSize(10);
-    doc.text("TOTAL", 140, yPos, { align: "right" });
-    doc.text("TOTAL", 180, yPos, { align: "right" });
-    yPos += 5;
-    doc.text("AMOUNT", 140, yPos, { align: "right" });
-    doc.text("RECEIVED", 180, yPos, { align: "right" });
-    yPos += 5;
-    doc.text(`QR${totalAmount.toFixed(2)}`, 140, yPos, { align: "right" });
-    doc.text(`QR${totalReceived.toFixed(2)}`, 180, yPos, { align: "right" });
-
-    // Terms Footer
-    yPos += 20; // Space before terms
-    doc.setFontSize(8);
-    doc.text("TERMS:", 20, yPos);
-    yPos += 5;
-    doc.text("All Payments to be made in favour of \" EDEN FARM\"", 20, yPos);
-    yPos += 4;
-    doc.text("OR by Bank Transfer as per Purchase & Sales Agreement", 20, yPos);
-
-    // Save the PDF
-    doc.save(fileName);
-
-    toast({
-      title: "Download Initiated",
-      description: "Customer statement is being downloaded in PDF format.",
-    });
-  };
-
-  const years = Array.from({ length: 5 }, (_, i) => currentYear - i); // Last 5 years
-  const months = [
-    { value: "all", label: "All" },
-    { value: "1", label: "Jan" },
-    { value: "2", label: "Feb" },
-    { value: "3", label: "Mar" },
-    { value: "4", label: "Apr" },
-    { value: "5", label: "May" },
-    { value: "6", label: "Jun" },
-    { value: "7", label: "Jul" },
-    { value: "8", label: "Aug" },
-    { value: "9", label: "Sep" },
-    { value: "10", label: "Oct" },
-    { value: "11", label: "Nov" },
-    { value: "12", label: "Dec" },
-  ];
-
   const { toast } = useToast();
 
   useEffect(() => {
@@ -213,11 +94,6 @@ export default function ReportsHistoryPage() {
           const endDate = new Date(parseInt(selectedYear), monthNumber, 0).toISOString().split('T')[0];
           query = query.gte('date', startDate).lte('date', endDate);
         }
-
-        // Apply invoice search term filter
-        // if (invoiceSearchTerm) {
-        //   query = query.ilike('invoice_content', `%${invoiceSearchTerm}%`);
-        // }
 
         const { data, error } = await query.order('created_at', { ascending: false }).order('date', { ascending: false });
 
@@ -457,8 +333,7 @@ export default function ReportsHistoryPage() {
         setLoadingProductStats(true);
         setLoadingMonthlyUnitsSold(true);
         setLoadingProductSalesHistory(true);
-        // Fetch all sales to filter by product name locally for now
-        // TODO: Implement more efficient backend filtering for product name (Supabase equivalent of $regex)
+
         let productHistoryQuery = supabase
           .from('sales')
           .select('*')
@@ -469,10 +344,6 @@ export default function ReportsHistoryPage() {
         } else if (session?.user?.id) {
           productHistoryQuery = productHistoryQuery.eq('user_id', session.user.id);
         }
-
-        // if (invoiceSearchTerm) {
-        //   productHistoryQuery = productHistoryQuery.ilike('invoice_content', `%${invoiceSearchTerm}%`);
-        // }
 
         const { data: allSales, error: salesError } = await productHistoryQuery;
 
@@ -486,35 +357,14 @@ export default function ReportsHistoryPage() {
           setLoadingProductSalesHistory(false);
           return;
         }
-/*
-        const { data: allSales, error: salesError } = await supabase
-          .from('sales')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .order('date', { ascending: true });
 
-        if (salesError) {
-          console.error("Error fetching all sales for product history:", salesError);
-          setProductStats(null);
-          setMonthlyUnitsSold([]);
-          setProductSalesHistory([]);
-          setLoadingProductStats(false);
-          setLoadingMonthlyUnitsSold(false);
-          setLoadingProductSalesHistory(false);
-          return;
-        }
-*/
         const filteredSales = allSales?.filter((sale: any) =>
           sale.items && sale.items.some((item: any) => {
-            // Temporarily commenting out category filter as item.category_id is not in sales.items JSONB
-            // const matchesCategory = selectedCategory !== "all" ? (item.category_id === selectedCategory) : true;
             const matchesProduct = selectedProduct !== "all" ? (item.description === selectedProduct) : true; // Filter by item.description
-            // console.log("Item Category ID:", item.category_id, "Matches Category:", matchesCategory);
-            return matchesProduct; // Only filtering by product for now
+            return matchesProduct;
           })
         ) || [];
 
-        // Calculate product statistics
         let totalUnitsSold = 0;
         let totalRevenue = 0;
         let firstSaleDate: string | null = null;
@@ -524,10 +374,7 @@ export default function ReportsHistoryPage() {
 
         filteredSales.forEach((sale: any) => {
           sale.items.forEach((item: any) => {
-            // Temporarily commenting out category filter as item.category_id is not in sales.items JSONB
-            // const matchesCategory = selectedCategory !== "all" ? (item.category_id === selectedCategory) : true;
-            const matchesProduct = selectedProduct !== "all" ? (item.description === selectedProduct) : true; // Filter by item.description
-            // console.log("Item Category ID:", item.category_id, "Matches Category:", matchesCategory);
+            const matchesProduct = selectedProduct !== "all" ? (item.description === selectedProduct) : true;
             if (matchesProduct) {
               totalUnitsSold += item.qty;
               totalRevenue += item.qty * item.unitPrice;
@@ -731,61 +578,20 @@ export default function ReportsHistoryPage() {
         <div className="container mx-auto py-8">
           <h1 className="text-3xl font-bold mb-6">Reports & History</h1>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <Select defaultValue={String(currentYear)} onValueChange={setSelectedYear}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select Year" />
-              </SelectTrigger>
-              <SelectContent>
-                {years.map((year) => (
-                  <SelectItem key={year} value={String(year)}>
-                    {year}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <ReportsFilter
+            selectedYear={selectedYear}
+            setSelectedYear={setSelectedYear}
+            selectedMonth={selectedMonth}
+            setSelectedMonth={setSelectedMonth}
+          />
 
-            <Select defaultValue="all" onValueChange={setSelectedMonth}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select Month" />
-              </SelectTrigger>
-              <SelectContent>
-                {months.map((month) => (
-                  <SelectItem key={month.value} value={month.value}>
-                    {month.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
-            <MetricCard
-              title="Year's Company Sales"
-              value={loadingAggregates ? "..." : `$${yearSalesTotal.toFixed(2)}`}
-              icon={DollarSign}
-              description="All sales made this year across the company"
-            />
-            <MetricCard
-              title="Year's Company Expense"
-              value={loadingAggregates ? "..." : `$${yearExpensesTotal.toFixed(2)}`}
-              icon={LineChartIcon}
-              description="Total expenses this year across the company"
-            />
-            <MetricCard
-              title="Monthly Company Sales"
-              value={loadingAggregates ? "..." : `$${monthlySalesTotal.toFixed(2)}`}
-              icon={LineChartIcon}
-              description="Total sales this month across the company"
-            />
-            <MetricCard
-              title="Monthly Company Expenses"
-              value={loadingAggregates ? "..." : `$${monthlyExpensesTotal.toFixed(2)}`}
-              icon={LineChartIcon}
-              description="Total expenses this month across the company"
-            />
-          </div>
+          <MetricCardsDisplay
+            loadingAggregates={loadingAggregates}
+            yearSalesTotal={yearSalesTotal}
+            yearExpensesTotal={yearExpensesTotal}
+            monthlySalesTotal={monthlySalesTotal}
+            monthlyExpensesTotal={monthlyExpensesTotal}
+          />
 
           <Tabs defaultValue="sales" className="mt-8">
             <TabsList className="grid w-full grid-cols-4">
@@ -794,192 +600,44 @@ export default function ReportsHistoryPage() {
               <TabsTrigger value="product-history">Product History</TabsTrigger>
               <TabsTrigger value="customer-statement">Customer Statement</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="sales">
               <AllSalesTable initialSales={sales} />
             </TabsContent>
             <TabsContent value="expenses">
               <AllExpensesTable initialExpenses={expenses} />
             </TabsContent>
-            
+
             <TabsContent value="product-history">
-              <div className="rounded-lg border p-4 shadow-sm">
-                <h2 className="text-2xl font-semibold mb-4">Product History</h2>
-                <div className="mb-4">
-                  <Select value={selectedProduct} onValueChange={setSelectedProduct}>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Select Product" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {products.map((product) => (
-                        <SelectItem key={product.id} value={product.id}>
-                          {product.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="mb-4">
-                  <Select value={selectedUser || ""} onValueChange={setSelectedUser}>
-                    <SelectTrigger className="w-[240px]">
-                      <SelectValue placeholder="Select User" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {loadingUsers ? (
-                        <SelectItem value="loading" disabled>Loading users...</SelectItem>
-                      ) : (
-                        users.map((user) => (
-                          <SelectItem key={user.id} value={user.id}>
-                            {user.name || user.email}
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {selectedUser && !loadingUsers && (
-                  <div className="rounded-lg border p-4 shadow-sm mb-6">
-                    <h3 className="text-xl font-semibold mb-4">Selected User Details</h3>
-                    <p><strong>User ID:</strong> {users.find(u => u.id === selectedUser)?.id}</p>
-                    <p><strong>User Name:</strong> {users.find(u => u.id === selectedUser)?.name || users.find(u => u.id === selectedUser)?.email}</p>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                  <div className="rounded-lg border p-4 shadow-sm">
-                    <p className="text-sm font-medium">Total Units Sold</p>
-                    <p className="text-2xl font-bold">{loadingProductStats ? "..." : productStats?.totalUnitsSold || 0}</p>
-                  </div>
-                  <div className="rounded-lg border p-4 shadow-sm">
-                    <p className="text-sm font-medium">Total Revenue</p>
-                    <p className="text-2xl font-bold">{loadingProductStats ? "..." : `$${Number(productStats?.totalRevenue || 0).toFixed(2)}`}</p>
-                  </div>
-                </div>
-
-                <div className="rounded-lg border p-4 shadow-sm mb-6">
-                  <h3 className="text-xl font-semibold mb-4">Monthly Units Sold</h3>
-                  <ResponsiveContainer width="100%" height={200}>
-                    {loadingMonthlyUnitsSold ? (
-                      <div className="h-full flex items-center justify-center text-muted-foreground">Loading chart...</div>
-                    ) : monthlyUnitsSold.length === 0 ? (
-                      null
-                    ) : (
-                      <LineChart
-                        data={monthlyUnitsSold}
-                        margin={{
-                          top: 5, right: 30, left: 20, bottom: 5,
-                        }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <Tooltip />
-                        <Legend />
-                        <Line type="monotone" dataKey="units" stroke="#8884d8" activeDot={{ r: 8 }} />
-                      </LineChart>
-                    )}
-                  </ResponsiveContainer>
-                </div>
-
-                <h3 className="text-xl font-semibold mb-4">Product Sales History</h3>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Customer</TableHead>
-                      <TableHead>Quantity</TableHead>
-                      <TableHead>Price</TableHead>
-                      <TableHead>Total</TableHead>
-                      <TableHead>Invoice</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {loadingProductSalesHistory ? (
-                      <TableRow><TableCell colSpan={6} className="text-center">Loading product sales history...</TableCell></TableRow>
-                    ) : productSalesHistory.length === 0 ? (
-                      <TableRow><TableCell colSpan={6} className="text-center">No sales history found for this product.</TableCell></TableRow>
-                    ) : (
-                      productSalesHistory.map((sale) => (
-                        <TableRow key={sale.id}>
-                          <TableCell>{formatDate(sale.date)}</TableCell>
-                          <TableCell>{sale.customer_name}</TableCell>
-                          <TableCell>{sale.quantity}</TableCell>
-                          <TableCell>${Number(sale.price).toFixed(2)}</TableCell>
-                          <TableCell>${Number(sale.total).toFixed(2)}</TableCell>
-                          <TableCell>{sale.invoice_id}</TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-                <div className="flex justify-center mt-4">
-                  {/* Pagination controls will go here */}
-                  <Button variant="outline" className="mx-1">Previous</Button>
-                  <Button variant="outline" className="mx-1">1</Button>
-                  <Button variant="outline" className="mx-1">2</Button>
-                  <Button variant="outline" className="mx-1">Next</Button>
-                </div>
-              </div>
+              <ProductHistoryTab
+                products={products}
+                selectedProduct={selectedProduct}
+                setSelectedProduct={setSelectedProduct}
+                users={users}
+                selectedUser={selectedUser}
+                setSelectedUser={setSelectedUser}
+                loadingUsers={loadingUsers}
+                loadingProductStats={loadingProductStats}
+                productStats={productStats}
+                loadingMonthlyUnitsSold={loadingMonthlyUnitsSold}
+                monthlyUnitsSold={monthlyUnitsSold}
+                loadingProductSalesHistory={loadingProductSalesHistory}
+                productSalesHistory={productSalesHistory}
+                formatDate={formatDate}
+              />
             </TabsContent>
             <TabsContent value="customer-statement">
-              <div className="rounded-lg border p-4 shadow-sm">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-2xl font-semibold">Customer Statement</h2>
-                  <Button onClick={handleDownloadStatement}>Download Statement</Button>
-                </div>
-                {/* Customer selection dropdown */}
-                <div className="mb-4">
-                  <Select value={selectedUser} onValueChange={setSelectedUser}>
-                    <SelectTrigger className="w-[240px]">
-                      <SelectValue placeholder="Select Customer" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {loadingCustomers ? (
-                        <SelectItem value="loading" disabled>Loading customers...</SelectItem>
-                      ) : (
-                        customers.filter(customer => customer.customer_id !== "all").map((customer) => (
-                          <SelectItem key={customer.customer_id} value={String(customer.customer_id)}>
-                            {customer.customer_name}
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {selectedUser && selectedUser !== "all" && (
-                  <div className="mb-4">
-                    <h3 className="text-xl font-semibold mb-4">Statement for {customers.find(c => c.customer_id === Number(selectedUser))?.customer_name}</h3>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Date</TableHead>
-                          <TableHead>Type</TableHead>
-                          <TableHead>Invoice</TableHead>
-                          <TableHead className="text-right">Amount</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {loadingCustomerStatements ? (
-                          <TableRow><TableCell colSpan={4} className="text-center">Loading statements...</TableCell></TableRow>
-                        ) : customerStatements.length === 0 ? (
-                          <TableRow><TableCell colSpan={4} className="text-center">No statements found for this customer.</TableCell></TableRow>
-                        ) : (
-                          customerStatements.map((statement, index) => (
-                            <TableRow key={index}>
-                              <TableCell>{formatDate(statement.date)}</TableCell>
-                              <TableCell>{statement.type}</TableCell>
-                              <TableCell>{statement.description}</TableCell>
-                              <TableCell className="text-right">${Number(statement.amount).toFixed(2)}</TableCell>
-                            </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </div>
+              <CustomerStatementTab
+                customers={customers}
+                selectedUser={selectedUser}
+                setSelectedUser={setSelectedUser}
+                loadingCustomers={loadingCustomers}
+                loadingCustomerStatements={loadingCustomerStatements}
+                customerStatements={customerStatements}
+                formatDate={formatDate}
+                selectedYear={selectedYear}
+                selectedMonth={selectedMonth}
+              />
             </TabsContent>
           </Tabs>
         </div>
