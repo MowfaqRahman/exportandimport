@@ -38,6 +38,9 @@ export default function ReportsHistoryPage() {
   const [yearExpensesTotal, setYearExpensesTotal] = useState<number>(0);
   const [monthlySalesTotal, setMonthlySalesTotal] = useState<number>(0);
   const [monthlyExpensesTotal, setMonthlyExpensesTotal] = useState<number>(0);
+  const [yearPurchasesTotal, setYearPurchasesTotal] = useState<number>(0);
+  const [monthlyPurchasesTotal, setMonthlyPurchasesTotal] = useState<number>(0);
+  const [netProfit, setNetProfit] = useState<number>(0);
   const [loadingAggregates, setLoadingAggregates] = useState(false);
 
   const [productStats, setProductStats] = useState<any>(null);
@@ -297,6 +300,29 @@ export default function ReportsHistoryPage() {
           setYearSalesTotal(total);
         }
 
+        let purchasesQuery = supabase
+          .from('purchases')
+          .select('price');
+
+        if (selectedUser && selectedUser !== "all") {
+          purchasesQuery = purchasesQuery.eq('user_id', selectedUser);
+        } else if (session?.user?.id && selectedUser !== "all") {
+          purchasesQuery = purchasesQuery.eq('user_id', session.user.id);
+        }
+
+        // Fetch yearly purchases total
+        const { data: yearPurchasesData, error: yearPurchasesError } = await purchasesQuery
+          .gte('date', yearStart)
+          .lte('date', yearEnd);
+
+        if (yearPurchasesError) {
+          console.error("Error fetching yearly purchases:", yearPurchasesError);
+          setYearPurchasesTotal(0);
+        } else {
+          const total = yearPurchasesData?.reduce((sum, purchase) => sum + Number(purchase.price || 0), 0) || 0;
+          setYearPurchasesTotal(total);
+        }
+
         let expensesQuery = supabase
           .from('expenses')
           .select('amount');
@@ -318,22 +344,33 @@ export default function ReportsHistoryPage() {
           console.error("Error fetching yearly expenses:", yearExpensesError);
           setYearExpensesTotal(0);
         } else {
-          const total = yearExpensesData?.reduce((sum, expense) => sum + Number(expense.amount || 0), 0) || 0;
-          setYearExpensesTotal(total);
+          const totalExpenses = yearExpensesData?.reduce((sum, expense) => sum + Number(expense.amount || 0), 0) || 0;
+          setYearExpensesTotal(totalExpenses);
         }
 
         // Fetch monthly sales total
         let currentMonthlySalesTotal = 0;
         let currentMonthlyExpensesTotal = 0;
+        let currentMonthlyPurchasesTotal = 0;
 
         if (selectedMonth !== "all") {
           const monthNumber = parseInt(selectedMonth, 10);
           const monthStart = new Date(parseInt(selectedYear), monthNumber - 1, 1).toISOString().split('T')[0];
           const monthEnd = new Date(parseInt(selectedYear), monthNumber, 0).toISOString().split('T')[0];
 
-          const { data: monthlySalesData, error: monthlySalesError } = await supabase
+          let monthlySalesQuery = supabase
             .from('sales')
-            .select('grand_total')
+            .select('grand_total');
+
+          if (selectedUser && selectedUser !== "all") {
+            monthlySalesQuery = monthlySalesQuery.eq('user_id', selectedUser);
+          } else if (selectedUser === "all") {
+            // No user_id filter applied when "All Users" is selected
+          } else if (session?.user?.id && selectedUser !== "all") {
+            monthlySalesQuery = monthlySalesQuery.eq('user_id', session.user.id);
+          }
+
+          const { data: monthlySalesData, error: monthlySalesError } = await monthlySalesQuery
             .gte('date', monthStart)
             .lte('date', monthEnd);
 
@@ -362,16 +399,51 @@ export default function ReportsHistoryPage() {
           } else {
             currentMonthlyExpensesTotal = monthlyExpensesData?.reduce((sum, expense) => sum + Number(expense.amount || 0), 0) || 0;
           }
+
+          let monthlyPurchasesQuery = supabase
+            .from('purchases')
+            .select('price');
+
+          if (selectedUser && selectedUser !== "all") {
+            monthlyPurchasesQuery = monthlyPurchasesQuery.eq('user_id', selectedUser);
+          } else if (session?.user?.id && selectedUser !== "all") {
+            monthlyPurchasesQuery = monthlyPurchasesQuery.eq('user_id', session.user.id);
+          }
+
+          const { data: monthlyPurchasesData, error: monthlyPurchasesError } = await monthlyPurchasesQuery
+            .gte('date', monthStart)
+            .lte('date', monthEnd);
+
+          if (monthlyPurchasesError) {
+            console.error("Error fetching monthly purchases:", monthlyPurchasesError);
+          } else {
+            currentMonthlyPurchasesTotal = monthlyPurchasesData?.reduce((sum, purchase) => sum + Number(purchase.price || 0), 0) || 0;
+          }
+        } else {
+          // When selectedMonth is "all", sum up all relevant data from the year
+          currentMonthlySalesTotal = sales?.reduce((sum, sale) => sum + Number(sale.grand_total || 0), 0) || 0;
+          currentMonthlyExpensesTotal = expenses?.reduce((sum, expense) => sum + Number(expense.amount || 0), 0) || 0;
+          currentMonthlyPurchasesTotal = purchases?.reduce((sum, purchase) => sum + Number(purchase.price || 0), 0) || 0;
         }
 
         setMonthlySalesTotal(currentMonthlySalesTotal);
         setMonthlyExpensesTotal(currentMonthlyExpensesTotal);
+        setMonthlyPurchasesTotal(currentMonthlyPurchasesTotal);
+
+        // Calculate net profit using the just-calculated yearly totals
+        const calculatedNetProfit = (
+          (yearSalesData?.reduce((sum, sale) => sum + Number(sale.grand_total || 0), 0) || 0) -
+          ((yearPurchasesData?.reduce((sum, purchase) => sum + Number(purchase.price || 0), 0) || 0) +
+            (yearExpensesData?.reduce((sum, expense) => sum + Number(expense.amount || 0), 0) || 0))
+        );
+        setNetProfit(calculatedNetProfit);
+
         setLoadingAggregates(false);
       };
 
-      fetchAggregates();
+      return fetchAggregates();
     });
-  }, [selectedYear, selectedMonth, selectedUser]);
+  }, [selectedYear, selectedMonth, selectedUser, sales, expenses, purchases]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -643,9 +715,12 @@ export default function ReportsHistoryPage() {
           <MetricCardsDisplay
             loadingAggregates={loadingAggregates}
             yearSalesTotal={yearSalesTotal}
+            yearPurchasesTotal={yearPurchasesTotal}
             yearExpensesTotal={yearExpensesTotal}
             monthlySalesTotal={monthlySalesTotal}
+            monthlyPurchasesTotal={monthlyPurchasesTotal}
             monthlyExpensesTotal={monthlyExpensesTotal}
+            netProfit={netProfit}
           />
 
           <Tabs defaultValue="sales" className="mt-8">
