@@ -10,7 +10,7 @@ import SalesChart from "@/components/dashboard/sales-chart"; // Reusing SalesCha
 import ExpenseChart from "@/components/dashboard/expense-chart"; // Reusing ExpenseChart
 import AllSalesTable from "@/components/company-overview/all-sales-table";
 import AllExpensesTable from "@/components/company-overview/all-expenses-table";
-import AllPurchasesTable from "@/components/company-overview/all-purchases-table";
+import { AllPurchasesTable } from "@/components/company-overview/all-purchases-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function CompanyOverviewPage() {

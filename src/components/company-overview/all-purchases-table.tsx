@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { Purchase } from "@/types/business";
+import React, { useState } from 'react';
 import {
   Table,
   TableBody,
@@ -10,81 +9,94 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { MoreHorizontal } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Search } from "lucide-react";
+import { format } from "date-fns";
+import { Expense } from "@/types/business";
+
+interface Purchase {
+  id: string;
+  date: string;
+  supplier_name: string;
+  grand_total: number;
+  payment_status: string;
+  user_name?: string;
+}
 
 interface AllPurchasesTableProps {
   initialPurchases: Purchase[];
 }
 
-export default function AllPurchasesTable({ initialPurchases }: AllPurchasesTableProps) {
-  const [purchases, setPurchases] = useState<Purchase[]>(initialPurchases);
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+};
 
-  // TODO: Implement edit and delete functionality later if needed
+export function AllPurchasesTable({ initialPurchases }: AllPurchasesTableProps) {
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const filteredPurchases = initialPurchases.filter(purchase =>
+    purchase.supplier_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    purchase.payment_status?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (purchase.user_name?.toLowerCase() || '').includes(searchTerm.toLowerCase())
+  ).sort((a, b) => {
+    const dateA = new Date(a.date);
+    const dateB = new Date(b.date);
+    return dateB.getTime() - dateA.getTime();
+  });
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-2xl font-bold">All Purchase Transactions</h2>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>Product</TableHead>
-              <TableHead>Company</TableHead>
-              <TableHead>Unit</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead>User</TableHead>
-              <TableHead><span className="sr-only">Actions</span></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {purchases.length === 0 && (
+    <Card>
+      <CardHeader className="flex flex-row justify-between items-center space-y-0 pb-2">
+        <CardTitle className="text-2xl font-bold">All User Purchases</CardTitle>
+        <div className="relative w-full max-w-sm sm:w-[250px]">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search purchases..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-8 w-full"
+          />
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="rounded-md border">
+          <Table className="min-w-full divide-y divide-gray-200">
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={7} className="text-center">
-                  No purchase transactions found.
-                </TableCell>
+                <TableHead>Date</TableHead>
+                <TableHead>Supplier</TableHead>
+                <TableHead>Total Amount</TableHead>
+                <TableHead>Payment Status</TableHead>
+                <TableHead>User</TableHead>
               </TableRow>
-            )}
-            {purchases.map((purchase) => (
-              <TableRow key={purchase.id}>
-                <TableCell>{purchase.date}</TableCell>
-                <TableCell>{purchase.product_name}</TableCell>
-                <TableCell>{purchase.company_name}</TableCell>
-                <TableCell>{purchase.unit}</TableCell>
-                <TableCell>${purchase.price.toFixed(2)}</TableCell>
-                <TableCell>{(purchase as any).user_name}</TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Open menu</span>
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem onClick={() => navigator.clipboard.writeText(purchase.id)}>
-                        Copy Purchase ID
-                      </DropdownMenuItem>
-                      {/* <DropdownMenuSeparator /> */}
-                      {/* Add Edit/Delete options here later */}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    </div>
+            </TableHeader>
+            <TableBody>
+              {filteredPurchases.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                    No purchases found for all users.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredPurchases.map((purchase) => (
+                  <TableRow key={purchase.id}>
+                    <TableCell>{format(new Date(purchase.date), "dd/MM/yyyy")}</TableCell>
+                    <TableCell className="max-w-[200px] truncate">{purchase.supplier_name}</TableCell>
+                    <TableCell className="font-medium">${purchase.grand_total ? purchase.grand_total.toFixed(2) : '0.00'}</TableCell>
+                    <TableCell>{purchase.payment_status}</TableCell>
+                    <TableCell>{purchase.user_name || "N/A"}</TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+    </Card>
   );
-}
+};

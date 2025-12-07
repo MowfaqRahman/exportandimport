@@ -12,6 +12,7 @@ import { MetricCardsDisplay } from "./components/MetricCardsDisplay";
 import { ProductHistoryTab } from "./components/ProductHistoryTab";
 import { CustomerStatementTab } from "./components/CustomerStatementTab";
 import { useToast } from "@/components/ui/use-toast";
+import { AllPurchasesTable } from "@/components/company-overview/all-purchases-table";
 
 // Helper function to format date
 export const formatDate = (dateString: string) => {
@@ -56,6 +57,9 @@ export default function ReportsHistoryPage() {
   const [loadingCustomers, setLoadingCustomers] = useState(false);
   const [customerStatements, setCustomerStatements] = useState<any[]>([]);
   const [loadingCustomerStatements, setLoadingCustomerStatements] = useState(false);
+
+  const [purchases, setPurchases] = useState<any[]>([]);
+  const [loadingPurchases, setLoadingPurchases] = useState(false);
 
   const { toast } = useToast();
 
@@ -165,10 +169,60 @@ export default function ReportsHistoryPage() {
 
   useEffect(() => {
     const supabase = createClient();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        console.error("User not authenticated.");
+        setLoadingPurchases(false);
+        return;
+      }
+
+      const fetchPurchases = async () => {
+        setLoadingPurchases(true);
+        let query = supabase
+          .from('purchases')
+          .select('*');
+
+        if (selectedUser && selectedUser !== "all") {
+          query = query.eq('user_id', selectedUser);
+        } else if (session?.user?.id && selectedUser !== "all") {
+          query = query.eq('user_id', session.user.id);
+        }
+
+        if (selectedYear !== "all") {
+          const startDate = `${selectedYear}-01-01`;
+          const endDate = `${selectedYear}-12-31`;
+          query = query.gte('date', startDate).lte('date', endDate);
+        }
+
+        if (selectedMonth !== "all") {
+          const monthNumber = parseInt(selectedMonth, 10);
+          const startDate = new Date(parseInt(selectedYear), monthNumber - 1, 1).toISOString().split('T')[0];
+          const endDate = new Date(parseInt(selectedYear), monthNumber, 0).toISOString().split('T')[0];
+          query = query.gte('date', startDate).lte('date', endDate);
+        }
+
+        const { data, error } = await query.order('created_at', { ascending: false }).order('date', { ascending: false });
+
+        if (error) {
+          console.error("Error fetching purchases data:", error);
+          setPurchases([]);
+        } else {
+          setPurchases(data || []);
+        }
+        setLoadingPurchases(false);
+      };
+
+      fetchPurchases();
+    });
+  }, [selectedYear, selectedMonth, selectedUser]);
+
+  useEffect(() => {
+    const supabase = createClient();
     const fetchAllExpensesAndUsers = async () => {
       setLoadingUsers(true);
       setLoadingExpenses(true);
       setLoadingCustomers(true);
+      setLoadingPurchases(true);
 
       const [expensesData, usersData, customersData] = await Promise.all([
         supabase.from('expenses').select('*').order('created_at', { ascending: false }).order('date', { ascending: false }),
@@ -201,6 +255,7 @@ export default function ReportsHistoryPage() {
       setLoadingUsers(false);
       setLoadingExpenses(false);
       setLoadingCustomers(false);
+      setLoadingPurchases(false);
     };
     fetchAllExpensesAndUsers();
   }, []);
@@ -594,8 +649,9 @@ export default function ReportsHistoryPage() {
           />
 
           <Tabs defaultValue="sales" className="mt-8">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="sales">Sales Transactions</TabsTrigger>
+              <TabsTrigger value="purchase">Purchases</TabsTrigger>
               <TabsTrigger value="expenses">Expenses</TabsTrigger>
               <TabsTrigger value="product-history">Product History</TabsTrigger>
               <TabsTrigger value="customer-statement">Customer Statement</TabsTrigger>
@@ -603,6 +659,9 @@ export default function ReportsHistoryPage() {
 
             <TabsContent value="sales">
               <AllSalesTable initialSales={sales} />
+            </TabsContent>
+            <TabsContent value="purchase">
+              <AllPurchasesTable initialPurchases={purchases} />
             </TabsContent>
             <TabsContent value="expenses">
               <AllExpensesTable initialExpenses={expenses} />
