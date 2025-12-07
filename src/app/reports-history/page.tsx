@@ -13,7 +13,7 @@ import { ProductHistoryTab } from "./components/ProductHistoryTab";
 import { CustomerStatementTab } from "./components/CustomerStatementTab";
 import { useToast } from "@/components/ui/use-toast";
 import { AllPurchasesTable } from "@/components/company-overview/all-purchases-table";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/utils/formatDate";
 
 export default function ReportsHistoryPage() {
   const currentYear = new Date().getFullYear();
