@@ -35,9 +35,9 @@ export default async function Dashboard() {
       <DashboardNavbar />
       <main className="w-full min-h-screen bg-background">
         <DashboardContent 
-          initialSales={salesData?.data || []}
-          initialExpenses={expensesData?.data || []}
-          initialPurchases={purchasesData?.data || []}
+          initialSales={salesData || []}
+          initialExpenses={expensesData || []}
+          initialPurchases={purchasesData || []}
         />
       </main>
     </>
