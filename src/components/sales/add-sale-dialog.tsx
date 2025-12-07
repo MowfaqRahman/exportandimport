@@ -189,6 +189,8 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
           salesman_name_footer: data.salesman_name_footer || '',
           customer_phone_footer: data.customer_phone_footer || '',
           invoice_no: data.invoice_no,
+          company_name: "KTF Vegetable and Fruit", // Placeholder
+          company_address: "123 Main St, Anytown USA", // Placeholder
         });
       } catch (pdfError) {
         console.error('Error generating PDF:', pdfError);
