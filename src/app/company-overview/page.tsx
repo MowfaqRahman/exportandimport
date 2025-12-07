@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "../../../supabase/client";
-import { Sale, Expense } from "@/types/business";
+import { Sale, Expense, Purchase } from "@/types/business";
 import DashboardNavbar from "@/components/dashboard-navbar";
 import { DollarSign, TrendingUp, TrendingDown, Wallet } from "lucide-react";
 import MetricCard from "@/components/dashboard/metric-card";
