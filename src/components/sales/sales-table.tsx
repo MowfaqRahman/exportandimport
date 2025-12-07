@@ -105,6 +105,8 @@ export default function SalesTable({ initialSales, onDataChange }: SalesTablePro
         salesman_name_footer: sale.salesman_name_footer || '',
         customer_phone_footer: sale.customer_phone_footer || '',
         invoice_no: sale.invoice_no || '',
+        company_name: "KTF Vegetable and Fruit", // Placeholder
+        company_address: "123 Main St, Anytown USA", // Placeholder
       });
       toast({
         title: "Success",
