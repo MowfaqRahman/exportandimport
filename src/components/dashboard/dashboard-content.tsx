@@ -8,21 +8,25 @@ import ExpenseChart from "./expense-chart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SalesTable from "../sales/sales-table";
 import ExpensesTable from "../expenses/expenses-table";
-import { Sale, Expense } from "@/types/business";
+import PurchaseTable from "../purchase/purchase-table";
+import { Sale, Expense, Purchase } from "@/types/business";
 
 interface DashboardContentProps {
   initialSales: Sale[];
   initialExpenses: Expense[];
+  initialPurchases: Purchase[];
 }
 
-export default function DashboardContent({ initialSales, initialExpenses }: DashboardContentProps) {
+export default function DashboardContent({ initialSales, initialExpenses, initialPurchases }: DashboardContentProps) {
   const [sales, setSales] = useState<Sale[]>(initialSales);
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
+  const [purchases, setPurchases] = useState<Purchase[]>(initialPurchases);
 
   // Calculate metrics
   const totalSales = sales.reduce((sum, sale) => sum + Number(sale.grand_total || 0), 0);
   const totalExpenses = expenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
-  const profit = totalSales - totalExpenses;
+  const totalPurchases = purchases.reduce((sum, purchase) => sum + Number(purchase.price), 0);
+  const profit = totalSales - totalExpenses - totalPurchases;
 
   // Get today's sales
   const today = new Date().toISOString().split('T')[0];
@@ -96,6 +100,12 @@ export default function DashboardContent({ initialSales, initialExpenses }: Dash
           description="Total expenses this month"
         />
         <MetricCard
+          title="Monthly Purchases"
+          value={`$${totalPurchases.toFixed(2)}`}
+          icon={TrendingDown}
+          description="Total purchases this month"
+        />
+        <MetricCard
           title="Net Profit"
           value={`$${profit.toFixed(2)}`}
           icon={Wallet}
@@ -116,12 +126,19 @@ export default function DashboardContent({ initialSales, initialExpenses }: Dash
       <Tabs defaultValue="sales" className="space-y-4">
         <TabsList>
           <TabsTrigger value="sales">Sales Transactions</TabsTrigger>
+          <TabsTrigger value="purchase">Purchase</TabsTrigger>
           <TabsTrigger value="expenses">Expenses</TabsTrigger>
         </TabsList>
         <TabsContent value="sales" className="space-y-4">
           <SalesTable 
             initialSales={sales}
             onDataChange={setSales}
+          />
+        </TabsContent>
+        <TabsContent value="purchase" className="space-y-4">
+          <PurchaseTable
+            initialPurchases={purchases}
+            onDataChange={setPurchases}
           />
         </TabsContent>
         <TabsContent value="expenses" className="space-y-4">

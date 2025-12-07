@@ -19,7 +19,7 @@ export default async function Dashboard() {
   const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
   const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
-  const [salesData, expensesData] = await Promise.all([
+  const [salesData, expensesData, purchasesData] = await Promise.all([
     supabase
       .from('sales')
       .select('*')
@@ -28,6 +28,12 @@ export default async function Dashboard() {
       .order('date', { ascending: true }),
     supabase
       .from('expenses')
+      .select('*')
+      .gte('date', firstDayOfMonth.toISOString().split('T')[0])
+      .lte('date', lastDayOfMonth.toISOString().split('T')[0])
+      .order('date', { ascending: true }),
+    supabase
+      .from('purchases')
       .select('*')
       .gte('date', firstDayOfMonth.toISOString().split('T')[0])
       .lte('date', lastDayOfMonth.toISOString().split('T')[0])
@@ -41,6 +47,7 @@ export default async function Dashboard() {
         <DashboardContent 
           initialSales={salesData.data || []}
           initialExpenses={expensesData.data || []}
+          initialPurchases={purchasesData.data || []}
         />
       </main>
     </>

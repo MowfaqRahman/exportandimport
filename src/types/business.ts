@@ -19,6 +19,18 @@ export interface Sale {
   invoice_no?: string;
 }
 
+export interface Purchase {
+  id: string;
+  date: string;
+  product_name: string;
+  company_name: string;
+  unit: string;
+  price: number;
+  user_id?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface Expense {
   id: string;
   amount: number;
