@@ -39,6 +39,7 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
   const [dueDate, setDueDate] = useState<string | null>(null); // New state for due date
   const [customerEmail, setCustomerEmail] = useState<string | null>(null); // New state for customer email
   const [customerAddress, setCustomerAddress] = useState<string | null>(null); // New state for customer address
+  const [customerPhone, setCustomerPhone] = useState<string | null>(null); // New state for customer phone
 
   const generateNextInvoiceNumber = async () => {
     const { data, error } = await supabase
@@ -138,11 +139,12 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
           setCustomerEmail(null);
           setCustomerAddress(null);
         } else if (customerData) {
-          setSalesmanName(customerData.full_name); // Assuming full_name in customer table is salesmanName
+          setCustomerPhone(customerData.phone_number);
           setCustomerEmail(customerData.email);
           setCustomerAddress(customerData.address);
         }
       } else {
+        setCustomerPhone(null);
         setCustomerEmail(null);
         setCustomerAddress(null);
       }
@@ -192,7 +194,7 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
       items: invoiceItems.filter(item => item.description !== ''),
       grand_total: calculateGrandTotal(),
       salesman_name_footer: salesmanName || salesmanEmail || '',
-      customer_phone_footer: formData.get('customer_phone_footer') as string,
+      customer_phone_footer: customerPhone || '', // Use customerPhone state
       invoice_no: invoiceNo || '',
       paid: isPaid,
       due_date: !isPaid ? dueDate : null,
@@ -314,6 +316,8 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
                 id="customer_phone_footer"
                 name="customer_phone_footer"
                 placeholder="Customer Phone Number"
+                value={customerPhone || ''}
+                readOnly
               />
             </div>
             {selectedCustomerName && (

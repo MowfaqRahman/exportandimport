@@ -121,7 +121,16 @@ export const generateSaleInvoicePDF = ({
   if (!isPaid) {
     doc.text("Terms and Conditions:", 20, yPos);
     yPos += 5;
-    doc.text("Payment is due in 7 days.", 20, yPos);
+
+    if (dueDate) {
+      const invoiceDate = new Date(date);
+      const due = new Date(dueDate);
+      const diffTime = Math.abs(due.getTime() - invoiceDate.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      doc.text(`Payment is due in ${diffDays} days.`, 20, yPos);
+    } else {
+      doc.text("Payment terms: To be discussed.", 20, yPos); // Fallback if no due date
+    }
     yPos += 4;
     doc.text(`Please make checks payable to: ${company_name}`, 20, yPos);
   } else {
