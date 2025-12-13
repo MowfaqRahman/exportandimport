@@ -18,6 +18,7 @@ export interface Sale {
   updated_at?: string;
   invoice_no?: string;
   paid?: boolean;
+  due_date?: string;
 }
 
 export interface Purchase {
