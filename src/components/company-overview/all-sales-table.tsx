@@ -98,13 +98,14 @@ export default function AllSalesTable({ initialSales }: AllSalesTableProps) {
                   <TableHead>Grand Total</TableHead>
                   <TableHead>Salesman Name</TableHead>
                   <TableHead>Invoice No</TableHead>
+                  <TableHead>Payment Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredSales.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                       No sales found for all users.
                     </TableCell>
                   </TableRow>
@@ -127,6 +128,13 @@ export default function AllSalesTable({ initialSales }: AllSalesTableProps) {
                       </TableCell>
                       <TableCell>{sale.salesman_name_footer || 'N/A'}</TableCell>
                       <TableCell>{sale.invoice_no || 'N/A'}</TableCell>
+                      <TableCell>
+                        {sale.paid ? (
+                          <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">Paid</span>
+                        ) : (
+                          <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-800">Unpaid</span>
+                        )}
+                      </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button

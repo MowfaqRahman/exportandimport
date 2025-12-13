@@ -83,14 +83,15 @@ export default function CompanyOverviewPage() {
   }, []);
 
   // Calculate company-wide metrics
-  const totalCompanySales = companySales.reduce((sum, sale) => sum + Number(sale.grand_total || 0), 0);
+  const paidCompanySales = companySales.filter(sale => sale.paid === true);
+  const totalCompanySales = paidCompanySales.reduce((sum, sale) => sum + Number(sale.grand_total || 0), 0);
   const totalCompanyExpenses = companyExpenses.reduce((sum, expense) => sum + Number(expense.amount || 0), 0);
   const totalCompanyPurchases = companyPurchases.reduce((sum, purchase) => sum + Number(purchase.price || 0), 0);
   const companyProfit = totalCompanySales - totalCompanyExpenses - totalCompanyPurchases;
 
   // Get today's company sales
   const today = new Date().toISOString().split('T')[0];
-  const todayCompanySales = companySales
+  const todayCompanySales = paidCompanySales
     .filter(sale => sale.date === today)
     .reduce((sum, sale) => sum + Number(sale.grand_total || 0), 0);
 
@@ -102,7 +103,7 @@ export default function CompanyOverviewPage() {
   });
 
   const companyChartData = last7Days.map(date => {
-    const daySales = companySales
+    const daySales = paidCompanySales
       .filter(sale => sale.date === date)
       .reduce((sum, sale) => sum + Number(sale.grand_total || 0), 0);
     const dayExpenses = companyExpenses

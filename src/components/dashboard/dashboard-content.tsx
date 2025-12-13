@@ -22,15 +22,18 @@ export default function DashboardContent({ initialSales, initialExpenses, initia
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
   const [purchases, setPurchases] = useState<Purchase[]>(initialPurchases);
 
+  // Filter for paid sales
+  const paidSales = sales.filter(sale => sale.paid === true);
+
   // Calculate metrics
-  const totalSales = sales.reduce((sum, sale) => sum + Number(sale.grand_total || 0), 0);
+  const totalSales = paidSales.reduce((sum, sale) => sum + Number(sale.grand_total || 0), 0);
     const totalExpenses = expenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
     const totalPurchases = purchases.reduce((sum, purchase) => sum + Number(purchase.price), 0);
     const profit = totalSales - totalExpenses - totalPurchases;
 
   // Get today's sales
   const today = new Date().toISOString().split('T')[0];
-  const todaySales = sales
+  const todaySales = paidSales
     .filter(sale => sale.date === today)
     .reduce((sum, sale) => sum + Number(sale.grand_total || 0), 0);
 
@@ -42,7 +45,7 @@ export default function DashboardContent({ initialSales, initialExpenses, initia
   });
 
   const chartData = last7Days.map(date => {
-    const daySales = sales
+    const daySales = paidSales
       .filter(sale => sale.date === date)
       .reduce((sum, sale) => sum + Number(sale.grand_total || 0), 0);
     const dayExpenses = expenses

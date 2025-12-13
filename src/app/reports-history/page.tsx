@@ -271,7 +271,8 @@ export default function ReportsHistoryPage() {
 
         let salesQuery = supabase
           .from('sales')
-          .select('grand_total');
+          .select('grand_total')
+          .eq('paid', true);
 
         if (selectedUser && selectedUser !== "all") {
           salesQuery = salesQuery.eq('user_id', selectedUser);
@@ -351,7 +352,8 @@ export default function ReportsHistoryPage() {
 
           let monthlySalesQuery = supabase
             .from('sales')
-            .select('grand_total');
+            .select('grand_total')
+            .eq('paid', true);
 
           if (selectedUser && selectedUser !== "all") {
             monthlySalesQuery = monthlySalesQuery.eq('user_id', selectedUser);
@@ -454,7 +456,7 @@ export default function ReportsHistoryPage() {
 
         let productHistoryQuery = supabase
           .from('sales')
-          .select('*')
+          .select('*, paid') // Ensure 'paid' is selected
           .order('date', { ascending: true });
 
         if (selectedUser && selectedUser !== "all") {
@@ -477,7 +479,7 @@ export default function ReportsHistoryPage() {
         }
 
         const filteredSales = allSales?.filter((sale: any) =>
-          sale.items && sale.items.some((item: any) => {
+          sale.paid === true && sale.items && sale.items.some((item: any) => {
             const matchesProduct = selectedProduct !== "all" ? (item.description === selectedProduct) : true; // Filter by item.description
             return matchesProduct;
           })
@@ -621,7 +623,7 @@ export default function ReportsHistoryPage() {
 
       setLoadingCustomerStatements(true);
 
-      let salesQuery = supabase.from('sales').select('date, grand_total, customer_name, items, invoice_no, id').eq('customer_name', selectedCustomerName);
+      let salesQuery = supabase.from('sales').select('date, grand_total, customer_name, items, invoice_no, id, paid').eq('customer_name', selectedCustomerName).eq('paid', true);
       let expensesQuery = supabase.from('expenses').select('date, amount, description').eq('customer_id', Number(selectedUser));
 
       // Apply year filter

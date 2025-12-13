@@ -129,14 +129,15 @@ export function ProductHistoryTab({
             <TableHead>Quantity</TableHead>
             <TableHead>Price</TableHead>
             <TableHead>Total</TableHead>
+            <TableHead>Payment Status</TableHead>
             <TableHead>Invoice</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {loadingProductSalesHistory ? (
-            <TableRow><TableCell colSpan={6} className="text-center">Loading product sales history...</TableCell></TableRow>
+            <TableRow><TableCell colSpan={7} className="text-center">Loading product sales history...</TableCell></TableRow>
           ) : productSalesHistory.length === 0 ? (
-            <TableRow><TableCell colSpan={6} className="text-center">No sales history found for this product.</TableCell></TableRow>
+            <TableRow><TableCell colSpan={7} className="text-center">No sales history found for this product.</TableCell></TableRow>
           ) : (
             productSalesHistory.map((sale) => (
               <TableRow key={sale.id}>
@@ -145,6 +146,13 @@ export function ProductHistoryTab({
                 <TableCell>{sale.quantity}</TableCell>
                 <TableCell>${Number(sale.price).toFixed(2)}</TableCell>
                 <TableCell>${Number(sale.total).toFixed(2)}</TableCell>
+                <TableCell>
+                  {sale.paid ? (
+                    <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">Paid</span>
+                  ) : (
+                    <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-800">Unpaid</span>
+                  )}
+                </TableCell>
                 <TableCell>{sale.invoice_id}</TableCell>
               </TableRow>
             ))

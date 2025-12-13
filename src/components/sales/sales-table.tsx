@@ -151,7 +151,8 @@ export default function SalesTable({ initialSales, onDataChange }: SalesTablePro
                   <TableHead>Customer</TableHead>
                   <TableHead>Items</TableHead>
                   <TableHead className="text-right">Grand Total</TableHead>
-                  <TableHead className="text-right">Invoice No</TableHead>
+                  <TableHead>Invoice No</TableHead>
+                  <TableHead>Payment Status</TableHead>
                   <TableHead className="text-right">Invoice</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -159,7 +160,7 @@ export default function SalesTable({ initialSales, onDataChange }: SalesTablePro
               <TableBody>
                 {filteredSales.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                       No sales found. Add your first sale to get started.
                     </TableCell>
                   </TableRow>
@@ -182,6 +183,13 @@ export default function SalesTable({ initialSales, onDataChange }: SalesTablePro
                       </TableCell>
                       <TableCell className="text-right">
                         {sale.invoice_no}
+                      </TableCell>
+                      <TableCell>
+                        {sale.paid ? (
+                          <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">Paid</span>
+                        ) : (
+                          <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-800">Unpaid</span>
+                        )}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button

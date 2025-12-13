@@ -35,6 +35,8 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [customers, setCustomers] = useState<string[]>([]); // New state for customer names
   const [selectedCustomerName, setSelectedCustomerName] = useState<string>(''); // New state for selected customer
+  const [isPaid, setIsPaid] = useState<boolean>(false); // New state for payment status
+  const [dueDate, setDueDate] = useState<string | null>(null); // New state for due date
 
   const generateNextInvoiceNumber = async () => {
     const { data, error } = await supabase
@@ -164,6 +166,8 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
       salesman_name_footer: salesmanName || salesmanEmail || '',
       customer_phone_footer: formData.get('customer_phone_footer') as string,
       invoice_no: invoiceNo || '',
+      paid: isPaid,
+      due_date: !isPaid ? dueDate : null,
     };
 
     const { data: userData } = await supabase.auth.getUser();
@@ -362,6 +366,32 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
                 </TableRow>
               </TableFooter>
             </Table>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="paid_status">Payment Status</Label>
+              <Button 
+                type="button"
+                variant={isPaid ? "default" : "outline"}
+                onClick={() => setIsPaid(!isPaid)}
+                className="w-full"
+              >
+                {isPaid ? "Paid" : "Not Paid"}
+              </Button>
+            </div>
+            {!isPaid && (
+              <div className="space-y-2">
+                <Label htmlFor="due_date">Due Date</Label>
+                <Input
+                  id="due_date"
+                  name="due_date"
+                  type="date"
+                  value={dueDate || ''}
+                  onChange={(e) => setDueDate(e.target.value)}
+                />
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">
