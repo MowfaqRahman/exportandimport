@@ -21,7 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { generateInvoicePDF } from "@/utils/generateInvoicePDF"; // Import generateInvoicePDF
+import { generateSaleInvoicePDF } from "@/utils/generateSaleInvoicePDF"; // Import new PDF generator
 
 interface SalesTableProps {
   initialSales: Sale[];
@@ -53,7 +53,10 @@ export default function SalesTable({ initialSales, onDataChange }: SalesTablePro
     const { data: userData } = await supabase.auth.getUser();
     const { data, error } = await supabase
       .from('sales')
-      .select('*')
+      .select(`
+        *,
+        customers(email, address)
+      `)
       .eq('user_id', userData.user?.id)
       .order('date', { ascending: false });
 
@@ -97,16 +100,22 @@ export default function SalesTable({ initialSales, onDataChange }: SalesTablePro
 
   const handleGenerateInvoice = (sale: Sale) => {
     try {
-      generateInvoicePDF({
+      generateSaleInvoicePDF({
         date: sale.date,
         customer_name: sale.customer_name || '',
+        customer_phone: sale.customer_phone_footer || '',
+        customer_email: (sale as any).customers?.email || '', // Access nested customer email
+        customer_address: (sale as any).customers?.address || '', // Access nested customer address
         items: sale.items || [],
         grand_total: sale.grand_total || 0,
         salesman_name_footer: sale.salesman_name_footer || '',
-        customer_phone_footer: sale.customer_phone_footer || '',
         invoice_no: sale.invoice_no || '',
-        company_name: "KTF Vegetable and Fruit", // Placeholder
-        company_address: "123 Main St, Anytown USA", // Placeholder
+        company_name: "KTF Vegetable and Fruit",
+        company_address: "Umm Salal, Doha, Qatar",
+        company_phone: "(+974) 30933327",
+        company_email: "ktf.co2025@gmail.com",
+        isPaid: sale.paid || false,
+        dueDate: sale.due_date || null,
       });
       toast({
         title: "Success",

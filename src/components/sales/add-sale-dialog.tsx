@@ -17,7 +17,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { createClient } from "../../../supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { Sale, InvoiceItem } from "@/types/business";
-import { generateInvoicePDF } from "@/utils/generateInvoicePDF";
+import { generateSaleInvoicePDF } from "@/utils/generateSaleInvoicePDF"; // Import new PDF generator
 
 interface AddSaleDialogProps {
   onSaleAdded: () => void;
@@ -37,6 +37,8 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
   const [selectedCustomerName, setSelectedCustomerName] = useState<string>(''); // New state for selected customer
   const [isPaid, setIsPaid] = useState<boolean>(false); // New state for payment status
   const [dueDate, setDueDate] = useState<string | null>(null); // New state for due date
+  const [customerEmail, setCustomerEmail] = useState<string | null>(null); // New state for customer email
+  const [customerAddress, setCustomerAddress] = useState<string | null>(null); // New state for customer address
 
   const generateNextInvoiceNumber = async () => {
     const { data, error } = await supabase
@@ -102,8 +104,8 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
 
       // Fetch distinct customer names from public.customers
       const { data: customerData, error: customerError } = await supabase
-        .from('customers') // Changed from 'invoices' to 'customers'
-        .select('customer_name');
+        .from('customers')
+        .select('customer_id, customer_name, phone_number, email, address'); // Select all customer details
 
       if (customerError) {
         console.error("Error fetching customer names:", customerError);
@@ -121,6 +123,32 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
     fetchUserAndSalesmanName();
     fetchInitialData();
   }, []);
+
+  useEffect(() => {
+    const fetchCustomerDetails = async () => {
+      if (selectedCustomerName) {
+        const { data: customerData, error } = await supabase
+          .from('customers')
+          .select('phone_number, email, address')
+          .eq('customer_name', selectedCustomerName)
+          .single();
+        
+        if (error) {
+          console.error("Error fetching customer details:", error);
+          setCustomerEmail(null);
+          setCustomerAddress(null);
+        } else if (customerData) {
+          setSalesmanName(customerData.full_name); // Assuming full_name in customer table is salesmanName
+          setCustomerEmail(customerData.email);
+          setCustomerAddress(customerData.address);
+        }
+      } else {
+        setCustomerEmail(null);
+        setCustomerAddress(null);
+      }
+    };
+    fetchCustomerDetails();
+  }, [selectedCustomerName]);
 
   const handleItemChange = (index: number, field: keyof InvoiceItem, value: any) => {
     const newItems = [...invoiceItems];
@@ -185,16 +213,22 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
     } else {
       // Generate and download PDF invoice
       try {
-        generateInvoicePDF({
+        generateSaleInvoicePDF({
           date: data.date,
           customer_name: data.customer_name || '',
+          customer_phone: data.customer_phone_footer || '',
+          customer_email: customerEmail || '',
+          customer_address: customerAddress || '',
           items: data.items,
           grand_total: data.grand_total,
           salesman_name_footer: data.salesman_name_footer || '',
-          customer_phone_footer: data.customer_phone_footer || '',
           invoice_no: data.invoice_no,
-          company_name: "KTF Vegetable and Fruit", // Placeholder
-          company_address: "123 Main St, Anytown USA", // Placeholder
+          company_name: "KTF Vegetable and Fruit",
+          company_address: "Umm Salal, Doha, Qatar",
+          company_phone: "(+974) 30933327",
+          company_email: "ktf.co2025@gmail.com",
+          isPaid: data.paid,
+          dueDate: data.due_date,
         });
       } catch (pdfError) {
         console.error('Error generating PDF:', pdfError);
@@ -282,6 +316,30 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
                 placeholder="Customer Phone Number"
               />
             </div>
+            {selectedCustomerName && (
+              <div className="space-y-2">
+                <Label htmlFor="customer_email">Email</Label>
+                <Input
+                  id="customer_email"
+                  name="customer_email"
+                  placeholder="Customer Email"
+                  value={customerEmail || ''}
+                  readOnly
+                />
+              </div>
+            )}
+            {selectedCustomerName && (
+              <div className="space-y-2">
+                <Label htmlFor="customer_address">Address</Label>
+                <Input
+                  id="customer_address"
+                  name="customer_address"
+                  placeholder="Customer Address"
+                  value={customerAddress || ''}
+                  readOnly
+                />
+              </div>
+            )}
           </div>
 
           <div className="overflow-x-auto">
