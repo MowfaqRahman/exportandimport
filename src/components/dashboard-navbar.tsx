@@ -53,22 +53,27 @@ const DashboardNavbar: React.FC<DashboardNavbarProps> = ({ activeTab, setActiveT
           <Link href="/" prefetch className="text-xl font-bold">
             Logo
           </Link>
-          <Link href="/dashboard" prefetch className={`text-sm font-medium transition-colors ${
-            pathname === "/dashboard" ? "text-primary" : "text-muted-foreground hover:text-primary"
-          }`}>
+          <Link href="/dashboard" prefetch className={`text-sm font-medium transition-colors ${pathname === "/dashboard" ? "text-primary" : "text-muted-foreground hover:text-primary"
+            }`}>
             Dashboard
           </Link>
           <Link href="/company-overview" className={`text-sm font-medium transition-colors ${pathname === "/company-overview"
-              ? "text-primary"
-              : "text-muted-foreground hover:text-primary"
+            ? "text-primary"
+            : "text-muted-foreground hover:text-primary"
             }`}>
             Company Overview
           </Link>
           <Link href="/reports-history" prefetch className={`text-sm font-medium transition-colors ${pathname === "/reports-history"
-              ? "text-primary"
-              : "text-muted-foreground hover:text-primary"
+            ? "text-primary"
+            : "text-muted-foreground hover:text-primary"
             }`}>
             Reports & History
+          </Link>
+          <Link href="/customers-products" prefetch className={`text-sm font-medium transition-colors ${pathname === "/customers-products"
+            ? "text-primary"
+            : "text-muted-foreground hover:text-primary"
+            }`}>
+            Customers & Products
           </Link>
         </div>
         <div className="flex gap-4 items-center">

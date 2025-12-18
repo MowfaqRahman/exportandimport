@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { Switch } from "@/components/ui/switch";
 import { jsPDF } from 'jspdf';
 import logo from '@/assets/logo.png'; // Import the logo image
 
@@ -18,6 +19,7 @@ interface CustomerStatementTabProps {
   formatDate: (dateString: string) => string;
   selectedYear: string;
   selectedMonth: string;
+  onPaymentStatusChange: (invoiceId: string, newStatus: boolean) => void;
 }
 
 export function CustomerStatementTab({
@@ -29,7 +31,8 @@ export function CustomerStatementTab({
   customerStatements,
   formatDate,
   selectedYear,
-  selectedMonth
+  selectedMonth,
+  onPaymentStatusChange
 }: CustomerStatementTabProps) {
   const { toast } = useToast();
 
@@ -95,17 +98,20 @@ export function CustomerStatementTab({
     doc.setTextColor(0, 0, 0); // Black text for table rows
     yPos += 7; // Adjust for header height
     customerStatements.forEach((statement) => {
+      const received = (statement.type === "Sale" && statement.paid) ? Number(statement.amount) : 0;
       doc.text(formatDate(statement.date), 20, yPos);
       doc.text(statement.description, 60, yPos);
       doc.text(Number(statement.amount).toFixed(2), 140, yPos, { align: "right" });
-      doc.text("0.00", 180, yPos, { align: "right" });
+      doc.text(received.toFixed(2), 180, yPos, { align: "right" });
       yPos += 5;
     });
 
     // Totals
     yPos += 10; // Space after table
     const totalAmount = customerStatements.reduce((sum, statement) => sum + Number(statement.amount || 0), 0);
-    const totalReceived = 0; // Based on the image, received is always 0.00
+    const totalReceived = customerStatements.reduce((sum, statement) => {
+      return sum + ((statement.type === "Sale" && statement.paid) ? Number(statement.amount) : 0);
+    }, 0);
 
     doc.setTextColor(0, 0, 0); // Black text for totals
     doc.setFontSize(10);
@@ -173,20 +179,34 @@ export function CustomerStatementTab({
                 <TableHead>Date</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Invoice</TableHead>
+                <TableHead>Payment Status</TableHead>
                 <TableHead className="text-right">Amount</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loadingCustomerStatements ? (
-                <TableRow><TableCell colSpan={4} className="text-center">Loading statements...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={5} className="text-center">Loading statements...</TableCell></TableRow>
               ) : customerStatements.length === 0 ? (
-                <TableRow><TableCell colSpan={4} className="text-center">No statements found for this customer.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={5} className="text-center">No statements found for this customer.</TableCell></TableRow>
               ) : (
                 customerStatements.map((statement, index) => (
                   <TableRow key={index}>
                     <TableCell>{formatDate(statement.date)}</TableCell>
                     <TableCell>{statement.type}</TableCell>
                     <TableCell>{statement.description}</TableCell>
+                    <TableCell>
+                      {statement.type === "Sale" ? (
+                        <div className="flex items-center space-x-2">
+                          <Switch
+                            checked={statement.paid}
+                            onCheckedChange={(checked) => onPaymentStatusChange(statement.invoice_id, checked)}
+                          />
+                          <span className="text-sm text-gray-500">{statement.paid ? "Paid" : "Unpaid"}</span>
+                        </div>
+                      ) : (
+                        <span className="text-gray-400 text-sm">N/A</span>
+                      )}
+                    </TableCell>
                     <TableCell className="text-right">${Number(statement.amount).toFixed(2)}</TableCell>
                   </TableRow>
                 ))

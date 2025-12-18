@@ -57,6 +57,32 @@ export default function ReportsHistoryPage() {
 
   const { toast } = useToast();
 
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const handlePaymentStatusChange = async (invoiceId: string, newStatus: boolean) => {
+    const supabase = createClient();
+    const { error } = await supabase
+      .from('sales')
+      .update({ paid: newStatus })
+      .eq('id', invoiceId);
+
+    if (error) {
+      console.error("Error updating payment status:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update payment status.",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: `Payment status updated to ${newStatus ? "Paid" : "Unpaid"}.`,
+      });
+      setRefreshTrigger(prev => prev + 1); // Trigger refresh
+    }
+  };
+
+
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -106,7 +132,7 @@ export default function ReportsHistoryPage() {
 
       fetchSales();
     });
-  }, [selectedYear, selectedMonth, selectedUser]);
+  }, [selectedYear, selectedMonth, selectedUser, refreshTrigger]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -436,7 +462,7 @@ export default function ReportsHistoryPage() {
 
       return fetchAggregates();
     });
-  }, [selectedYear, selectedMonth, selectedUser, sales, expenses, purchases]);
+  }, [selectedYear, selectedMonth, selectedUser, sales, expenses, purchases, refreshTrigger]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -544,7 +570,7 @@ export default function ReportsHistoryPage() {
 
       return () => clearTimeout(debounceTimeout);
     });
-  }, [selectedProduct, sales, selectedUser]);
+  }, [selectedProduct, sales, selectedUser, refreshTrigger]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -623,7 +649,7 @@ export default function ReportsHistoryPage() {
 
       setLoadingCustomerStatements(true);
 
-      let salesQuery = supabase.from('sales').select('date, grand_total, customer_name, items, invoice_no, id, paid').eq('customer_name', selectedCustomerName).eq('paid', true);
+      let salesQuery = supabase.from('sales').select('date, grand_total, customer_name, items, invoice_no, id, paid').eq('customer_name', selectedCustomerName);
       let expensesQuery = supabase.from('expenses').select('date, amount, description').eq('customer_id', Number(selectedUser));
 
       // Apply year filter
@@ -661,6 +687,7 @@ export default function ReportsHistoryPage() {
         description: sale.invoice_no || sale.id,
         amount: Number(sale.grand_total || 0),
         invoice_id: sale.id,
+        paid: sale.paid // Ensure paid status is passed here
       })) || [];
 
       const expenseStatements = expensesData.data?.map(expense => ({
@@ -689,7 +716,7 @@ export default function ReportsHistoryPage() {
     };
 
     fetchSessionAndStatements();
-  }, [selectedUser, selectedYear, selectedMonth]);
+  }, [selectedUser, selectedYear, selectedMonth, refreshTrigger]);
 
   return (
     <>
@@ -764,6 +791,7 @@ export default function ReportsHistoryPage() {
                 formatDate={formatDate}
                 selectedYear={selectedYear}
                 selectedMonth={selectedMonth}
+                onPaymentStatusChange={handlePaymentStatusChange}
               />
             </TabsContent>
           </Tabs>
