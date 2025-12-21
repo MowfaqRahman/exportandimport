@@ -23,18 +23,21 @@ export default async function Dashboard() {
     supabase
       .from('sales')
       .select('*')
+      .eq('user_id', user.id)
       .gte('date', firstDayOfMonth.toISOString().split('T')[0])
       .lte('date', lastDayOfMonth.toISOString().split('T')[0])
       .order('date', { ascending: true }),
     supabase
       .from('expenses')
       .select('*')
+      .eq('user_id', user.id)
       .gte('date', firstDayOfMonth.toISOString().split('T')[0])
       .lte('date', lastDayOfMonth.toISOString().split('T')[0])
       .order('date', { ascending: true }),
     supabase
       .from('purchases')
       .select('*')
+      .eq('user_id', user.id)
       .gte('date', firstDayOfMonth.toISOString().split('T')[0])
       .lte('date', lastDayOfMonth.toISOString().split('T')[0])
       .order('date', { ascending: true }),
@@ -44,7 +47,7 @@ export default async function Dashboard() {
     <>
       <DashboardNavbar />
       <main className="w-full min-h-screen bg-background">
-        <DashboardContent 
+        <DashboardContent
           initialSales={salesData.data || []}
           initialExpenses={expensesData.data || []}
           initialPurchases={purchasesData.data || []}

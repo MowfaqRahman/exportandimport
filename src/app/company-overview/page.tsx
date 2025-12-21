@@ -75,7 +75,11 @@ export default function CompanyOverviewPage() {
         setCompanyExpenses(expensesWithUserName as Expense[]);
       }
       if (purchasesData.data) {
-        setCompanyPurchases(purchasesWithUserName as Purchase[]);
+        const finalizedPurchases = purchasesWithUserName.map(p => ({
+          ...p,
+          price: Number(p.price || 0)
+        }));
+        setCompanyPurchases(finalizedPurchases as Purchase[]);
       }
     };
 
@@ -83,10 +87,21 @@ export default function CompanyOverviewPage() {
   }, []);
 
   // Calculate company-wide metrics
+  const now = new Date();
+  const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+  const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+
   const paidCompanySales = companySales.filter(sale => sale.paid === true);
-  const totalCompanySales = paidCompanySales.reduce((sum, sale) => sum + Number(sale.grand_total || 0), 0);
-  const totalCompanyExpenses = companyExpenses.reduce((sum, expense) => sum + Number(expense.amount || 0), 0);
-  const totalCompanyPurchases = companyPurchases.reduce((sum, purchase) => sum + Number(purchase.price || 0), 0);
+
+  const monthlyCompanySales = paidCompanySales.filter(sale => sale.date >= firstDayOfMonth && sale.date <= lastDayOfMonth);
+  const totalCompanySales = monthlyCompanySales.reduce((sum, sale) => sum + Number(sale.grand_total || 0), 0);
+
+  const monthlyCompanyExpenses = companyExpenses.filter(expense => expense.date >= firstDayOfMonth && expense.date <= lastDayOfMonth);
+  const totalCompanyExpenses = monthlyCompanyExpenses.reduce((sum, expense) => sum + Number(expense.amount || 0), 0);
+
+  const monthlyCompanyPurchases = companyPurchases.filter(purchase => purchase.date >= firstDayOfMonth && purchase.date <= lastDayOfMonth);
+  const totalCompanyPurchases = monthlyCompanyPurchases.reduce((sum, purchase) => sum + Number(purchase.price || 0), 0);
+
   const companyProfit = totalCompanySales - totalCompanyExpenses - totalCompanyPurchases;
 
   // Get today's company sales

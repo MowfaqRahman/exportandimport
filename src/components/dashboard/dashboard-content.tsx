@@ -32,9 +32,13 @@ export default function DashboardContent({ initialSales, initialExpenses, initia
       const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
       const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
 
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
       const { data, error } = await supabase
         .from('sales')
         .select('*')
+        .eq('user_id', user.id)
         .gte('date', firstDay)
         .lte('date', lastDay)
         .order('date', { ascending: false });
