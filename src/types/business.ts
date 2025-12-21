@@ -19,6 +19,7 @@ export interface Sale {
   invoice_no?: string;
   paid?: boolean;
   due_date?: string;
+  payment_type?: 'Cash' | 'Online' | 'UPI';
 }
 
 export interface Purchase {

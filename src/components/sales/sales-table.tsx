@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,19 +26,19 @@ import { generateSaleInvoicePDF } from "@/utils/generateSaleInvoicePDF"; // Impo
 interface SalesTableProps {
   initialSales: Sale[];
   onDataChange: (sales: Sale[]) => void;
+  onRefresh: () => void;
 }
 
-export default function SalesTable({ initialSales, onDataChange }: SalesTableProps) {
-  const [sales, setSales] = useState<Sale[]>(initialSales);
-  const [filteredSales, setFilteredSales] = useState<Sale[]>(initialSales);
+export default function SalesTable({ initialSales, onDataChange, onRefresh }: SalesTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editSale, setEditSale] = useState<Sale | null>(null);
   const { toast } = useToast();
   const supabase = createClient();
 
-  useEffect(() => {
-    const filtered = sales.filter(sale =>
+  // Use props directly for filtering
+  const filteredSales = useMemo(() => {
+    return initialSales.filter(sale =>
       sale.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       sale.items?.some(item => item.description?.toLowerCase().includes(searchTerm.toLowerCase()))
     ).sort((a, b) => {
@@ -46,25 +46,7 @@ export default function SalesTable({ initialSales, onDataChange }: SalesTablePro
       const dateB = new Date(b.created_at || b.date);
       return dateB.getTime() - dateA.getTime();
     });
-    setFilteredSales(filtered);
-  }, [searchTerm, sales]);
-
-  const fetchSales = async () => {
-    const { data: userData } = await supabase.auth.getUser();
-    const { data, error } = await supabase
-      .from('sales')
-      .select(`
-        *,
-        customers(email, address)
-      `)
-      .eq('user_id', userData.user?.id)
-      .order('date', { ascending: false });
-
-    if (!error && data) {
-      setSales(data);
-      onDataChange(data);
-    }
-  };
+  }, [searchTerm, initialSales]);
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -85,7 +67,7 @@ export default function SalesTable({ initialSales, onDataChange }: SalesTablePro
         title: "Success",
         description: "Sale deleted successfully",
       });
-      fetchSales();
+      onRefresh();
     }
     setDeleteId(null);
   };
@@ -147,7 +129,7 @@ export default function SalesTable({ initialSales, onDataChange }: SalesTablePro
                   className="pl-8 w-full sm:w-[250px]"
                 />
               </div>
-              <AddSaleDialog onSaleAdded={fetchSales} />
+              <AddSaleDialog onSaleAdded={onRefresh} />
             </div>
           </div>
         </CardHeader>
@@ -160,8 +142,9 @@ export default function SalesTable({ initialSales, onDataChange }: SalesTablePro
                   <TableHead>Customer</TableHead>
                   <TableHead>Items</TableHead>
                   <TableHead className="text-right">Grand Total</TableHead>
-                  <TableHead>Invoice No</TableHead>
+                  <TableHead className="text-right">Invoice No</TableHead>
                   <TableHead>Payment Status</TableHead>
+                  <TableHead>Payment Method</TableHead>
                   <TableHead className="text-right">Invoice</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -169,7 +152,7 @@ export default function SalesTable({ initialSales, onDataChange }: SalesTablePro
               <TableBody>
                 {filteredSales.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                       No sales found. Add your first sale to get started.
                     </TableCell>
                   </TableRow>
@@ -198,6 +181,13 @@ export default function SalesTable({ initialSales, onDataChange }: SalesTablePro
                           <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">Paid</span>
                         ) : (
                           <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-800">Unpaid</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {sale.paid && sale.payment_type ? (
+                          <span className="text-sm font-medium">{sale.payment_type}</span>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
                         )}
                       </TableCell>
                       <TableCell className="text-right">
@@ -256,7 +246,7 @@ export default function SalesTable({ initialSales, onDataChange }: SalesTablePro
           sale={editSale}
           open={!!editSale}
           onClose={() => setEditSale(null)}
-          onSaleUpdated={fetchSales}
+          onSaleUpdated={onRefresh}
         />
       )}
     </>

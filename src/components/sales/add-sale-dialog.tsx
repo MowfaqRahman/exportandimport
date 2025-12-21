@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Plus, Trash2 } from "lucide-react";
 import { createClient } from "../../../supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -36,6 +37,7 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
   const [customers, setCustomers] = useState<string[]>([]); // New state for customer names
   const [selectedCustomerName, setSelectedCustomerName] = useState<string>(''); // New state for selected customer
   const [isPaid, setIsPaid] = useState<boolean>(false); // New state for payment status
+  const [paymentType, setPaymentType] = useState<'Cash' | 'Online' | 'UPI'>('Cash');
   const [dueDate, setDueDate] = useState<string | null>(null); // New state for due date
   const [customerEmail, setCustomerEmail] = useState<string | null>(null); // New state for customer email
   const [customerAddress, setCustomerAddress] = useState<string | null>(null); // New state for customer address
@@ -133,7 +135,7 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
           .select('phone_number, email, address')
           .eq('customer_name', selectedCustomerName)
           .single();
-        
+
         if (error) {
           console.error("Error fetching customer details:", error);
           setCustomerEmail(null);
@@ -197,11 +199,12 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
       customer_phone_footer: customerPhone || '', // Use customerPhone state
       invoice_no: invoiceNo || '',
       paid: isPaid,
+      payment_type: isPaid ? paymentType : null,
       due_date: !isPaid ? dueDate : null,
     };
 
     const { data: userData } = await supabase.auth.getUser();
-    
+
     const { error } = await supabase
       .from('sales')
       .insert([{ ...data, user_id: userData.user?.id }]);
@@ -433,7 +436,7 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="paid_status">Payment Status</Label>
-              <Button 
+              <Button
                 type="button"
                 variant={isPaid ? "default" : "outline"}
                 onClick={() => setIsPaid(!isPaid)}
@@ -442,18 +445,32 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
                 {isPaid ? "Paid" : "Not Paid"}
               </Button>
             </div>
-            {!isPaid && (
-              <div className="space-y-2">
-                <Label htmlFor="due_date">Due Date</Label>
-                <Input
-                  id="due_date"
-                  name="due_date"
-                  type="date"
-                  value={dueDate || ''}
-                  onChange={(e) => setDueDate(e.target.value)}
-                />
-              </div>
-            )}
+
+            <div className="space-y-2">
+              {isPaid ? (
+                <div className="space-y-2">
+                  <Label>Payment Method</Label>
+                  <Tabs value={paymentType} onValueChange={(v) => setPaymentType(v as 'Cash' | 'Online' | 'UPI')} className="w-full">
+                    <TabsList className="grid w-full grid-cols-3">
+                      <TabsTrigger value="Cash">Cash</TabsTrigger>
+                      <TabsTrigger value="Online">Online</TabsTrigger>
+                      <TabsTrigger value="UPI">UPI</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label htmlFor="due_date">Due Date</Label>
+                  <Input
+                    id="due_date"
+                    name="due_date"
+                    type="date"
+                    value={dueDate || ''}
+                    onChange={(e) => setDueDate(e.target.value)}
+                  />
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -476,6 +493,6 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
           </div>
         </form>
       </DialogContent>
-    </Dialog>
+    </Dialog >
   );
 }

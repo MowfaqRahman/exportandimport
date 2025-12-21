@@ -10,6 +10,8 @@ import SalesTable from "../sales/sales-table";
 import ExpensesTable from "../expenses/expenses-table";
 import PurchaseTable from "../purchase/purchase-table";
 import { Sale, Expense, Purchase } from "@/types/business";
+import { createClient } from "../../../supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 interface DashboardContentProps {
   initialSales: Sale[];
@@ -21,15 +23,45 @@ export default function DashboardContent({ initialSales, initialExpenses, initia
   const [sales, setSales] = useState<Sale[]>(initialSales);
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
   const [purchases, setPurchases] = useState<Purchase[]>(initialPurchases);
+  const supabase = createClient();
+  const { toast } = useToast();
+
+  const refreshSales = async () => {
+    try {
+      const now = new Date();
+      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+      const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+
+      const { data, error } = await supabase
+        .from('sales')
+        .select('*')
+        .gte('date', firstDay)
+        .lte('date', lastDay)
+        .order('date', { ascending: false });
+
+      if (error) throw error;
+
+      if (data) {
+        setSales(data);
+      }
+    } catch (error) {
+      console.error("Error refreshing sales:", error);
+      toast({
+        title: "Error",
+        description: "Failed to refresh sales data",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Filter for paid sales
   const paidSales = sales.filter(sale => sale.paid === true);
 
   // Calculate metrics
   const totalSales = paidSales.reduce((sum, sale) => sum + Number(sale.grand_total || 0), 0);
-    const totalExpenses = expenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
-    const totalPurchases = purchases.reduce((sum, purchase) => sum + Number(purchase.price), 0);
-    const profit = totalSales - totalExpenses - totalPurchases;
+  const totalExpenses = expenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
+  const totalPurchases = purchases.reduce((sum, purchase) => sum + Number(purchase.price), 0);
+  const profit = totalSales - totalExpenses - totalPurchases;
 
   // Get today's sales
   const today = new Date().toISOString().split('T')[0];
@@ -140,9 +172,10 @@ export default function DashboardContent({ initialSales, initialExpenses, initia
           <TabsTrigger value="expenses">Expenses</TabsTrigger>
         </TabsList>
         <TabsContent value="sales" className="space-y-4">
-          <SalesTable 
+          <SalesTable
             initialSales={sales}
             onDataChange={setSales}
+            onRefresh={refreshSales}
           />
         </TabsContent>
         <TabsContent value="purchase" className="space-y-4">
@@ -152,7 +185,7 @@ export default function DashboardContent({ initialSales, initialExpenses, initia
           />
         </TabsContent>
         <TabsContent value="expenses" className="space-y-4">
-          <ExpensesTable 
+          <ExpensesTable
             initialExpenses={expenses}
             onDataChange={setExpenses}
           />
