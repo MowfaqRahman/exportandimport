@@ -22,7 +22,7 @@ export default function CompanyOverviewPage() {
 
   useEffect(() => {
     const fetchCompanyData = async () => {
-      
+
       const [salesData, expensesData, purchasesData, usersData] = await Promise.all([
         supabase
           .from('sales')
@@ -149,25 +149,25 @@ export default function CompanyOverviewPage() {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <MetricCard
               title="Today's Company Sales"
-              value={`$${todayCompanySales.toFixed(2)}`}
+              value={`QAR ${todayCompanySales.toFixed(2)}`}
               icon={DollarSign}
               description="All sales made today across the company"
             />
             <MetricCard
               title="Monthly Company Sales"
-              value={`$${totalCompanySales.toFixed(2)}`}
+              value={`QAR ${totalCompanySales.toFixed(2)}`}
               icon={TrendingUp}
               description="Total sales this month across the company"
             />
             <MetricCard
               title="Monthly Company Expenses"
-              value={`$${totalCompanyExpenses.toFixed(2)}`}
+              value={`QAR ${totalCompanyExpenses.toFixed(2)}`}
               icon={TrendingDown}
               description="Total expenses this month across the company"
             />
             <MetricCard
               title="Monthly Company Purchases"
-              value={`$${totalCompanyPurchases.toFixed(2)}`}
+              value={`QAR ${totalCompanyPurchases.toFixed(2)}`}
               icon={TrendingDown}
               description="Total purchases this month across the company"
             />
@@ -176,7 +176,7 @@ export default function CompanyOverviewPage() {
             <MetricCard
               className="lg:col-start-2 lg:col-span-2"
               title="Company Net Profit"
-              value={`$${companyProfit.toFixed(2)}`}
+              value={`QAR ${companyProfit.toFixed(2)}`}
               icon={Wallet}
               trend={{
                 value: companyProfit >= 0 ? `+${companyProfit.toFixed(2)}` : companyProfit.toFixed(2),

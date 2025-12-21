@@ -79,7 +79,7 @@ export default function AllExpensesTable({ initialExpenses }: AllExpensesTablePr
                     </TableCell>
                     <TableCell className="max-w-[200px] truncate">{expense.description || '-'}</TableCell>
                     <TableCell className="font-medium">
-                      ${Number(expense.amount || 0).toFixed(2)}
+                      QAR {Number(expense.amount || 0).toFixed(2)}
                     </TableCell>
                     <TableCell>{expense.user_name || 'N/A'}</TableCell>
                   </TableRow>

@@ -92,8 +92,8 @@ export const generateSaleInvoicePDF = ({
   doc.text("No.", 20, yPos);
   doc.text("Name of Item", 40, yPos);
   doc.text("Quantity", 110, yPos, { align: "right" });
-  doc.text("Amount ($)", 145, yPos, { align: "right" });
-  doc.text("Sum ($)", 180, yPos, { align: "right" });
+  doc.text("Amount (QAR)", 145, yPos, { align: "right" });
+  doc.text("Sum (QAR)", 180, yPos, { align: "right" });
 
   // Table Rows
   doc.setTextColor(0, 0, 0);
@@ -111,7 +111,7 @@ export const generateSaleInvoicePDF = ({
   yPos += 10;
   doc.setFontSize(12);
   doc.text("GRAND TOTAL:", 140, yPos, { align: "right" });
-  doc.text(`$${grand_total.toFixed(2)}`, 180, yPos, { align: "right" });
+  doc.text(`QAR ${grand_total.toFixed(2)}`, 180, yPos, { align: "right" });
 
   // Terms and Conditions / Payment Status
   yPos = doc.internal.pageSize.height - 50; // Position above the very bottom

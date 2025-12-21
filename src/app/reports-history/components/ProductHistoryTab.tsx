@@ -91,7 +91,7 @@ export function ProductHistoryTab({
         </div>
         <div className="rounded-lg border p-4 shadow-sm">
           <p className="text-sm font-medium">Total Revenue</p>
-          <p className="text-2xl font-bold">{loadingProductStats ? "..." : `$${Number(productStats?.totalRevenue || 0).toFixed(2)}`}</p>
+          <p className="text-2xl font-bold">{loadingProductStats ? "..." : `QAR ${Number(productStats?.totalRevenue || 0).toFixed(2)}`}</p>
         </div>
       </div>
 
@@ -144,8 +144,8 @@ export function ProductHistoryTab({
                 <TableCell>{formatDate(sale.date)}</TableCell>
                 <TableCell>{sale.customer_name}</TableCell>
                 <TableCell>{sale.quantity}</TableCell>
-                <TableCell>${Number(sale.price).toFixed(2)}</TableCell>
-                <TableCell>${Number(sale.total).toFixed(2)}</TableCell>
+                <TableCell>QAR {Number(sale.price).toFixed(2)}</TableCell>
+                <TableCell>QAR {Number(sale.total).toFixed(2)}</TableCell>
                 <TableCell>
                   {sale.paid ? (
                     <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">Paid</span>

@@ -138,7 +138,7 @@ export default function ExpensesTable({ initialExpenses, onDataChange }: Expense
                         </span>
                       </TableCell>
                       <TableCell className="max-w-[200px] truncate">{expense.description || '-'}</TableCell>
-                      <TableCell className="text-right font-medium">${Number(expense.amount).toFixed(2)}</TableCell>
+                      <TableCell className="text-right font-medium">QAR {Number(expense.amount).toFixed(2)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button

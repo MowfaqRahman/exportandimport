@@ -89,7 +89,7 @@ export function AllPurchasesTable({ initialPurchases }: AllPurchasesTableProps) 
                     <TableCell className="max-w-[200px] truncate">{purchase.product_name}</TableCell>
                     <TableCell className="max-w-[200px] truncate">{purchase.company_name}</TableCell>
                     <TableCell>{purchase.unit}</TableCell>
-                    <TableCell className="font-medium">${purchase.price ? purchase.price.toFixed(2) : '0.00'}</TableCell>
+                    <TableCell className="font-medium">QAR {purchase.price ? purchase.price.toFixed(2) : '0.00'}</TableCell>
                   </TableRow>
                 ))
               )}

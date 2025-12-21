@@ -122,25 +122,25 @@ export default function DashboardContent({ initialSales, initialExpenses, initia
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           title="Today's Sales"
-          value={`$${todaySales.toFixed(2)}`}
+          value={`QAR ${todaySales.toFixed(2)}`}
           icon={DollarSign}
           description="Sales made today"
         />
         <MetricCard
           title="Monthly Sales"
-          value={`$${totalSales.toFixed(2)}`}
+          value={`QAR ${totalSales.toFixed(2)}`}
           icon={TrendingUp}
           description="Total sales this month"
         />
         <MetricCard
           title="Monthly Expenses"
-          value={`$${totalExpenses.toFixed(2)}`}
+          value={`QAR ${totalExpenses.toFixed(2)}`}
           icon={TrendingDown}
           description="Total expenses this month"
         />
         <MetricCard
           title="Monthly Purchases"
-          value={`$${totalPurchases.toFixed(2)}`}
+          value={`QAR ${totalPurchases.toFixed(2)}`}
           icon={TrendingDown}
           description="Total purchases this month"
         />
@@ -149,7 +149,7 @@ export default function DashboardContent({ initialSales, initialExpenses, initia
         <MetricCard
           className="lg:col-start-2 lg:col-span-2"
           title="Net Profit"
-          value={`$${profit.toFixed(2)}`}
+          value={`QAR ${profit.toFixed(2)}`}
           icon={Wallet}
           trend={{
             value: profit >= 0 ? `+${profit.toFixed(2)}` : profit.toFixed(2),

@@ -82,6 +82,29 @@ export default function ReportsHistoryPage() {
     }
   };
 
+  const handlePaymentMethodChange = async (invoiceId: string, method: string) => {
+    const supabase = createClient();
+    const { error } = await supabase
+      .from('sales')
+      .update({ payment_type: method })
+      .eq('id', invoiceId);
+
+    if (error) {
+      console.error("Error updating payment method:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update payment method.",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: `Payment method updated to ${method}.`,
+      });
+      setRefreshTrigger(prev => prev + 1); // Trigger refresh
+    }
+  };
+
 
   useEffect(() => {
     const supabase = createClient();
@@ -649,8 +672,8 @@ export default function ReportsHistoryPage() {
 
       setLoadingCustomerStatements(true);
 
-      let salesQuery = supabase.from('sales').select('date, grand_total, customer_name, items, invoice_no, id, paid').eq('customer_name', selectedCustomerName);
-      let expensesQuery = supabase.from('expenses').select('date, amount, description').eq('customer_id', Number(selectedUser));
+      let salesQuery = supabase.from('sales').select('date, grand_total, customer_name, items, invoice_no, id, paid, payment_type, due_date, created_at').eq('customer_name', selectedCustomerName);
+      let expensesQuery = supabase.from('expenses').select('date, amount, description, created_at').eq('customer_id', Number(selectedUser));
 
       // Apply year filter
       if (selectedYear !== "all") {
@@ -687,7 +710,10 @@ export default function ReportsHistoryPage() {
         description: sale.invoice_no || sale.id,
         amount: Number(sale.grand_total || 0),
         invoice_id: sale.id,
-        paid: sale.paid // Ensure paid status is passed here
+        paid: sale.paid, // Ensure paid status is passed here
+        payment_type: sale.payment_type,
+        due_date: sale.due_date,
+        created_at: sale.created_at
       })) || [];
 
       const expenseStatements = expensesData.data?.map(expense => ({
@@ -695,9 +721,17 @@ export default function ReportsHistoryPage() {
         type: "Expense",
         description: expense.description || "N/A",
         amount: -expense.amount, // Represent expenses as negative amounts
+        created_at: expense.created_at
       })) || [];
 
-      const combinedStatements = [...salesStatements, ...expenseStatements].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      const combinedStatements = [...salesStatements, ...expenseStatements].sort((a, b) => {
+        const dateA = new Date(a.date).getTime();
+        const dateB = new Date(b.date).getTime();
+        if (dateB !== dateA) return dateB - dateA;
+
+        // If same date, sort by created_at time
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
 
       setCustomerStatements(combinedStatements);
       setLoadingCustomerStatements(false);
@@ -792,6 +826,7 @@ export default function ReportsHistoryPage() {
                 selectedYear={selectedYear}
                 selectedMonth={selectedMonth}
                 onPaymentStatusChange={handlePaymentStatusChange}
+                onPaymentMethodChange={handlePaymentMethodChange}
               />
             </TabsContent>
           </Tabs>

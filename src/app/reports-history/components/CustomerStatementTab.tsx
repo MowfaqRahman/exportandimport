@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { jsPDF } from 'jspdf';
 import logo from '@/assets/logo.png'; // Import the logo image
 
@@ -20,6 +21,7 @@ interface CustomerStatementTabProps {
   selectedYear: string;
   selectedMonth: string;
   onPaymentStatusChange: (invoiceId: string, newStatus: boolean) => void;
+  onPaymentMethodChange?: (invoiceId: string, method: string) => void;
 }
 
 export function CustomerStatementTab({
@@ -32,7 +34,8 @@ export function CustomerStatementTab({
   formatDate,
   selectedYear,
   selectedMonth,
-  onPaymentStatusChange
+  onPaymentStatusChange,
+  onPaymentMethodChange
 }: CustomerStatementTabProps) {
   const { toast } = useToast();
 
@@ -91,18 +94,21 @@ export function CustomerStatementTab({
     doc.setFontSize(10);
     doc.text("DATE", 20, yPos);
     doc.text("ACTIVITY", 60, yPos);
-    doc.text("AMOUNT", 140, yPos, { align: "right" });
-    doc.text("RECEIVED", 180, yPos, { align: "right" });
+    doc.text("AMOUNT", 130, yPos, { align: "right" });
+    doc.text("METHOD", 165, yPos, { align: "right" });
+    doc.text("RECEIVED", 195, yPos, { align: "right" });
 
     // Table Rows
     doc.setTextColor(0, 0, 0); // Black text for table rows
     yPos += 7; // Adjust for header height
     customerStatements.forEach((statement) => {
       const received = (statement.type === "Sale" && statement.paid) ? Number(statement.amount) : 0;
+      const method = (statement.type === "Sale" && statement.paid) ? (statement.payment_type || "Cash") : "-";
       doc.text(formatDate(statement.date), 20, yPos);
       doc.text(statement.description, 60, yPos);
-      doc.text(Number(statement.amount).toFixed(2), 140, yPos, { align: "right" });
-      doc.text(received.toFixed(2), 180, yPos, { align: "right" });
+      doc.text(Number(statement.amount).toFixed(2), 130, yPos, { align: "right" });
+      doc.text(method, 165, yPos, { align: "right" });
+      doc.text(received.toFixed(2), 195, yPos, { align: "right" });
       yPos += 5;
     });
 
@@ -115,14 +121,14 @@ export function CustomerStatementTab({
 
     doc.setTextColor(0, 0, 0); // Black text for totals
     doc.setFontSize(10);
-    doc.text("TOTAL", 140, yPos, { align: "right" });
-    doc.text("TOTAL", 180, yPos, { align: "right" });
+    doc.text("TOTAL", 130, yPos, { align: "right" });
+    doc.text("TOTAL", 195, yPos, { align: "right" });
     yPos += 5;
-    doc.text("AMOUNT", 140, yPos, { align: "right" });
-    doc.text("RECEIVED", 180, yPos, { align: "right" });
+    doc.text("AMOUNT", 130, yPos, { align: "right" });
+    doc.text("RECEIVED", 195, yPos, { align: "right" });
     yPos += 5;
-    doc.text(`QR${totalAmount.toFixed(2)}`, 140, yPos, { align: "right" });
-    doc.text(`QR${totalReceived.toFixed(2)}`, 180, yPos, { align: "right" });
+    doc.text(`QAR ${totalAmount.toFixed(2)}`, 130, yPos, { align: "right" });
+    doc.text(`QAR ${totalReceived.toFixed(2)}`, 195, yPos, { align: "right" });
 
     // Terms Footer
     // Calculate yPos for the very bottom
@@ -180,14 +186,15 @@ export function CustomerStatementTab({
                 <TableHead>Type</TableHead>
                 <TableHead>Invoice</TableHead>
                 <TableHead>Payment Status</TableHead>
+                <TableHead>Payment Method</TableHead>
                 <TableHead className="text-right">Amount</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loadingCustomerStatements ? (
-                <TableRow><TableCell colSpan={5} className="text-center">Loading statements...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} className="text-center">Loading statements...</TableCell></TableRow>
               ) : customerStatements.length === 0 ? (
-                <TableRow><TableCell colSpan={5} className="text-center">No statements found for this customer.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} className="text-center">No statements found for this customer.</TableCell></TableRow>
               ) : (
                 customerStatements.map((statement, index) => (
                   <TableRow key={index}>
@@ -207,7 +214,26 @@ export function CustomerStatementTab({
                         <span className="text-gray-400 text-sm">N/A</span>
                       )}
                     </TableCell>
-                    <TableCell className="text-right">${Number(statement.amount).toFixed(2)}</TableCell>
+                    <TableCell>
+                      {statement.type === "Sale" ? (
+                        statement.paid ? (
+                          <Tabs defaultValue={statement.payment_type || "Cash"} onValueChange={(val) => onPaymentMethodChange?.(statement.invoice_id, val)}>
+                            <TabsList className="h-8">
+                              <TabsTrigger value="Cash" className="text-xs px-2 h-6">Cash</TabsTrigger>
+                              <TabsTrigger value="Online" className="text-xs px-2 h-6">Online</TabsTrigger>
+                              <TabsTrigger value="UPI" className="text-xs px-2 h-6">UPI</TabsTrigger>
+                            </TabsList>
+                          </Tabs>
+                        ) : (
+                          <span className="text-sm font-medium text-amber-600">
+                            Due: {statement.due_date ? formatDate(statement.due_date) : "N/A"}
+                          </span>
+                        )
+                      ) : (
+                        <span className="text-gray-400 text-sm">N/A</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">QAR {Number(statement.amount).toFixed(2)}</TableCell>
                   </TableRow>
                 ))
               )}

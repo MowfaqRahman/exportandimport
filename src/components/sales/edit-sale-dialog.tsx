@@ -301,8 +301,8 @@ export default function EditSaleDialog({ sale, open, onClose, onSaleUpdated }: E
                   <TableHead className="w-[50px]">No.</TableHead>
                   <TableHead>Name of Item</TableHead>
                   <TableHead className="w-[100px]">Quantity</TableHead>
-                  <TableHead className="text-right">Amount ($)</TableHead>
-                  <TableHead className="text-right">Sum ($)</TableHead>
+                  <TableHead className="text-right">Amount (QAR)</TableHead>
+                  <TableHead className="text-right">Sum (QAR)</TableHead>
                   <TableHead className="text-center">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -373,7 +373,7 @@ export default function EditSaleDialog({ sale, open, onClose, onSaleUpdated }: E
               <TableFooter>
                 <TableRow>
                   <TableCell colSpan={5} className="text-right text-base font-semibold">Grand Total</TableCell>
-                  <TableCell className="text-right text-base font-semibold">${calculateGrandTotal().toFixed(2)}</TableCell>
+                  <TableCell className="text-right text-base font-semibold">QAR {calculateGrandTotal().toFixed(2)}</TableCell>
                 </TableRow>
               </TableFooter>
             </Table>

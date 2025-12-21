@@ -99,13 +99,14 @@ export default function AllSalesTable({ initialSales }: AllSalesTableProps) {
                   <TableHead>Salesman Name</TableHead>
                   <TableHead>Invoice No</TableHead>
                   <TableHead>Payment Status</TableHead>
+                  <TableHead>Payment Method</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredSales.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                       No sales found for all users.
                     </TableCell>
                   </TableRow>
@@ -124,7 +125,7 @@ export default function AllSalesTable({ initialSales }: AllSalesTableProps) {
                         )}
                       </TableCell>
                       <TableCell className="font-medium">
-                        ${Number(sale.grand_total || 0).toFixed(2)}
+                        QAR {Number(sale.grand_total || 0).toFixed(2)}
                       </TableCell>
                       <TableCell>{sale.salesman_name_footer || 'N/A'}</TableCell>
                       <TableCell>{sale.invoice_no || 'N/A'}</TableCell>
@@ -134,6 +135,9 @@ export default function AllSalesTable({ initialSales }: AllSalesTableProps) {
                         ) : (
                           <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-800">Unpaid</span>
                         )}
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm">{sale.paid ? (sale.payment_type || 'Cash') : '-'}</span>
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
@@ -160,7 +164,7 @@ export default function AllSalesTable({ initialSales }: AllSalesTableProps) {
             </Table>
           </div>
         </CardContent>
-      </Card>
+      </Card >
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>

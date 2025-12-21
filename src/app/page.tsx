@@ -12,7 +12,7 @@ export default async function Home() {
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
       <Navbar />
       <Hero />
-      
+
       {/* Features Section */}
       <section className="py-24 bg-white">
         <div className="container mx-auto px-4">
@@ -20,7 +20,7 @@ export default async function Home() {
             <h2 className="text-3xl font-bold mb-4">Why Choose Us</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">We're revolutionizing the way teams work with cutting-edge technology and unparalleled service.</p>
           </div>
-          
+
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {[
               { icon: <Zap className="w-6 h-6" />, title: "Lightning Fast", description: "10x faster than traditional solutions" },
@@ -43,7 +43,7 @@ export default async function Home() {
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-3 gap-8 text-center">
             <div>
-              <div className="text-4xl font-bold mb-2">$1M+</div>
+              <div className="text-4xl font-bold mb-2">QAR 1M+</div>
               <div className="text-blue-100">Funding Raised</div>
             </div>
             <div>

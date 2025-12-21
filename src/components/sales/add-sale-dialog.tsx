@@ -356,8 +356,8 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
                   <TableHead className="w-[50px]">No.</TableHead>
                   <TableHead>Name of Item</TableHead>
                   <TableHead className="w-[100px]">Quantity</TableHead>
-                  <TableHead className="text-right">Amount ($)</TableHead>
-                  <TableHead className="text-right">Sum ($)</TableHead>
+                  <TableHead className="text-right">Amount (QAR)</TableHead>
+                  <TableHead className="text-right">Sum (QAR)</TableHead>
                   <TableHead className="text-center">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -427,7 +427,7 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
               <TableFooter>
                 <TableRow>
                   <TableCell colSpan={5} className="text-right text-base font-semibold">Grand Total</TableCell> {/* Changed colSpan from 4 to 5 */}
-                  <TableCell className="text-right text-base font-semibold">${calculateGrandTotal().toFixed(2)}</TableCell>
+                  <TableCell className="text-right text-base font-semibold">QAR {calculateGrandTotal().toFixed(2)}</TableCell>
                 </TableRow>
               </TableFooter>
             </Table>

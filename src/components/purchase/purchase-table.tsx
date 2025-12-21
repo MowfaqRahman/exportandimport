@@ -62,7 +62,7 @@ export default function PurchaseTable({ initialPurchases, onDataChange }: Purcha
                 <TableCell>{purchase.product_name}</TableCell>
                 <TableCell>{purchase.company_name}</TableCell>
                 <TableCell>{purchase.unit}</TableCell>
-                <TableCell className="text-right">${purchase.price.toFixed(2)}</TableCell>
+                <TableCell className="text-right">QAR {purchase.price.toFixed(2)}</TableCell>
               </TableRow>
             ))}
           </TableBody>

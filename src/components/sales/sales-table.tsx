@@ -171,7 +171,7 @@ export default function SalesTable({ initialSales, onDataChange, onRefresh }: Sa
                         )}
                       </TableCell>
                       <TableCell className="text-right font-medium">
-                        ${Number(sale.grand_total || 0).toFixed(2)}
+                        QAR {Number(sale.grand_total || 0).toFixed(2)}
                       </TableCell>
                       <TableCell className="text-right">
                         {sale.invoice_no}
