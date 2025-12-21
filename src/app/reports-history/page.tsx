@@ -756,8 +756,10 @@ export default function ReportsHistoryPage() {
     <>
       <DashboardNavbar />
       <main className="w-full min-h-screen bg-background">
-        <div className="container mx-auto py-8">
-          <h1 className="text-3xl font-bold mb-6">Reports & History</h1>
+        <div className="container mx-auto px-4 py-8 space-y-8">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Reports & History</h1>
+          </div>
 
           <ReportsFilter
             selectedYear={selectedYear}

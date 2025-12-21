@@ -11,7 +11,6 @@ import { Pencil, Trash2 } from "lucide-react";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger, AlertDialogFooter, AlertDialogAction, AlertDialogCancel, AlertDialogDescription } from "@/components/ui/alert-dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { createClient } from "../../../supabase/client";
-import AddSaleDialog from "@/components/sales/add-sale-dialog"; // Import AddSaleDialog
 
 interface AllSalesTableProps {
   initialSales: Sale[];
@@ -84,7 +83,6 @@ export default function AllSalesTable({ initialSales }: AllSalesTableProps) {
                 className="pl-8 w-full"
               />
             </div>
-            <AddSaleDialog onSaleAdded={() => { /* TODO: Re-fetch sales after adding */ }} />
           </div>
         </CardHeader>
         <CardContent>

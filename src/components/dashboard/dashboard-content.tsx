@@ -151,10 +151,18 @@ export default function DashboardContent({ initialSales, initialExpenses, initia
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard
-          className="lg:col-start-2 lg:col-span-2"
+          className={
+            profit >= 0
+              ? "lg:col-start-2 lg:col-span-2 border-green-500/50 bg-green-50/30 dark:bg-green-950/10"
+              : "lg:col-start-2 lg:col-span-2 border-red-500/50 bg-red-50/30 dark:bg-red-950/10"
+          }
           title="Net Profit"
           value={`QAR ${profit.toFixed(2)}`}
           icon={Wallet}
+          badge={{
+            text: profit >= 0 ? "Profit" : "Loss",
+            variant: profit >= 0 ? "success" : "destructive"
+          }}
           trend={{
             value: profit >= 0 ? `+${profit.toFixed(2)}` : profit.toFixed(2),
             isPositive: profit >= 0,

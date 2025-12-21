@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { createClient } from '../../supabase/client'
 import {
   DropdownMenu,
@@ -50,8 +51,8 @@ const DashboardNavbar: React.FC<DashboardNavbarProps> = ({ activeTab, setActiveT
     <nav className="w-full border-b border-gray-200 bg-white py-4">
       <div className="container mx-auto px-4 flex justify-between items-center">
         <div className="flex items-center gap-4">
-          <Link href="/" prefetch className="text-xl font-bold">
-            Logo
+          <Link href="/" prefetch className="flex items-center gap-2">
+            <Image src="/logo.png" alt="Logo" width={32} height={32} className="h-8 w-auto" />
           </Link>
           <Link href="/dashboard" prefetch className={`text-sm font-medium transition-colors ${pathname === "/dashboard" ? "text-primary" : "text-muted-foreground hover:text-primary"
             }`}>

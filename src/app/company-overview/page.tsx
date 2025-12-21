@@ -154,10 +154,12 @@ export default function CompanyOverviewPage() {
       <DashboardNavbar activeTab={activeTab} setActiveTab={setActiveTab} />
       <main className="w-full min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8 space-y-8">
-          <h1 className="text-3xl font-bold tracking-tight">Company Overview</h1>
-          <p className="text-muted-foreground mt-2 mb-4">
-            Combined financial performance across all users
-          </p>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Company Overview</h1>
+            <p className="text-muted-foreground mt-2">
+              Combined financial performance across all users
+            </p>
+          </div>
 
           {/* Tabs component moved to DashboardNavbar */}
 
@@ -189,10 +191,18 @@ export default function CompanyOverviewPage() {
           </div>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <MetricCard
-              className="lg:col-start-2 lg:col-span-2"
+              className={
+                companyProfit >= 0
+                  ? "lg:col-start-2 lg:col-span-2 border-green-500/50 bg-green-50/30 dark:bg-green-950/10"
+                  : "lg:col-start-2 lg:col-span-2 border-red-500/50 bg-red-50/30 dark:bg-red-950/10"
+              }
               title="Company Net Profit"
               value={`QAR ${companyProfit.toFixed(2)}`}
               icon={Wallet}
+              badge={{
+                text: companyProfit >= 0 ? "Profit" : "Loss",
+                variant: companyProfit >= 0 ? "success" : "destructive"
+              }}
               trend={{
                 value: companyProfit >= 0 ? `+${companyProfit.toFixed(2)}` : companyProfit.toFixed(2),
                 isPositive: companyProfit >= 0,
