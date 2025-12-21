@@ -77,9 +77,9 @@ BEGIN
   UPDATE public.users
   SET
     email = NEW.email,
-    name = NEW.raw_user_meta_data->>'name',
-    full_name = NEW.raw_user_meta_data->>'full_name',
-    avatar_url = NEW.raw_user_meta_data->>'avatar_url',
+    name = COALESCE(public.users.name, NEW.raw_user_meta_data->>'name'),
+    full_name = COALESCE(public.users.full_name, NEW.raw_user_meta_data->>'full_name'),
+    avatar_url = COALESCE(public.users.avatar_url, NEW.raw_user_meta_data->>'avatar_url'),
     updated_at = NEW.updated_at
   WHERE user_id = NEW.id::text;
   RETURN NEW;

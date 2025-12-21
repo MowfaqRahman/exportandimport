@@ -92,7 +92,7 @@ const DashboardNavbar: React.FC<DashboardNavbarProps> = ({ activeTab, setActiveT
               )}
               <DropdownMenuItem onClick={async () => {
                 await supabase.auth.signOut()
-                router.refresh()
+                router.push('/sign-in')
               }}>
                 Sign out
               </DropdownMenuItem>
