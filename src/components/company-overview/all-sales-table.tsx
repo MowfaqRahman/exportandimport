@@ -11,9 +11,11 @@ import { Pencil, Trash2 } from "lucide-react";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger, AlertDialogFooter, AlertDialogAction, AlertDialogCancel, AlertDialogDescription } from "@/components/ui/alert-dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { createClient } from "../../../supabase/client";
+import EditSaleDialog from "../sales/edit-sale-dialog";
 
 interface AllSalesTableProps {
   initialSales: Sale[];
+  onRefresh?: () => void;
 }
 
 const formatDate = (dateString: string) => {
@@ -24,9 +26,10 @@ const formatDate = (dateString: string) => {
   return `${day}/${month}/${year}`;
 };
 
-export default function AllSalesTable({ initialSales }: AllSalesTableProps) {
+export default function AllSalesTable({ initialSales, onRefresh }: AllSalesTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [editSale, setEditSale] = useState<Sale | null>(null);
   const { toast } = useToast();
   const [supabase] = useState(createClient());
 
@@ -62,8 +65,7 @@ export default function AllSalesTable({ initialSales }: AllSalesTableProps) {
         title: "Success",
         description: "Sale deleted successfully",
       });
-      // In a real application, you would re-fetch sales or update the state here.
-      // For this example, we'll just clear the deleteId.
+      if (onRefresh) onRefresh();
     }
     setDeleteId(null);
   };
@@ -142,7 +144,7 @@ export default function AllSalesTable({ initialSales }: AllSalesTableProps) {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => { /* TODO: Implement edit functionality */ }}
+                            onClick={() => setEditSale(sale)}
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
@@ -177,6 +179,18 @@ export default function AllSalesTable({ initialSales }: AllSalesTableProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {editSale && (
+        <EditSaleDialog
+          sale={editSale}
+          open={!!editSale}
+          onClose={() => setEditSale(null)}
+          onSaleUpdated={() => {
+            if (onRefresh) onRefresh();
+            setEditSale(null);
+          }}
+        />
+      )}
     </>
   );
 }

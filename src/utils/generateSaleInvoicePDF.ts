@@ -1,5 +1,6 @@
 import { jsPDF } from 'jspdf';
-import logo from '@/assets/logo.png'; // Assuming logo is accessible here
+import logo from '@/assets/logowithqt.png';
+import headerBg from '@/assets/header_bg_grid.png';
 
 interface InvoiceItem {
   no: number;
@@ -24,6 +25,7 @@ interface GenerateSaleInvoicePDFProps {
   company_email: string;
   isPaid: boolean;
   dueDate: string | null;
+  disclaimer?: string;
 }
 
 export const generateSaleInvoicePDF = ({
@@ -42,32 +44,48 @@ export const generateSaleInvoicePDF = ({
   company_email,
   isPaid,
   dueDate,
+  disclaimer,
 }: GenerateSaleInvoicePDFProps) => {
   const doc = new jsPDF();
 
   const primaryColor = "#6AA84F"; // Green for "Statement" and lines
   const secondaryColor = "#D9EAD3"; // Light green for table headers
 
-  // Company Header
+  // Company Header Background
+  try {
+    doc.addImage(headerBg.src, "PNG", 0, 0, 210, 50); 
+  } catch (e) {
+    console.error("Failed to load header background image", e);
+    // Fallback if image fails to load
+    doc.setFillColor(15, 30, 15); // Dark forest green fallback
+    doc.rect(0, 0, 210, 50, 'F');
+  }
+
+  // Company Header Text
+  doc.setTextColor(255, 255, 255); // White text for visibility on dark background
   doc.setFontSize(10);
   doc.text(company_name, 20, 20);
   doc.text(`Tel: ${company_phone}`, 20, 25);
   doc.text(`Email: ${company_email}`, 20, 30);
   doc.text(`Address: ${company_address}`, 20, 35);
-  doc.addImage(logo.src, "PNG", 140, 5, 50, 30); // Adjust logo position to top right
+  doc.addImage(logo.src, "PNG", 160, 5, 40, 40); // 1:1 ratio, vertically centered
 
   // Invoice Title
-  doc.setTextColor(primaryColor);
-  doc.setFontSize(18);
-  doc.text("INVOICE", 20, 50);
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(22);
+  doc.text("INVOICE", 105, 45, { align: "center" });
+  doc.setFont('helvetica', 'normal');
+
+  // Reset text color to black for the rest of the document
+  doc.setTextColor(0, 0, 0);
 
   // Invoice Details
-  doc.setTextColor(0, 0, 0); // Black text
   doc.setFontSize(10);
-  doc.text(`Invoice No: ${invoice_no}`, 150, 60);
-  doc.text(`Invoice Date: ${date}`, 150, 65);
+  doc.text(`Invoice No: ${invoice_no}`, 180, 60, { align: "right" });
+  doc.text(`Invoice Date: ${date}`, 180, 65, { align: "right" });
   if (!isPaid && dueDate) {
-    doc.text(`Due Date: ${dueDate}`, 150, 70);
+    doc.text(`Due Date: ${dueDate}`, 180, 70, { align: "right" });
   }
 
   // Customer Details
@@ -114,7 +132,13 @@ export const generateSaleInvoicePDF = ({
   doc.text(`QAR ${grand_total.toFixed(2)}`, 180, yPos, { align: "right" });
 
   // Terms and Conditions / Payment Status
-  yPos = doc.internal.pageSize.height - 50; // Position above the very bottom
+  const footerYStart = doc.internal.pageSize.height - 50;
+  yPos = footerYStart;
+
+  // Footer Background (Classy Light Gray)
+  doc.setFillColor(242, 242, 242);
+  doc.rect(15, footerYStart - 7, 180, 42, 'F');
+
   doc.setFontSize(8);
   doc.setTextColor(0, 0, 0);
 
@@ -132,15 +156,24 @@ export const generateSaleInvoicePDF = ({
       doc.text("Payment terms: To be discussed.", 20, yPos); // Fallback if no due date
     }
     yPos += 4;
-    doc.text(`Please make checks payable to: ${company_name}`, 20, yPos);
+    doc.text(`Please make cheque payable to: ${company_name}`, 20, yPos);
   } else {
     doc.text(`Payment received in full on ${date}.`, 20, yPos);
     yPos += 4;
     doc.text("No further payment is required.", 20, yPos);
   }
 
+  // Disclaimer (Aligned on right side of payment status, above salesman)
+  if (disclaimer) {
+    doc.setFont('helvetica', 'bold');
+    doc.text("Disclaimer :", 180, footerYStart, { align: "right" });
+    doc.setFont('helvetica', 'normal');
+    const disclaimerLines = doc.splitTextToSize(disclaimer, 60);
+    doc.text(disclaimerLines, 180, footerYStart + 5, { align: "right" });
+  }
+
   // Salesman Name Footer
-  doc.text(`Salesman: ${salesman_name_footer}`, 150, doc.internal.pageSize.height - 20, { align: "right" });
+  doc.text(`Salesman: ${salesman_name_footer}`, 180, doc.internal.pageSize.height - 20, { align: "right" });
 
   doc.save(`invoice_${invoice_no}.pdf`);
 };

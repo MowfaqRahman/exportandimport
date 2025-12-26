@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Textarea } from "@/components/ui/textarea"
 import { Plus, Trash2 } from "lucide-react";
 import { createClient } from "../../../supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -42,6 +43,7 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
   const [customerEmail, setCustomerEmail] = useState<string | null>(null); // New state for customer email
   const [customerAddress, setCustomerAddress] = useState<string | null>(null); // New state for customer address
   const [customerPhone, setCustomerPhone] = useState<string | null>(null); // New state for customer phone
+  const [disclaimer, setDisclaimer] = useState<string>('');
 
   const generateNextInvoiceNumber = async () => {
     const { data, error } = await supabase
@@ -201,6 +203,7 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
       paid: isPaid,
       payment_type: isPaid ? paymentType : null,
       due_date: !isPaid ? dueDate : null,
+      disclaimer: disclaimer,
     };
 
     const { data: userData } = await supabase.auth.getUser();
@@ -234,6 +237,7 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
           company_email: "ktf.co2025@gmail.com",
           isPaid: data.paid,
           dueDate: data.due_date,
+          disclaimer: data.disclaimer,
         });
       } catch (pdfError) {
         console.error('Error generating PDF:', pdfError);
@@ -251,6 +255,7 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
       setOpen(false);
       onSaleAdded();
       (e.target as HTMLFormElement).reset();
+      setDisclaimer('');
       setInvoiceItems([{ no: 1, description: '', qty: 0, unitPrice: 0 }]);
       const nextInvoiceNum = await generateNextInvoiceNumber();
       setInvoiceNo(nextInvoiceNum);
@@ -471,6 +476,17 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
                 </div>
               )}
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="disclaimer">Disclaimer</Label>
+            <Textarea
+              id="disclaimer"
+              name="disclaimer"
+              placeholder="Add a disclaimer or note (optional)"
+              value={disclaimer}
+              onChange={(e) => setDisclaimer(e.target.value)}
+            />
           </div>
 
           <div className="space-y-2">

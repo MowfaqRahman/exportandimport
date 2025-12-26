@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createClient } from "../../../supabase/client";
 import { Sale, Expense, Purchase } from "@/types/business";
 import DashboardNavbar from "@/components/dashboard-navbar";
@@ -20,71 +20,65 @@ export default function CompanyOverviewPage() {
   const [activeTab, setActiveTab] = useState("sales"); // State to manage active tab for Sales/Expenses
   const supabase = createClient();
 
+  const fetchCompanyData = useCallback(async () => {
+    const [salesData, expensesData, purchasesData, usersData] = await Promise.all([
+      supabase
+        .from('sales')
+        .select('*'),
+      supabase
+        .from('expenses')
+        .select('*'),
+      supabase
+        .from('purchases')
+        .select('*'),
+      supabase
+        .from('users')
+        .select('id, name, email, full_name'),
+    ]);
+
+    if (salesData.error) {
+      console.error("Error fetching sales data:", salesData.error);
+    }
+    if (expensesData.error) {
+      console.error("Error fetching expenses data:", expensesData.error);
+    }
+    if (purchasesData.error) {
+      console.error("Error fetching purchases data:", purchasesData.error);
+    }
+    if (usersData.error) {
+      console.error("Error fetching users data:", usersData.error);
+    }
+
+    const usersMap = new Map(usersData?.data?.map((user: any) => [user.id, user.full_name || user.name || user.email]) || []);
+
+    const expensesWithUserName = expensesData.data ? expensesData.data.map((expense: any) => ({
+      ...expense,
+      user_name: usersMap.get(expense.user_id) || null,
+    })) : [];
+
+    const purchasesWithUserName = purchasesData.data ? purchasesData.data.map((purchase: any) => ({
+      ...purchase,
+      user_name: usersMap.get(purchase.user_id) || null,
+    })) : [];
+
+    if (salesData.data) {
+      setCompanySales(salesData.data as Sale[]);
+    }
+    if (expensesData.data) {
+      setCompanyExpenses(expensesWithUserName as Expense[]);
+    }
+    if (purchasesData.data) {
+      const finalizedPurchases = purchasesWithUserName.map(p => ({
+        ...p,
+        price: Number(p.price || 0)
+      }));
+      setCompanyPurchases(finalizedPurchases as Purchase[]);
+    }
+  }, [supabase]);
+
   useEffect(() => {
-    const fetchCompanyData = async () => {
-
-      const [salesData, expensesData, purchasesData, usersData] = await Promise.all([
-        supabase
-          .from('sales')
-          .select('*'),
-        supabase
-          .from('expenses')
-          .select('*'),
-        supabase
-          .from('purchases')
-          .select('*'),
-        supabase
-          .from('users')
-          .select('id, name, email, full_name'),
-      ]);
-
-      if (salesData.error) {
-        console.error("Error fetching sales data:", salesData.error);
-      }
-      if (expensesData.error) {
-        console.error("Error fetching expenses data:", expensesData.error);
-      }
-      if (purchasesData.error) {
-        console.error("Error fetching purchases data:", purchasesData.error);
-      }
-      if (usersData.error) {
-        console.error("Error fetching users data:", usersData.error);
-      }
-
-      console.log("Fetched sales data:", salesData.data);
-      console.log("Fetched expenses data:", expensesData.data);
-      console.log("Fetched purchases data:", purchasesData.data);
-      console.log("Fetched users data:", usersData.data);
-
-      const usersMap = new Map(usersData?.data?.map((user: any) => [user.id, user.full_name || user.name || user.email]) || []);
-
-      const expensesWithUserName = expensesData.data ? expensesData.data.map((expense: any) => ({
-        ...expense,
-        user_name: usersMap.get(expense.user_id) || null,
-      })) : [];
-
-      const purchasesWithUserName = purchasesData.data ? purchasesData.data.map((purchase: any) => ({
-        ...purchase,
-        user_name: usersMap.get(purchase.user_id) || null,
-      })) : [];
-
-      if (salesData.data) {
-        setCompanySales(salesData.data as Sale[]);
-      }
-      if (expensesData.data) {
-        setCompanyExpenses(expensesWithUserName as Expense[]);
-      }
-      if (purchasesData.data) {
-        const finalizedPurchases = purchasesWithUserName.map(p => ({
-          ...p,
-          price: Number(p.price || 0)
-        }));
-        setCompanyPurchases(finalizedPurchases as Purchase[]);
-      }
-    };
-
     fetchCompanyData();
-  }, []);
+  }, [fetchCompanyData]);
 
   // Calculate company-wide metrics
   const now = new Date();
@@ -223,7 +217,7 @@ export default function CompanyOverviewPage() {
                 <TabsTrigger value="expenses">Expenses</TabsTrigger>
               </TabsList>
               {activeTab === "sales" && (
-                <AllSalesTable initialSales={companySales} />
+                <AllSalesTable initialSales={companySales} onRefresh={fetchCompanyData} />
               )}
               {activeTab === "expenses" && (
                 <AllExpensesTable initialExpenses={companyExpenses} />

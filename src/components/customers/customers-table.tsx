@@ -50,7 +50,7 @@ export function CustomersTable() {
         const { data, error } = await supabase
             .from("customers")
             .select("*")
-            .order("customer_name");
+            .order("customer_id");
 
         if (error) {
             console.error("Error fetching customers:", error);

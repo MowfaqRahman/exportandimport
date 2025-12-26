@@ -19,6 +19,14 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useEffect } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface AddPurchaseDialogProps {
   isOpen: boolean;
@@ -34,8 +42,25 @@ export default function AddPurchaseDialog({ isOpen, onClose, onAddPurchase }: Ad
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
 
   const supabase = createClient();
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const { data, error: catError } = await supabase
+        .from("category")
+        .select("id, name")
+        .order("name");
+
+      if (catError) {
+        console.error("Error fetching categories:", catError);
+      } else {
+        setCategories(data || []);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const handleSubmit = async () => {
     if (!productName || !companyName || !unit || price === "" || !date) {
@@ -92,12 +117,20 @@ export default function AddPurchaseDialog({ isOpen, onClose, onAddPurchase }: Ad
             <Label htmlFor="productName" className="text-right">
               Product
             </Label>
-            <Input
-              id="productName"
-              value={productName}
-              onChange={(e) => setProductName(e.target.value)}
-              className="col-span-3"
-            />
+            <div className="col-span-3">
+              <Select value={productName} onValueChange={setProductName}>
+                <SelectTrigger id="productName">
+                  <SelectValue placeholder="Select a product" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.name}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="companyName" className="text-right">

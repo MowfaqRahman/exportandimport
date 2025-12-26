@@ -98,6 +98,7 @@ export default function SalesTable({ initialSales, onDataChange, onRefresh }: Sa
         company_email: "ktf.co2025@gmail.com",
         isPaid: sale.paid || false,
         dueDate: sale.due_date || null,
+        disclaimer: sale.disclaimer,
       });
       toast({
         title: "Success",

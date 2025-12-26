@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Textarea } from "@/components/ui/textarea"
 import { Plus, Trash2 } from "lucide-react";
 import { createClient } from "../../../supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -44,6 +45,7 @@ export default function EditSaleDialog({ sale, open, onClose, onSaleUpdated }: E
   const [customerEmail, setCustomerEmail] = useState<string | null>(null);
   const [customerAddress, setCustomerAddress] = useState<string | null>(null);
   const [customerPhone, setCustomerPhone] = useState<string | null>(sale.customer_phone_footer || null);
+  const [disclaimer, setDisclaimer] = useState<string>(sale.disclaimer || '');
 
   useEffect(() => {
     // Re-initialize state when sale prop changes
@@ -54,6 +56,7 @@ export default function EditSaleDialog({ sale, open, onClose, onSaleUpdated }: E
       setPaymentType(sale.payment_type || 'Cash');
       setDueDate(sale.due_date || null);
       setCustomerPhone(sale.customer_phone_footer || null);
+      setDisclaimer(sale.disclaimer || '');
     }
   }, [sale, open]);
 
@@ -185,6 +188,7 @@ export default function EditSaleDialog({ sale, open, onClose, onSaleUpdated }: E
       paid: isPaid,
       payment_type: isPaid ? paymentType : null,
       due_date: !isPaid ? dueDate : null,
+      disclaimer: disclaimer,
     };
 
     const { error } = await supabase
@@ -416,6 +420,17 @@ export default function EditSaleDialog({ sale, open, onClose, onSaleUpdated }: E
                 </div>
               )}
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="disclaimer">Disclaimer</Label>
+            <Textarea
+              id="disclaimer"
+              name="disclaimer"
+              placeholder="Add a disclaimer or note (optional)"
+              value={disclaimer}
+              onChange={(e) => setDisclaimer(e.target.value)}
+            />
           </div>
 
           <div className="space-y-2">
