@@ -68,11 +68,7 @@ export default function CompanyOverviewPage() {
       setCompanyExpenses(expensesWithUserName as Expense[]);
     }
     if (purchasesData.data) {
-      const finalizedPurchases = purchasesWithUserName.map(p => ({
-        ...p,
-        price: Number(p.price || 0)
-      }));
-      setCompanyPurchases(finalizedPurchases as Purchase[]);
+      setCompanyPurchases(purchasesWithUserName as Purchase[]);
     }
   }, [supabase]);
 
@@ -94,7 +90,7 @@ export default function CompanyOverviewPage() {
   const totalCompanyExpenses = monthlyCompanyExpenses.reduce((sum, expense) => sum + Number(expense.amount || 0), 0);
 
   const monthlyCompanyPurchases = companyPurchases.filter(purchase => purchase.date >= firstDayOfMonth && purchase.date <= lastDayOfMonth);
-  const totalCompanyPurchases = monthlyCompanyPurchases.reduce((sum, purchase) => sum + Number(purchase.price || 0), 0);
+  const totalCompanyPurchases = monthlyCompanyPurchases.reduce((sum, purchase) => sum + Number(purchase.grand_total || 0), 0);
 
   const companyProfit = totalCompanySales - totalCompanyExpenses - totalCompanyPurchases;
 
@@ -120,7 +116,7 @@ export default function CompanyOverviewPage() {
       .reduce((sum, expense) => sum + Number(expense.amount || 0), 0);
     const dayPurchases = companyPurchases
       .filter(purchase => purchase.date === date)
-      .reduce((sum, purchase) => sum + Number(purchase.price || 0), 0);
+      .reduce((sum, purchase) => sum + Number(purchase.grand_total || 0), 0);
 
     return {
       date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
