@@ -343,7 +343,7 @@ export default function ReportsHistoryPage() {
 
         let purchasesQuery = supabase
           .from('purchases')
-          .select('price');
+          .select('grand_total');
 
         if (selectedUser && selectedUser !== "all") {
           purchasesQuery = purchasesQuery.eq('user_id', selectedUser);
@@ -360,7 +360,7 @@ export default function ReportsHistoryPage() {
           console.error("Error fetching yearly purchases:", yearPurchasesError);
           setYearPurchasesTotal(0);
         } else {
-          const total = yearPurchasesData?.reduce((sum, purchase) => sum + Number(purchase.price || 0), 0) || 0;
+          const total = yearPurchasesData?.reduce((sum, purchase) => sum + Number(purchase.grand_total || 0), 0) || 0;
           setYearPurchasesTotal(total);
         }
 
@@ -444,7 +444,7 @@ export default function ReportsHistoryPage() {
 
           let monthlyPurchasesQuery = supabase
             .from('purchases')
-            .select('price');
+            .select('grand_total');
 
           if (selectedUser && selectedUser !== "all") {
             monthlyPurchasesQuery = monthlyPurchasesQuery.eq('user_id', selectedUser);
@@ -459,13 +459,13 @@ export default function ReportsHistoryPage() {
           if (monthlyPurchasesError) {
             console.error("Error fetching monthly purchases:", monthlyPurchasesError);
           } else {
-            currentMonthlyPurchasesTotal = monthlyPurchasesData?.reduce((sum, purchase) => sum + Number(purchase.price || 0), 0) || 0;
+            currentMonthlyPurchasesTotal = monthlyPurchasesData?.reduce((sum, purchase) => sum + Number(purchase.grand_total || 0), 0) || 0;
           }
         } else {
           // When selectedMonth is "all", sum up all relevant data from the year
           currentMonthlySalesTotal = sales?.reduce((sum, sale) => sum + Number(sale.grand_total || 0), 0) || 0;
           currentMonthlyExpensesTotal = expenses?.reduce((sum, expense) => sum + Number(expense.amount || 0), 0) || 0;
-          currentMonthlyPurchasesTotal = purchases?.reduce((sum, purchase) => sum + Number(purchase.price || 0), 0) || 0;
+          currentMonthlyPurchasesTotal = purchases?.reduce((sum, purchase) => sum + Number(purchase.grand_total || 0), 0) || 0;
         }
 
         setMonthlySalesTotal(currentMonthlySalesTotal);
@@ -475,7 +475,7 @@ export default function ReportsHistoryPage() {
         // Calculate net profit using the just-calculated yearly totals
         const calculatedNetProfit = (
           (yearSalesData?.reduce((sum, sale) => sum + Number(sale.grand_total || 0), 0) || 0) -
-          ((yearPurchasesData?.reduce((sum, purchase) => sum + Number(purchase.price || 0), 0) || 0) +
+          ((yearPurchasesData?.reduce((sum, purchase) => sum + Number(purchase.grand_total || 0), 0) || 0) +
             (yearExpensesData?.reduce((sum, expense) => sum + Number(expense.amount || 0), 0) || 0))
         );
         setNetProfit(calculatedNetProfit);

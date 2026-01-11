@@ -40,7 +40,7 @@ export default function EditSaleDialog({ sale, open, onClose, onSaleUpdated }: E
   const [customers, setCustomers] = useState<string[]>([]);
   const [selectedCustomerName, setSelectedCustomerName] = useState<string>(sale.customer_name || '');
   const [isPaid, setIsPaid] = useState<boolean>(sale.paid || false);
-  const [paymentType, setPaymentType] = useState<'Cash' | 'Online' | 'UPI'>(sale.payment_type || 'Cash');
+  const [paymentType, setPaymentType] = useState<'Cash' | 'Online' | 'Cheque'>(sale.payment_type || 'Cash');
   const [dueDate, setDueDate] = useState<string | null>(sale.due_date || null);
   const [customerEmail, setCustomerEmail] = useState<string | null>(null);
   const [customerAddress, setCustomerAddress] = useState<string | null>(null);
@@ -399,11 +399,11 @@ export default function EditSaleDialog({ sale, open, onClose, onSaleUpdated }: E
               {isPaid ? (
                 <div className="space-y-2">
                   <Label>Payment Method</Label>
-                  <Tabs value={paymentType} onValueChange={(v) => setPaymentType(v as 'Cash' | 'Online' | 'UPI')} className="w-full">
+                  <Tabs value={paymentType} onValueChange={(v) => setPaymentType(v as 'Cash' | 'Online' | 'Cheque')} className="w-full">
                     <TabsList className="grid w-full grid-cols-3">
                       <TabsTrigger value="Cash">Cash</TabsTrigger>
                       <TabsTrigger value="Online">Online</TabsTrigger>
-                      <TabsTrigger value="UPI">UPI</TabsTrigger>
+                      <TabsTrigger value="Cheque">Cheque</TabsTrigger>
                     </TabsList>
                   </Tabs>
                 </div>

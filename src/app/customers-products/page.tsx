@@ -5,9 +5,10 @@ import DashboardNavbar from "@/components/dashboard-navbar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CustomersTable } from "@/components/customers/customers-table";
 import { CategoriesTable } from "@/components/products/categories-table";
+import { PurchaseCustomersTable } from "@/components/purchase-customers/purchase-customers-table";
 
 export default function CustomersProductsPage() {
-    const [activeTab, setActiveTab] = useState("customers");
+    const [activeTab, setActiveTab] = useState("sale-customers");
 
     return (
         <>
@@ -21,11 +22,15 @@ export default function CustomersProductsPage() {
 
                     <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
                         <TabsList>
-                            <TabsTrigger value="customers">Customers</TabsTrigger>
+                            <TabsTrigger value="sale-customers">Sale Customer</TabsTrigger>
+                            <TabsTrigger value="purchase-customers">Purchase Customer</TabsTrigger>
                             <TabsTrigger value="products">Products</TabsTrigger>
                         </TabsList>
-                        <TabsContent value="customers" className="space-y-4">
+                        <TabsContent value="sale-customers" className="space-y-4">
                             <CustomersTable />
+                        </TabsContent>
+                        <TabsContent value="purchase-customers" className="space-y-4">
+                            <PurchaseCustomersTable />
                         </TabsContent>
                         <TabsContent value="products" className="space-y-4">
                             <CategoriesTable />

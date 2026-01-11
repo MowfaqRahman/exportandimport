@@ -11,20 +11,24 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search } from "lucide-react";
+import { Search, Edit, Trash2 } from "lucide-react";
 import { format } from "date-fns";
-import { Expense } from "@/types/business";
+import { Expense, Purchase } from "@/types/business";
+import { Button } from "@/components/ui/button";
+import AddPurchaseDialog from "../purchase/add-purchase-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { createClient } from "../../../supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
-interface Purchase {
-  id: string;
-  date: string;
-  product_name: string;
-  company_name: string;
-  unit: string;
-  price: number;
-  user_id?: string;
-  user_name?: string | null;
-}
 
 interface AllPurchasesTableProps {
   initialPurchases: Purchase[];
@@ -39,10 +43,62 @@ const formatDate = (dateString: string) => {
 };
 
 export function AllPurchasesTable({ initialPurchases }: AllPurchasesTableProps) {
+  const [purchases, setPurchases] = useState<Purchase[]>(initialPurchases);
   const [searchTerm, setSearchTerm] = useState("");
+  const [editingPurchase, setEditingPurchase] = useState<Purchase | null>(null);
+  const [deletingPurchaseId, setDeletingPurchaseId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const filteredPurchases = initialPurchases.filter(purchase =>
-    purchase.product_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  const supabase = createClient();
+  const { toast } = useToast();
+
+  const fetchPurchases = async () => {
+    const { data, error } = await supabase
+      .from('purchases')
+      .select('*')
+      .order('date', { ascending: false });
+
+    if (error) {
+      console.error("Error fetching all purchases:", error);
+    } else if (data) {
+      setPurchases(data);
+    }
+  };
+
+  const handleEdit = (purchase: Purchase) => {
+    setEditingPurchase(purchase);
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!deletingPurchaseId) return;
+
+    setIsDeleting(true);
+    const { error } = await supabase
+      .from('purchases')
+      .delete()
+      .eq('id', deletingPurchaseId);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: "Purchase deleted successfully.",
+      });
+      fetchPurchases();
+    }
+    setIsDeleting(false);
+    setDeletingPurchaseId(null);
+  };
+
+  const filteredPurchases = purchases.filter(purchase =>
+    purchase.items?.some(item => item.productName.toLowerCase().includes(searchTerm.toLowerCase())) ||
     purchase.company_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (purchase.user_name?.toLowerCase() || '').includes(searchTerm.toLowerCase())
   ).sort((a, b) => {
@@ -70,30 +126,57 @@ export function AllPurchasesTable({ initialPurchases }: AllPurchasesTableProps) 
           <Table className="min-w-full divide-y divide-gray-200">
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[50px]">No.</TableHead>
                 <TableHead>Date</TableHead>
-                <TableHead>Product</TableHead>
-                <TableHead>Company</TableHead>
+                <TableHead className="min-w-[200px]">Name of Item</TableHead>
+                <TableHead>Supplier</TableHead>
                 <TableHead>Unit</TableHead>
-                <TableHead>Price</TableHead>
+                <TableHead className="text-right">Sum (QAR)</TableHead>
+                <TableHead className="text-center">Status</TableHead>
                 <TableHead>Salesman Name</TableHead>
+                <TableHead className="text-center">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredPurchases.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                     No purchases found for all users.
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredPurchases.map((purchase) => (
+                filteredPurchases.map((purchase, index) => (
                   <TableRow key={purchase.id}>
+                    <TableCell>{index + 1}</TableCell>
                     <TableCell>{format(new Date(purchase.date), "dd/MM/yyyy")}</TableCell>
-                    <TableCell className="max-w-[200px] truncate">{purchase.product_name}</TableCell>
+                    <TableCell className="font-medium max-w-[200px] truncate">
+                      {purchase.items?.[0]?.productName || "N/A"}
+                      {purchase.items && purchase.items.length > 1 ? ` (+${purchase.items.length - 1})` : ""}
+                    </TableCell>
                     <TableCell className="max-w-[200px] truncate">{purchase.company_name}</TableCell>
-                    <TableCell>{purchase.unit}</TableCell>
-                    <TableCell className="font-medium">QAR {purchase.price ? Number(purchase.price).toFixed(2) : '0.00'}</TableCell>
+                    <TableCell>{purchase.items?.[0]?.unit || "-"}</TableCell>
+                    <TableCell className="text-right font-semibold">
+                      QAR {purchase.grand_total ? Number(purchase.grand_total).toFixed(2) : '0.00'}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${purchase.paid
+                        ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                        : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+                        }`}>
+                        {purchase.paid ? "Paid" : "Not Paid"}
+                      </span>
+                    </TableCell>
                     <TableCell>{purchase.user_name || 'N/A'}</TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex justify-center gap-2">
+                        <Button variant="ghost" size="icon" onClick={() => handleEdit(purchase)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => setDeletingPurchaseId(purchase.id)} className="text-destructive">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))
               )}
@@ -101,6 +184,33 @@ export function AllPurchasesTable({ initialPurchases }: AllPurchasesTableProps) 
           </Table>
         </div>
       </CardContent>
+
+      <AddPurchaseDialog
+        isOpen={isDialogOpen}
+        onClose={() => {
+          setIsDialogOpen(false);
+          setEditingPurchase(null);
+        }}
+        onSuccess={fetchPurchases}
+        purchase={editingPurchase || undefined}
+      />
+
+      <AlertDialog open={!!deletingPurchaseId} onOpenChange={() => setDeletingPurchaseId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete this purchase transaction.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90" disabled={isDeleting}>
+              {isDeleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 };

@@ -38,7 +38,7 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
   const [customers, setCustomers] = useState<string[]>([]); // New state for customer names
   const [selectedCustomerName, setSelectedCustomerName] = useState<string>(''); // New state for selected customer
   const [isPaid, setIsPaid] = useState<boolean>(false); // New state for payment status
-  const [paymentType, setPaymentType] = useState<'Cash' | 'Online' | 'UPI'>('Cash');
+  const [paymentType, setPaymentType] = useState<'Cash' | 'Online' | 'Cheque'>('Cash');
   const [dueDate, setDueDate] = useState<string | null>(null); // New state for due date
   const [customerEmail, setCustomerEmail] = useState<string | null>(null); // New state for customer email
   const [customerAddress, setCustomerAddress] = useState<string | null>(null); // New state for customer address
@@ -455,11 +455,11 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
               {isPaid ? (
                 <div className="space-y-2">
                   <Label>Payment Method</Label>
-                  <Tabs value={paymentType} onValueChange={(v) => setPaymentType(v as 'Cash' | 'Online' | 'UPI')} className="w-full">
+                  <Tabs value={paymentType} onValueChange={(v) => setPaymentType(v as 'Cash' | 'Online' | 'Cheque')} className="w-full">
                     <TabsList className="grid w-full grid-cols-3">
                       <TabsTrigger value="Cash">Cash</TabsTrigger>
                       <TabsTrigger value="Online">Online</TabsTrigger>
-                      <TabsTrigger value="UPI">UPI</TabsTrigger>
+                      <TabsTrigger value="Cheque">Cheque</TabsTrigger>
                     </TabsList>
                   </Tabs>
                 </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -11,15 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Purchase } from "@/types/business";
-import { createClient } from "../../../supabase/client";
-import { v4 as uuidv4 } from "uuid";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useEffect } from "react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import {
   Select,
   SelectContent,
@@ -27,28 +19,46 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Plus, Trash2 } from "lucide-react";
+import { Purchase, PurchaseItem } from "@/types/business";
+import { createClient } from "../../../supabase/client";
+import { v4 as uuidv4 } from "uuid";
+import { useToast } from "@/components/ui/use-toast";
 
 interface AddPurchaseDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddPurchase: (purchase: Purchase) => void;
+  onAddPurchase?: (purchase: Purchase) => void;
+  onSuccess?: () => void;
+  purchase?: Purchase;
 }
 
-export default function AddPurchaseDialog({ isOpen, onClose, onAddPurchase }: AddPurchaseDialogProps) {
-  const [productName, setProductName] = useState("");
-  const [companyName, setCompanyName] = useState("");
-  const [unit, setUnit] = useState("");
-  const [price, setPrice] = useState<number | "">("");
-  const [date, setDate] = useState<Date | undefined>(new Date());
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+interface PurchaseCustomer {
+  id: number;
+  name: string;
+  phone: string | null;
+}
 
+export default function AddPurchaseDialog({ isOpen, onClose, onAddPurchase, onSuccess, purchase }: AddPurchaseDialogProps) {
+  const [purchaseCustomer, setPurchaseCustomer] = useState("");
+  const [supplierPhone, setSupplierPhone] = useState("");
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [purchaseCustomers, setPurchaseCustomers] = useState<PurchaseCustomer[]>([]);
+  const [items, setItems] = useState<PurchaseItem[]>([{ no: 1, productName: "", unit: "", qty: 0, price: 0 }]);
+  const [isPaid, setIsPaid] = useState<boolean>(false);
+  const [paymentType, setPaymentType] = useState<'Cash' | 'Online' | 'Cheque'>('Cash');
+  const [dueDate, setDueDate] = useState<string>("");
+
+  const { toast } = useToast();
   const supabase = createClient();
 
   useEffect(() => {
-    const fetchCategories = async () => {
-      const { data, error: catError } = await supabase
+    const fetchData = async () => {
+      // Fetch categories
+      const { data: catData, error: catError } = await supabase
         .from("category")
         .select("id, name")
         .order("name");
@@ -56,151 +66,338 @@ export default function AddPurchaseDialog({ isOpen, onClose, onAddPurchase }: Ad
       if (catError) {
         console.error("Error fetching categories:", catError);
       } else {
-        setCategories(data || []);
+        setCategories(catData || []);
+      }
+
+      // Fetch purchase customers
+      const { data: custData, error: custError } = await supabase
+        .from("purchase_customer")
+        .select("id, name, phone")
+        .order("name");
+
+      if (custError) {
+        console.error("Error fetching purchase customers:", custError);
+      } else {
+        setPurchaseCustomers(custData || []);
       }
     };
-    fetchCategories();
-  }, []);
+
+    if (isOpen) {
+      fetchData();
+      if (purchase) {
+        setPurchaseCustomer(purchase.company_name);
+        setSupplierPhone(purchase.supplier_phone || "");
+        setDate(purchase.date);
+        setItems(purchase.items || [{ no: 1, productName: "", unit: "", qty: 0, price: 0 }]);
+        setIsPaid(!!purchase.paid);
+        setPaymentType(purchase.payment_type as 'Cash' | 'Online' | 'Cheque' || "Cash");
+        setDueDate(purchase.due_date || "");
+      } else {
+        resetForm();
+      }
+    }
+  }, [isOpen, purchase]);
+
+  const handleCustomerChange = (customerName: string) => {
+    setPurchaseCustomer(customerName);
+    const selected = purchaseCustomers.find(c => c.name === customerName);
+    if (selected && selected.phone) {
+      setSupplierPhone(selected.phone);
+    }
+  };
+
+  const handleItemChange = (index: number, field: keyof PurchaseItem, value: any) => {
+    const newItems = [...items];
+    (newItems[index] as any)[field] = value;
+    setItems(newItems);
+  };
+
+  const handleAddItem = () => {
+    if (items.length < 20) {
+      setItems([...items, { no: items.length + 1, productName: "", unit: "", qty: 0, price: 0 }]);
+    }
+  };
+
+  const handleDeleteItem = (indexToDelete: number) => {
+    const newItems = items.filter((_, index) => index !== indexToDelete);
+    const reIndexedItems = newItems.map((item, index) => ({ ...item, no: index + 1 }));
+    setItems(reIndexedItems);
+  };
+
+  const calculateTotal = (item: PurchaseItem) => {
+    return item.qty * item.price;
+  };
+
+  const calculateGrandTotal = () => {
+    return items.reduce((sum, item) => sum + calculateTotal(item), 0);
+  };
 
   const handleSubmit = async () => {
-    if (!productName || !companyName || !unit || price === "" || !date) {
-      setError("All fields are required.");
+    if (!purchaseCustomer || !date || items.some(item => !item.productName || item.qty <= 0)) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields and add at least one valid item.",
+        variant: "destructive",
+      });
       return;
     }
 
     setLoading(true);
-    setError(null);
 
-    const { data: { user } } = await supabase.auth.getUser();
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
 
-    if (!user) {
-      setError("User not authenticated.");
-      setLoading(false);
-      return;
-    }
+      if (!user) {
+        throw new Error("User not authenticated.");
+      }
 
-    const newPurchase: Purchase = {
-      id: uuidv4(),
-      date: format(date, "yyyy-MM-dd"),
-      product_name: productName,
-      company_name: companyName,
-      unit: unit,
-      price: Number(price),
-      user_id: user.id,
-    };
+      const validItems = items.filter(item => item.productName !== "");
+      const grandTotal = calculateGrandTotal();
 
-    const { data, error: dbError } = await supabase.from("purchases").insert(newPurchase);
+      const purchaseData = {
+        date,
+        items: validItems,
+        grand_total: grandTotal,
+        company_name: purchaseCustomer,
+        supplier_phone: supplierPhone,
+        paid: isPaid,
+        payment_type: isPaid ? paymentType : null,
+        due_date: !isPaid ? dueDate : null,
+        user_id: user.id,
+      };
 
-    if (dbError) {
-      setError(dbError.message);
-      console.error("Error adding purchase:", dbError);
-    } else {
-      onAddPurchase(newPurchase);
-      setProductName("");
-      setCompanyName("");
-      setUnit("");
-      setPrice("");
-      setDate(new Date());
+      if (purchase) {
+        const { error: dbError } = await supabase
+          .from("purchases")
+          .update(purchaseData)
+          .eq("id", purchase.id);
+        if (dbError) throw dbError;
+        toast({ title: "Success", description: "Purchase updated successfully." });
+      } else {
+        const { error: dbError } = await supabase
+          .from("purchases")
+          .insert([{ ...purchaseData, id: uuidv4() }]);
+        if (dbError) throw dbError;
+        toast({ title: "Success", description: "Purchase added successfully." });
+      }
+
+      if (onAddPurchase) onAddPurchase({ ...purchaseData, id: purchase?.id || uuidv4() } as Purchase);
+      if (onSuccess) onSuccess();
+      resetForm();
       onClose();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
+  };
+
+  const resetForm = () => {
+    setPurchaseCustomer("");
+    setSupplierPhone("");
+    setDate(new Date().toISOString().split('T')[0]);
+    setItems([{ no: 1, productName: "", unit: "", qty: 0, price: 0 }]);
+    setIsPaid(false);
+    setPaymentType("Cash");
+    setDueDate("");
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add New Purchase</DialogTitle>
+          <DialogTitle>{purchase ? "Edit Purchase" : "Add New Purchase"}</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="productName" className="text-right">
-              Product
-            </Label>
-            <div className="col-span-3">
-              <Select value={productName} onValueChange={setProductName}>
-                <SelectTrigger id="productName">
-                  <SelectValue placeholder="Select a product" />
+        <div className="space-y-4 py-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="date">Date *</Label>
+              <Input
+                id="date"
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="purchaseCustomer">Purchase Customer *</Label>
+              <Select
+                value={purchaseCustomer}
+                onValueChange={handleCustomerChange}
+              >
+                <SelectTrigger id="purchaseCustomer" className="w-full">
+                  <SelectValue placeholder="Select a customer" />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.name}>
-                      {category.name}
+                  {purchaseCustomers.map((customer) => (
+                    <SelectItem key={customer.id} value={customer.name}>
+                      {customer.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="companyName" className="text-right">
-              Company
-            </Label>
-            <Input
-              id="companyName"
-              value={companyName}
-              onChange={(e) => setCompanyName(e.target.value)}
-              className="col-span-3"
-            />
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="supplierPhone">Tel. No.</Label>
+              <Input
+                id="supplierPhone"
+                placeholder="Supplier Phone Number"
+                value={supplierPhone}
+                onChange={(e) => setSupplierPhone(e.target.value)}
+              />
+            </div>
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="unit" className="text-right">
-              Unit
-            </Label>
-            <Input
-              id="unit"
-              value={unit}
-              onChange={(e) => setUnit(e.target.value)}
-              className="col-span-3"
-            />
+
+          <div className="overflow-x-auto rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[50px]">No.</TableHead>
+                  <TableHead className="min-w-[250px]">Name of Item</TableHead>
+                  <TableHead className="w-[120px]">Unit</TableHead>
+                  <TableHead className="w-[120px]">Quantity</TableHead>
+                  <TableHead className="text-right w-[150px]">Amount (QAR)</TableHead>
+                  <TableHead className="text-right w-[150px]">Sum (QAR)</TableHead>
+                  <TableHead className="text-center w-[80px]">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {items.map((item, index) => (
+                  <TableRow key={item.no}>
+                    <TableCell>{item.no}</TableCell>
+                    <TableCell>
+                      <Select
+                        value={item.productName}
+                        onValueChange={(value) => handleItemChange(index, "productName", value)}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select a product" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map((category) => (
+                            <SelectItem key={category.id} value={category.name}>
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        placeholder="e.g. kg, box"
+                        value={item.unit}
+                        onChange={(e) => handleItemChange(index, "unit", e.target.value)}
+                        className="w-full"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="number"
+                        placeholder="0"
+                        value={item.qty || ""}
+                        onChange={(e) => handleItemChange(index, "qty", parseFloat(e.target.value) || 0)}
+                        className="w-full"
+                      />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="0.00"
+                        className="text-right w-full"
+                        value={item.price || ""}
+                        onChange={(e) => handleItemChange(index, "price", parseFloat(e.target.value) || 0)}
+                      />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {(item.qty * item.price).toFixed(2)}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDeleteItem(index)}
+                        className="text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {items.length < 20 && (
+                  <TableRow>
+                    <TableCell colSpan={7}>
+                      <Button type="button" variant="outline" onClick={handleAddItem} className="w-full">
+                        <Plus className="mr-2 h-4 w-4" /> Add Item
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+              <TableFooter>
+                <TableRow>
+                  <TableCell colSpan={5} className="text-right text-base font-semibold">Grand Total</TableCell>
+                  <TableCell className="text-right text-base font-semibold">QAR {calculateGrandTotal().toFixed(2)}</TableCell>
+                  <TableCell />
+                </TableRow>
+              </TableFooter>
+            </Table>
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="price" className="text-right">
-              Price
-            </Label>
-            <Input
-              id="price"
-              type="number"
-              value={price}
-              onChange={(e) => setPrice(Number(e.target.value))}
-              className="col-span-3"
-            />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="date" className="text-right">
-              Date
-            </Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant={"outline"}
-                  className={cn(
-                    "w-[280px] justify-start text-left font-normal",
-                    !date && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {date ? format(date, "PPP") : <span>Pick a date</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={date}
-                  onSelect={setDate}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Payment Status</Label>
+              <Button
+                type="button"
+                variant={isPaid ? "default" : "outline"}
+                onClick={() => setIsPaid(!isPaid)}
+                className="w-full"
+              >
+                {isPaid ? "Paid" : "Not Paid"}
+              </Button>
+            </div>
+
+            <div className="space-y-2">
+              {isPaid ? (
+                <div className="space-y-2">
+                  <Label>Payment Method</Label>
+                  <Tabs value={paymentType} onValueChange={(v) => setPaymentType(v as 'Cash' | 'Online' | 'Cheque')} className="w-full">
+                    <TabsList className="grid w-full grid-cols-3">
+                      <TabsTrigger value="Cash">Cash</TabsTrigger>
+                      <TabsTrigger value="Online">Online</TabsTrigger>
+                      <TabsTrigger value="Cheque">Cheque</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label htmlFor="due_date">Due Date</Label>
+                  <Input
+                    id="due_date"
+                    type="date"
+                    value={dueDate}
+                    onChange={(e) => setDueDate(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+              )}
+            </div>
           </div>
         </div>
-        {error && <p className="text-red-500 text-sm">{error}</p>}
-        <DialogFooter>
+        <DialogFooter className="gap-2 pt-4">
           <Button onClick={onClose} variant="outline">
             Cancel
           </Button>
           <Button onClick={handleSubmit} disabled={loading}>
-            {loading ? "Adding..." : "Add Purchase"}
+            {loading ? "Saving..." : (purchase ? "Update Purchase" : "Add Purchase")}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -64,7 +64,7 @@ export default function DashboardContent({ initialSales, initialExpenses, initia
   // Calculate metrics
   const totalSales = paidSales.reduce((sum, sale) => sum + Number(sale.grand_total || 0), 0);
   const totalExpenses = expenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
-  const totalPurchases = purchases.reduce((sum, purchase) => sum + Number(purchase.price), 0);
+  const totalPurchases = purchases.reduce((sum, purchase) => sum + Number(purchase.grand_total || 0), 0);
   const profit = totalSales - totalExpenses - totalPurchases;
 
   // Get today's sales
@@ -89,7 +89,7 @@ export default function DashboardContent({ initialSales, initialExpenses, initia
       .reduce((sum, expense) => sum + Number(expense.amount), 0);
     const dayPurchases = purchases
       .filter(purchase => purchase.date === date)
-      .reduce((sum, purchase) => sum + Number(purchase.price), 0);
+      .reduce((sum, purchase) => sum + Number(purchase.grand_total || 0), 0);
 
     return {
       date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),

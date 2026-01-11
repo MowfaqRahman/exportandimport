@@ -221,7 +221,7 @@ export function CustomerStatementTab({
                             <TabsList className="h-8">
                               <TabsTrigger value="Cash" className="text-xs px-2 h-6">Cash</TabsTrigger>
                               <TabsTrigger value="Online" className="text-xs px-2 h-6">Online</TabsTrigger>
-                              <TabsTrigger value="UPI" className="text-xs px-2 h-6">UPI</TabsTrigger>
+                              <TabsTrigger value="Cheque" className="text-xs px-2 h-6">Cheque</TabsTrigger>
                             </TabsList>
                           </Tabs>
                         ) : (

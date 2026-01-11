@@ -19,17 +19,28 @@ export interface Sale {
   invoice_no?: string;
   paid?: boolean;
   due_date?: string;
-  payment_type?: 'Cash' | 'Online' | 'UPI';
+  payment_type?: 'Cash' | 'Online' | 'Cheque';
   disclaimer?: string;
+}
+
+export interface PurchaseItem {
+  no: number;
+  productName: string;
+  unit: string;
+  qty: number;
+  price: number;
 }
 
 export interface Purchase {
   id: string;
   date: string;
-  product_name: string;
+  items: PurchaseItem[];
+  grand_total: number;
   company_name: string;
-  unit: string;
-  price: number;
+  supplier_phone?: string;
+  paid?: boolean;
+  due_date?: string;
+  payment_type?: 'Cash' | 'Online' | 'Cheque';
   user_id?: string;
   created_at?: string;
   updated_at?: string;
