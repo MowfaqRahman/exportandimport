@@ -80,14 +80,26 @@ export default function SalesTable({ initialSales, onDataChange, onRefresh }: Sa
     return `${day}/${month}/${year}`;
   };
 
-  const handleGenerateInvoice = (sale: Sale) => {
+  const handleGenerateInvoice = async (sale: Sale) => {
     try {
+      // Fetch the latest customer details from the customers table
+      const { data: customerData, error: customerError } = await supabase
+        .from('customers')
+        .select('company_name, email, address, phone_number')
+        .eq('customer_name', sale.customer_name)
+        .single();
+
+      if (customerError && customerError.code !== 'PGRST116') {
+        console.error("Error fetching customer details for invoice:", customerError);
+      }
+
       generateSaleInvoicePDF({
         date: sale.date,
         customer_name: sale.customer_name || '',
-        customer_phone: sale.customer_phone_footer || '',
-        customer_email: (sale as any).customers?.email || '', // Access nested customer email
-        customer_address: (sale as any).customers?.address || '', // Access nested customer address
+        customer_phone: customerData?.phone_number || sale.customer_phone_footer || '',
+        customer_email: customerData?.email || '',
+        customer_address: customerData?.address || '',
+        customer_company_name: customerData?.company_name || '',
         items: sale.items || [],
         grand_total: sale.grand_total || 0,
         salesman_name_footer: sale.salesman_name_footer || '',
@@ -98,6 +110,7 @@ export default function SalesTable({ initialSales, onDataChange, onRefresh }: Sa
         company_email: "ktf.co2025@gmail.com",
         isPaid: sale.paid || false,
         dueDate: sale.due_date || null,
+        paymentType: sale.payment_type,
         disclaimer: sale.disclaimer,
       });
       toast({

@@ -29,6 +29,7 @@ import { useToast } from "@/components/ui/use-toast";
 interface Customer {
     customer_id: number;
     customer_name: string;
+    company_name: string | null;
     phone_number: string | null;
     email: string | null;
     address: string | null;
@@ -96,6 +97,7 @@ export function CustomersTable() {
 
     const filteredCustomers = customers.filter((customer) =>
         customer.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (customer.company_name && customer.company_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (customer.phone_number && customer.phone_number.includes(searchTerm))
     );
 
@@ -122,6 +124,7 @@ export function CustomersTable() {
                         <TableRow>
                             <TableHead>ID</TableHead>
                             <TableHead>Name</TableHead>
+                            <TableHead>Company Name</TableHead>
                             <TableHead>Phone</TableHead>
                             <TableHead>Email</TableHead>
                             <TableHead>Address</TableHead>
@@ -146,6 +149,7 @@ export function CustomersTable() {
                                 <TableRow key={customer.customer_id}>
                                     <TableCell>{customer.customer_id}</TableCell>
                                     <TableCell className="font-medium">{customer.customer_name}</TableCell>
+                                    <TableCell>{customer.company_name || "-"}</TableCell>
                                     <TableCell>{customer.phone_number || "-"}</TableCell>
                                     <TableCell>{customer.email || "-"}</TableCell>
                                     <TableCell>{customer.address || "-"}</TableCell>

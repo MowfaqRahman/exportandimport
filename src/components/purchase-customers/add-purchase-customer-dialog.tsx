@@ -18,6 +18,7 @@ import { useToast } from "@/components/ui/use-toast";
 interface PurchaseCustomer {
     id: number;
     name: string;
+    company_name: string | null;
     phone: string | null;
     email: string | null;
     address: string | null;
@@ -44,12 +45,14 @@ export function AddPurchaseCustomerDialog({
     useEffect(() => {
         if (customer) {
             setValue("name", customer.name);
+            setValue("company_name", customer.company_name);
             setValue("phone", customer.phone);
             setValue("email", customer.email);
             setValue("address", customer.address);
         } else {
             reset({
                 name: "",
+                company_name: "",
                 phone: "",
                 email: "",
                 address: "",
@@ -67,6 +70,7 @@ export function AddPurchaseCustomerDialog({
                     .from("purchase_customer")
                     .update({
                         name: data.name,
+                        company_name: data.company_name,
                         phone: data.phone,
                         email: data.email,
                         address: data.address,
@@ -81,6 +85,7 @@ export function AddPurchaseCustomerDialog({
                     .from("purchase_customer")
                     .insert([{
                         name: data.name,
+                        company_name: data.company_name,
                         phone: data.phone,
                         email: data.email,
                         address: data.address,
@@ -114,6 +119,10 @@ export function AddPurchaseCustomerDialog({
                     <div className="space-y-2">
                         <Label htmlFor="name">Name</Label>
                         <Input id="name" required {...register("name")} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="company_name">Company Name</Label>
+                        <Input id="company_name" {...register("company_name")} />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="phone">Phone Number</Label>

@@ -270,7 +270,7 @@ export default function ReportsHistoryPage() {
       const [expensesData, usersData, customersData] = await Promise.all([
         supabase.from('expenses').select('*').order('created_at', { ascending: false }).order('date', { ascending: false }),
         supabase.from('users').select('id, name, email, full_name'),
-        supabase.from('customers').select('customer_id, customer_name, phone_number, email, address'),
+        supabase.from('customers').select('customer_id, customer_name, phone_number, email, address, company_name'),
       ]);
 
       if (expensesData.error) {

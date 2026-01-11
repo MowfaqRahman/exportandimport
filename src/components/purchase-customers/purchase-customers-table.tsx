@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2, Plus, Search } from "lucide-react";
 import { AddPurchaseCustomerDialog } from "./add-purchase-customer-dialog";
+
 import {
     AlertDialog,
     AlertDialogAction,
@@ -29,6 +30,7 @@ import { useToast } from "@/components/ui/use-toast";
 interface PurchaseCustomer {
     id: number;
     name: string;
+    company_name: string | null;
     phone: string | null;
     email: string | null;
     address: string | null;
@@ -96,6 +98,7 @@ export function PurchaseCustomersTable() {
 
     const filteredCustomers = customers.filter((customer) =>
         customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (customer.company_name && customer.company_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (customer.phone && customer.phone.includes(searchTerm))
     );
 
@@ -122,6 +125,7 @@ export function PurchaseCustomersTable() {
                         <TableRow>
                             <TableHead>ID</TableHead>
                             <TableHead>Name</TableHead>
+                            <TableHead>Company Name</TableHead>
                             <TableHead>Phone</TableHead>
                             <TableHead>Email</TableHead>
                             <TableHead>Address</TableHead>
@@ -146,6 +150,7 @@ export function PurchaseCustomersTable() {
                                 <TableRow key={customer.id}>
                                     <TableCell>{customer.id}</TableCell>
                                     <TableCell className="font-medium">{customer.name}</TableCell>
+                                    <TableCell>{customer.company_name || "-"}</TableCell>
                                     <TableCell>{customer.phone || "-"}</TableCell>
                                     <TableCell>{customer.email || "-"}</TableCell>
                                     <TableCell>{customer.address || "-"}</TableCell>

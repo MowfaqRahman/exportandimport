@@ -11,7 +11,7 @@ import { jsPDF } from 'jspdf';
 import logo from '@/assets/logo.png'; // Import the logo image
 
 interface CustomerStatementTabProps {
-  customers: { customer_id: number | string; customer_name: string; phone_number?: string; email?: string; address?: string }[];
+  customers: { customer_id: number | string; customer_name: string; phone_number?: string; email?: string; address?: string; company_name?: string }[];
   selectedUser: string;
   setSelectedUser: (user: string) => void;
   loadingCustomers: boolean;
@@ -77,8 +77,22 @@ export function CustomerStatementTab({
     doc.setFontSize(10);
     doc.text("TO", 20, 70);
     doc.text(`${selectedCustomer?.customer_name || ""}`, 20, 75);
-    doc.text(`${selectedCustomer?.address || ""}`, 20, 80);
-    doc.text(`Phone: ${selectedCustomer?.phone_number || ""}`, 20, 85);
+    let detailYPos = 80;
+    if (selectedCustomer?.company_name) {
+      doc.text(selectedCustomer.company_name, 20, detailYPos);
+      detailYPos += 5;
+    }
+    if (selectedCustomer?.address) {
+      doc.text(selectedCustomer.address, 20, detailYPos);
+      detailYPos += 5;
+    }
+    if (selectedCustomer?.email) {
+      doc.text(`Email: ${selectedCustomer.email}`, 20, detailYPos);
+      detailYPos += 5;
+    }
+    if (selectedCustomer?.phone_number) {
+      doc.text(`Tel. No: ${selectedCustomer.phone_number}`, 20, detailYPos);
+    }
 
     // Statement Details (right side)
     doc.setTextColor(0, 0, 0); // Black text for Statement Details

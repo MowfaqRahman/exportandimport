@@ -18,6 +18,7 @@ import { useToast } from "@/components/ui/use-toast";
 interface Customer {
     customer_id: number;
     customer_name: string;
+    company_name: string | null;
     phone_number: string | null;
     email: string | null;
     address: string | null;
@@ -44,12 +45,14 @@ export function AddCustomerDialog({
     useEffect(() => {
         if (customer) {
             setValue("customer_name", customer.customer_name);
+            setValue("company_name", customer.company_name);
             setValue("phone_number", customer.phone_number);
             setValue("email", customer.email);
             setValue("address", customer.address);
         } else {
             reset({
                 customer_name: "",
+                company_name: "",
                 phone_number: "",
                 email: "",
                 address: "",
@@ -67,6 +70,7 @@ export function AddCustomerDialog({
                     .from("customers")
                     .update({
                         customer_name: data.customer_name,
+                        company_name: data.company_name,
                         phone_number: data.phone_number,
                         email: data.email,
                         address: data.address,
@@ -81,6 +85,7 @@ export function AddCustomerDialog({
                     .from("customers")
                     .insert([{
                         customer_name: data.customer_name,
+                        company_name: data.company_name,
                         phone_number: data.phone_number,
                         email: data.email,
                         address: data.address,
@@ -114,6 +119,10 @@ export function AddCustomerDialog({
                     <div className="space-y-2">
                         <Label htmlFor="customer_name">Name</Label>
                         <Input id="customer_name" required {...register("customer_name")} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="company_name">Company Name</Label>
+                        <Input id="company_name" {...register("company_name")} />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="phone_number">Phone Number</Label>

@@ -38,10 +38,12 @@ interface PurchaseCustomer {
   id: number;
   name: string;
   phone: string | null;
+  company_name: string | null;
 }
 
 export default function AddPurchaseDialog({ isOpen, onClose, onAddPurchase, onSuccess, purchase }: AddPurchaseDialogProps) {
   const [purchaseCustomer, setPurchaseCustomer] = useState("");
+  const [companyName, setCompanyName] = useState("");
   const [supplierPhone, setSupplierPhone] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [loading, setLoading] = useState(false);
@@ -72,7 +74,7 @@ export default function AddPurchaseDialog({ isOpen, onClose, onAddPurchase, onSu
       // Fetch purchase customers
       const { data: custData, error: custError } = await supabase
         .from("purchase_customer")
-        .select("id, name, phone")
+        .select("id, name, phone, company_name")
         .order("name");
 
       if (custError) {
@@ -85,7 +87,8 @@ export default function AddPurchaseDialog({ isOpen, onClose, onAddPurchase, onSu
     if (isOpen) {
       fetchData();
       if (purchase) {
-        setPurchaseCustomer(purchase.company_name);
+        setPurchaseCustomer(purchase.company_name); // This might needs careful check if we want to separate name and company in future
+        setCompanyName(purchase.company_name || "");
         setSupplierPhone(purchase.supplier_phone || "");
         setDate(purchase.date);
         setItems(purchase.items || [{ no: 1, productName: "", unit: "", qty: 0, price: 0 }]);
@@ -101,8 +104,9 @@ export default function AddPurchaseDialog({ isOpen, onClose, onAddPurchase, onSu
   const handleCustomerChange = (customerName: string) => {
     setPurchaseCustomer(customerName);
     const selected = purchaseCustomers.find(c => c.name === customerName);
-    if (selected && selected.phone) {
-      setSupplierPhone(selected.phone);
+    if (selected) {
+      if (selected.phone) setSupplierPhone(selected.phone);
+      if (selected.company_name) setCompanyName(selected.company_name);
     }
   };
 
@@ -158,7 +162,7 @@ export default function AddPurchaseDialog({ isOpen, onClose, onAddPurchase, onSu
         date,
         items: validItems,
         grand_total: grandTotal,
-        company_name: purchaseCustomer,
+        company_name: companyName || purchaseCustomer,
         supplier_phone: supplierPhone,
         paid: isPaid,
         payment_type: isPaid ? paymentType : null,
@@ -198,6 +202,7 @@ export default function AddPurchaseDialog({ isOpen, onClose, onAddPurchase, onSu
 
   const resetForm = () => {
     setPurchaseCustomer("");
+    setCompanyName("");
     setSupplierPhone("");
     setDate(new Date().toISOString().split('T')[0]);
     setItems([{ no: 1, productName: "", unit: "", qty: 0, price: 0 }]);
@@ -245,6 +250,15 @@ export default function AddPurchaseDialog({ isOpen, onClose, onAddPurchase, onSu
           </div>
 
           <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="companyName">Company Name</Label>
+              <Input
+                id="companyName"
+                placeholder="Company Name"
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="supplierPhone">Tel. No.</Label>
               <Input

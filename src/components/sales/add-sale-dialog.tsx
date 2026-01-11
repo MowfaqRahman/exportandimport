@@ -43,6 +43,7 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
   const [customerEmail, setCustomerEmail] = useState<string | null>(null); // New state for customer email
   const [customerAddress, setCustomerAddress] = useState<string | null>(null); // New state for customer address
   const [customerPhone, setCustomerPhone] = useState<string | null>(null); // New state for customer phone
+  const [customerCompanyName, setCustomerCompanyName] = useState<string | null>(null); // New state for customer company name
   const [disclaimer, setDisclaimer] = useState<string>('');
 
   const generateNextInvoiceNumber = async () => {
@@ -110,7 +111,7 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
       // Fetch distinct customer names from public.customers
       const { data: customerData, error: customerError } = await supabase
         .from('customers')
-        .select('customer_id, customer_name, phone_number, email, address'); // Select all customer details
+        .select('customer_id, customer_name, phone_number, email, address, company_name'); // Select all customer details
 
       if (customerError) {
         console.error("Error fetching customer names:", customerError);
@@ -134,7 +135,7 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
       if (selectedCustomerName) {
         const { data: customerData, error } = await supabase
           .from('customers')
-          .select('phone_number, email, address')
+          .select('phone_number, email, address, company_name')
           .eq('customer_name', selectedCustomerName)
           .single();
 
@@ -146,11 +147,13 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
           setCustomerPhone(customerData.phone_number);
           setCustomerEmail(customerData.email);
           setCustomerAddress(customerData.address);
+          setCustomerCompanyName(customerData.company_name);
         }
       } else {
         setCustomerPhone(null);
         setCustomerEmail(null);
         setCustomerAddress(null);
+        setCustomerCompanyName(null);
       }
     };
     fetchCustomerDetails();
@@ -202,7 +205,7 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
       invoice_no: invoiceNo || '',
       paid: isPaid,
       payment_type: isPaid ? paymentType : null,
-      due_date: !isPaid ? dueDate : null,
+      due_date: (!isPaid || (isPaid && paymentType === 'Cheque')) ? dueDate : null,
       disclaimer: disclaimer,
     };
 
@@ -227,6 +230,7 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
           customer_phone: data.customer_phone_footer || '',
           customer_email: customerEmail || '',
           customer_address: customerAddress || '',
+          customer_company_name: customerCompanyName || '',
           items: data.items,
           grand_total: data.grand_total,
           salesman_name_footer: data.salesman_name_footer || '',
@@ -237,6 +241,7 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
           company_email: "ktf.co2025@gmail.com",
           isPaid: data.paid,
           dueDate: data.due_date,
+          paymentType: data.payment_type,
           disclaimer: data.disclaimer,
         });
       } catch (pdfError) {
@@ -352,6 +357,18 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
                 />
               </div>
             )}
+            {selectedCustomerName && (
+              <div className="space-y-2">
+                <Label htmlFor="customer_company">Company Name</Label>
+                <Input
+                  id="customer_company"
+                  name="customer_company"
+                  placeholder="Company Name"
+                  value={customerCompanyName || ''}
+                  readOnly
+                />
+              </div>
+            )}
           </div>
 
           <div className="overflow-x-auto">
@@ -462,6 +479,18 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
                       <TabsTrigger value="Cheque">Cheque</TabsTrigger>
                     </TabsList>
                   </Tabs>
+                  {paymentType === 'Cheque' && (
+                    <div className="pt-2 space-y-2">
+                      <Label htmlFor="cheque_date">Cheque Date</Label>
+                      <Input
+                        id="cheque_date"
+                        name="cheque_date"
+                        type="date"
+                        value={dueDate || ''}
+                        onChange={(e) => setDueDate(e.target.value)}
+                      />
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-2">

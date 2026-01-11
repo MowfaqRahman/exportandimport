@@ -12,6 +12,7 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, A
 import { useToast } from "@/components/ui/use-toast";
 import { createClient } from "../../../supabase/client";
 import EditSaleDialog from "../sales/edit-sale-dialog";
+import { generateSaleInvoicePDF } from "@/utils/generateSaleInvoicePDF";
 
 interface AllSalesTableProps {
   initialSales: Sale[];
@@ -70,6 +71,52 @@ export default function AllSalesTable({ initialSales, onRefresh }: AllSalesTable
     setDeleteId(null);
   };
 
+  const handleGenerateInvoice = async (sale: Sale) => {
+    try {
+      const { data: customerData, error: customerError } = await supabase
+        .from('customers')
+        .select('company_name, email, address, phone_number')
+        .eq('customer_name', sale.customer_name)
+        .single();
+
+      if (customerError && customerError.code !== 'PGRST116') {
+        console.error("Error fetching customer details for invoice:", customerError);
+      }
+
+      generateSaleInvoicePDF({
+        date: sale.date,
+        customer_name: sale.customer_name || '',
+        customer_phone: customerData?.phone_number || sale.customer_phone_footer || '',
+        customer_email: customerData?.email || '',
+        customer_address: customerData?.address || '',
+        customer_company_name: customerData?.company_name || '',
+        items: sale.items || [],
+        grand_total: sale.grand_total || 0,
+        salesman_name_footer: sale.salesman_name_footer || '',
+        invoice_no: sale.invoice_no || '',
+        company_name: "KTF Vegetable and Fruit",
+        company_address: "Umm Salal, Doha, Qatar",
+        company_phone: "(+974) 30933327",
+        company_email: "ktf.co2025@gmail.com",
+        isPaid: sale.paid || false,
+        dueDate: sale.due_date || null,
+        paymentType: sale.payment_type,
+        disclaimer: sale.disclaimer,
+      });
+      toast({
+        title: "Success",
+        description: "Invoice downloaded successfully",
+      });
+    } catch (pdfError) {
+      console.error('Error generating PDF:', pdfError);
+      toast({
+        title: "Error",
+        description: "Failed to generate PDF invoice",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <>
       <Card>
@@ -100,6 +147,7 @@ export default function AllSalesTable({ initialSales, onRefresh }: AllSalesTable
                   <TableHead>Invoice No</TableHead>
                   <TableHead>Payment Status</TableHead>
                   <TableHead>Payment Method</TableHead>
+                  <TableHead className="text-right">Invoice</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -138,6 +186,15 @@ export default function AllSalesTable({ initialSales, onRefresh }: AllSalesTable
                       </TableCell>
                       <TableCell>
                         <span className="text-sm">{sale.paid ? (sale.payment_type || 'Cash') : '-'}</span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleGenerateInvoice(sale)}
+                        >
+                          Invoice
+                        </Button>
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">

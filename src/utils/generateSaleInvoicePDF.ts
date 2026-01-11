@@ -15,6 +15,7 @@ interface GenerateSaleInvoicePDFProps {
   customer_phone?: string;
   customer_email?: string;
   customer_address?: string;
+  customer_company_name?: string;
   items: InvoiceItem[];
   grand_total: number;
   salesman_name_footer: string;
@@ -25,6 +26,7 @@ interface GenerateSaleInvoicePDFProps {
   company_email: string;
   isPaid: boolean;
   dueDate: string | null;
+  paymentType?: string | null;
   disclaimer?: string;
 }
 
@@ -34,6 +36,7 @@ export const generateSaleInvoicePDF = ({
   customer_phone,
   customer_email,
   customer_address,
+  customer_company_name,
   items,
   grand_total,
   salesman_name_footer,
@@ -44,6 +47,7 @@ export const generateSaleInvoicePDF = ({
   company_email,
   isPaid,
   dueDate,
+  paymentType,
   disclaimer,
 }: GenerateSaleInvoicePDFProps) => {
   const doc = new jsPDF();
@@ -86,19 +90,28 @@ export const generateSaleInvoicePDF = ({
   doc.text(`Invoice Date: ${date}`, 180, 65, { align: "right" });
   if (!isPaid && dueDate) {
     doc.text(`Due Date: ${dueDate}`, 180, 70, { align: "right" });
+  } else if (isPaid && paymentType === 'Cheque' && dueDate) {
+    doc.text(`Cheque Date: ${dueDate}`, 180, 70, { align: "right" });
   }
 
   // Customer Details
   doc.text("Bill To:", 20, 70);
   doc.text(customer_name || '', 20, 75);
-  if (customer_address) {
-    doc.text(customer_address, 20, 80);
+  let detailYPos = 80;
+  if (customer_company_name) {
+    doc.text(customer_company_name, 20, detailYPos);
+    detailYPos += 5;
   }
-  if (customer_phone) {
-    doc.text(`Phone: ${customer_phone}`, 20, 85);
+  if (customer_address) {
+    doc.text(customer_address, 20, detailYPos);
+    detailYPos += 5;
   }
   if (customer_email) {
-    doc.text(`Email: ${customer_email}`, 20, 90);
+    doc.text(`Email: ${customer_email}`, 20, detailYPos);
+    detailYPos += 5;
+  }
+  if (customer_phone) {
+    doc.text(`Tel. No: ${customer_phone}`, 20, detailYPos);
   }
 
   // Table Headers
