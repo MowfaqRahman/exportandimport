@@ -12,10 +12,10 @@ export default function Footer() {
           <div>
             <h3 className="font-semibold text-gray-900 mb-4">Product</h3>
             <ul className="space-y-2">
-              <li><Link href="#features" className="text-gray-600 hover:text-blue-600">Features</Link></li>
-              <li><Link href="#pricing" className="text-gray-600 hover:text-blue-600">Pricing</Link></li>
-              <li><Link href="/dashboard" className="text-gray-600 hover:text-blue-600">Dashboard</Link></li>
-              <li><Link href="#" className="text-gray-600 hover:text-blue-600">API</Link></li>
+              <li><Link href="#features" className="text-gray-600 hover:text-green-600">Features</Link></li>
+              <li><Link href="#pricing" className="text-gray-600 hover:text-green-600">Pricing</Link></li>
+              <li><Link href="/dashboard" className="text-gray-600 hover:text-green-600">Dashboard</Link></li>
+              <li><Link href="#" className="text-gray-600 hover:text-green-600">API</Link></li>
             </ul>
           </div>
 
@@ -23,10 +23,10 @@ export default function Footer() {
           <div>
             <h3 className="font-semibold text-gray-900 mb-4">Company</h3>
             <ul className="space-y-2">
-              <li><Link href="#" className="text-gray-600 hover:text-blue-600">About</Link></li>
-              <li><Link href="#" className="text-gray-600 hover:text-blue-600">Blog</Link></li>
-              <li><Link href="#" className="text-gray-600 hover:text-blue-600">Careers</Link></li>
-              <li><Link href="#" className="text-gray-600 hover:text-blue-600">Press</Link></li>
+              <li><Link href="#" className="text-gray-600 hover:text-green-600">About</Link></li>
+              <li><Link href="#" className="text-gray-600 hover:text-green-600">Blog</Link></li>
+              <li><Link href="#" className="text-gray-600 hover:text-green-600">Careers</Link></li>
+              <li><Link href="#" className="text-gray-600 hover:text-green-600">Press</Link></li>
             </ul>
           </div>
 
@@ -34,10 +34,10 @@ export default function Footer() {
           <div>
             <h3 className="font-semibold text-gray-900 mb-4">Resources</h3>
             <ul className="space-y-2">
-              <li><Link href="#" className="text-gray-600 hover:text-blue-600">Documentation</Link></li>
-              <li><Link href="#" className="text-gray-600 hover:text-blue-600">Help Center</Link></li>
-              <li><Link href="#" className="text-gray-600 hover:text-blue-600">Community</Link></li>
-              <li><Link href="#" className="text-gray-600 hover:text-blue-600">Status</Link></li>
+              <li><Link href="#" className="text-gray-600 hover:text-green-600">Documentation</Link></li>
+              <li><Link href="#" className="text-gray-600 hover:text-green-600">Help Center</Link></li>
+              <li><Link href="#" className="text-gray-600 hover:text-green-600">Community</Link></li>
+              <li><Link href="#" className="text-gray-600 hover:text-green-600">Status</Link></li>
             </ul>
           </div>
 
@@ -45,19 +45,19 @@ export default function Footer() {
           <div>
             <h3 className="font-semibold text-gray-900 mb-4">Legal</h3>
             <ul className="space-y-2">
-              <li><Link href="#" className="text-gray-600 hover:text-blue-600">Privacy</Link></li>
-              <li><Link href="#" className="text-gray-600 hover:text-blue-600">Terms</Link></li>
-              <li><Link href="#" className="text-gray-600 hover:text-blue-600">Security</Link></li>
-              <li><Link href="#" className="text-gray-600 hover:text-blue-600">Cookies</Link></li>
+              <li><Link href="#" className="text-gray-600 hover:text-green-600">Privacy</Link></li>
+              <li><Link href="#" className="text-gray-600 hover:text-green-600">Terms</Link></li>
+              <li><Link href="#" className="text-gray-600 hover:text-green-600">Security</Link></li>
+              <li><Link href="#" className="text-gray-600 hover:text-green-600">Cookies</Link></li>
             </ul>
           </div>
         </div>
 
         <div className="flex flex-col md:flex-row justify-between items-center pt-8 border-t border-gray-200">
           <div className="text-gray-600 mb-4 md:mb-0">
-            © {currentYear} Your Company. All rights reserved.
+            © {currentYear} KTF Vegetable and Fruits. All rights reserved.
           </div>
-          
+
           <div className="flex space-x-6">
             <a href="#" className="text-gray-400 hover:text-gray-500">
               <span className="sr-only">Twitter</span>
