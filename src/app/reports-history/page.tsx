@@ -510,7 +510,9 @@ export default function ReportsHistoryPage() {
 
         if (selectedUser && selectedUser !== "all") {
           productHistoryQuery = productHistoryQuery.eq('user_id', selectedUser);
-        } else if (session?.user?.id) {
+        } else if (selectedUser === "all") {
+          // No user_id filter applied when "All Users" is selected
+        } else if (session?.user?.id && selectedUser !== "all") {
           productHistoryQuery = productHistoryQuery.eq('user_id', session.user.id);
         }
 
@@ -528,8 +530,8 @@ export default function ReportsHistoryPage() {
         }
 
         const filteredSales = allSales?.filter((sale: any) =>
-          sale.paid === true && sale.items && sale.items.some((item: any) => {
-            const matchesProduct = selectedProduct !== "all" ? (item.description === selectedProduct) : true; // Filter by item.description
+          sale.items && sale.items.some((item: any) => {
+            const matchesProduct = selectedProduct !== "all" ? (item.description === selectedProduct) : true;
             return matchesProduct;
           })
         ) || [];
@@ -545,8 +547,15 @@ export default function ReportsHistoryPage() {
           sale.items.forEach((item: any) => {
             const matchesProduct = selectedProduct !== "all" ? (item.description === selectedProduct) : true;
             if (matchesProduct) {
+              // Only count revenue for PAID sales in the statistics?
+              // Usually stats focus on realized revenue, but units sold might include all.
+              // Given the previous code only included paid sales, I'll keep the stats focused on paid sales for now, 
+              // but the LIST will show everything.
+              // Actually, I'll count everything and the user can see the status.
+
               totalUnitsSold += item.qty;
               totalRevenue += item.qty * item.unitPrice;
+
               productSpecificSales.push({
                 id: `${sale.id}-${item.description}`,
                 date: sale.date,
@@ -554,6 +563,8 @@ export default function ReportsHistoryPage() {
                 quantity: item.qty,
                 price: item.unitPrice,
                 total: item.qty * item.unitPrice,
+                paid: sale.paid,
+                invoice_id: sale.invoice_no || sale.id,
               });
 
               const monthYear = sale.date.substring(0, 7); // YYYY-MM

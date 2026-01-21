@@ -289,7 +289,7 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
                 id="invoice_no"
                 name="invoice_no"
                 value={invoiceNo || ''}
-                readOnly
+                onChange={(e) => setInvoiceNo(e.target.value)}
               />
             </div>
             <div className="space-y-2">

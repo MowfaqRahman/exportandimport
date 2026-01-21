@@ -132,17 +132,21 @@ export function CustomerStatementTab({
     const totalReceived = customerStatements.reduce((sum, statement) => {
       return sum + ((statement.type === "Sale" && statement.paid) ? Number(statement.amount) : 0);
     }, 0);
+    const balanceAmount = totalAmount - totalReceived;
 
     doc.setTextColor(0, 0, 0); // Black text for totals
     doc.setFontSize(10);
-    doc.text("TOTAL", 130, yPos, { align: "right" });
-    doc.text("TOTAL", 195, yPos, { align: "right" });
+    doc.text("TOTAL", 110, yPos, { align: "right" });
+    doc.text("TOTAL", 155, yPos, { align: "right" });
+    doc.text("BALANCE", 195, yPos, { align: "right" });
     yPos += 5;
-    doc.text("AMOUNT", 130, yPos, { align: "right" });
-    doc.text("RECEIVED", 195, yPos, { align: "right" });
+    doc.text("AMOUNT", 110, yPos, { align: "right" });
+    doc.text("RECEIVED", 155, yPos, { align: "right" });
+    doc.text("AMOUNT", 195, yPos, { align: "right" });
     yPos += 5;
-    doc.text(`QAR ${totalAmount.toFixed(2)}`, 130, yPos, { align: "right" });
-    doc.text(`QAR ${totalReceived.toFixed(2)}`, 195, yPos, { align: "right" });
+    doc.text(`QAR ${totalAmount.toFixed(2)}`, 110, yPos, { align: "right" });
+    doc.text(`QAR ${totalReceived.toFixed(2)}`, 155, yPos, { align: "right" });
+    doc.text(`QAR ${balanceAmount.toFixed(2)}`, 195, yPos, { align: "right" });
 
     // Terms Footer
     // Calculate yPos for the very bottom

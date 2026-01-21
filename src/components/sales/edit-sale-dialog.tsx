@@ -46,6 +46,7 @@ export default function EditSaleDialog({ sale, open, onClose, onSaleUpdated }: E
   const [customerAddress, setCustomerAddress] = useState<string | null>(null);
   const [customerPhone, setCustomerPhone] = useState<string | null>(sale.customer_phone_footer || null);
   const [disclaimer, setDisclaimer] = useState<string>(sale.disclaimer || '');
+  const [invoiceNo, setInvoiceNo] = useState<string>(sale.invoice_no || '');
 
   useEffect(() => {
     // Re-initialize state when sale prop changes
@@ -57,6 +58,7 @@ export default function EditSaleDialog({ sale, open, onClose, onSaleUpdated }: E
       setDueDate(sale.due_date || null);
       setCustomerPhone(sale.customer_phone_footer || null);
       setDisclaimer(sale.disclaimer || '');
+      setInvoiceNo(sale.invoice_no || '');
     }
   }, [sale, open]);
 
@@ -189,6 +191,7 @@ export default function EditSaleDialog({ sale, open, onClose, onSaleUpdated }: E
       payment_type: isPaid ? paymentType : null,
       due_date: !isPaid ? dueDate : null,
       disclaimer: disclaimer,
+      invoice_no: invoiceNo,
     };
 
     const { error } = await supabase
@@ -227,8 +230,8 @@ export default function EditSaleDialog({ sale, open, onClose, onSaleUpdated }: E
               <Input
                 id="invoice_no"
                 name="invoice_no"
-                value={sale.invoice_no || ''}
-                readOnly
+                value={invoiceNo || ''}
+                onChange={(e) => setInvoiceNo(e.target.value)}
               />
             </div>
             <div className="space-y-2">
