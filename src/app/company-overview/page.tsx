@@ -51,6 +51,11 @@ export default function CompanyOverviewPage() {
 
     const usersMap = new Map(usersData?.data?.map((user: any) => [user.id, user.full_name || user.name || user.email]) || []);
 
+    const salesWithUserName = salesData.data ? salesData.data.map((sale: any) => ({
+      ...sale,
+      user_name: usersMap.get(sale.user_id) || null,
+    })) : [];
+
     const expensesWithUserName = expensesData.data ? expensesData.data.map((expense: any) => ({
       ...expense,
       user_name: usersMap.get(expense.user_id) || null,
@@ -62,7 +67,7 @@ export default function CompanyOverviewPage() {
     })) : [];
 
     if (salesData.data) {
-      setCompanySales(salesData.data as Sale[]);
+      setCompanySales(salesWithUserName as Sale[]);
     }
     if (expensesData.data) {
       setCompanyExpenses(expensesWithUserName as Expense[]);
@@ -78,29 +83,46 @@ export default function CompanyOverviewPage() {
 
   // Calculate company-wide metrics
   const now = new Date();
+  const today = now.toISOString().split('T')[0];
+  const currentYear = now.getFullYear();
   const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
   const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+  const firstDayOfYear = `${currentYear}-01-01`;
+  const lastDayOfYear = `${currentYear}-12-31`;
 
-  const paidCompanySales = companySales.filter(sale => sale.paid === true);
+  // Filter sales, expenses, and purchases for various periods
+  // We show ALL data (paid + unpaid) to match the bottom table as requested
 
-  const monthlyCompanySales = paidCompanySales.filter(sale => sale.date >= firstDayOfMonth && sale.date <= lastDayOfMonth);
-  const totalCompanySales = monthlyCompanySales.reduce((sum, sale) => sum + Number(sale.grand_total || 0), 0);
-
-  const monthlyCompanyExpenses = companyExpenses.filter(expense => expense.date >= firstDayOfMonth && expense.date <= lastDayOfMonth);
-  const totalCompanyExpenses = monthlyCompanyExpenses.reduce((sum, expense) => sum + Number(expense.amount || 0), 0);
-
-  const monthlyCompanyPurchases = companyPurchases.filter(purchase => purchase.date >= firstDayOfMonth && purchase.date <= lastDayOfMonth);
-  const totalCompanyPurchases = monthlyCompanyPurchases.reduce((sum, purchase) => sum + Number(purchase.grand_total || 0), 0);
-
-  const companyProfit = totalCompanySales - totalCompanyExpenses - totalCompanyPurchases;
-
-  // Get today's company sales
-  const today = new Date().toISOString().split('T')[0];
-  const todayCompanySales = paidCompanySales
+  // Today's Sales
+  const todayCompanySales = companySales
     .filter(sale => sale.date === today)
     .reduce((sum, sale) => sum + Number(sale.grand_total || 0), 0);
 
-  // Prepare chart data for company-wide view
+  // Monthly Metrics
+  const monthlyCompanySales = companySales.filter(sale => sale.date >= firstDayOfMonth && sale.date <= lastDayOfMonth);
+  const totalMonthlySales = monthlyCompanySales.reduce((sum, sale) => sum + Number(sale.grand_total || 0), 0);
+
+  const monthlyCompanyExpenses = companyExpenses.filter(expense => expense.date >= firstDayOfMonth && expense.date <= lastDayOfMonth);
+  const totalMonthlyExpenses = monthlyCompanyExpenses.reduce((sum, expense) => sum + Number(expense.amount || 0), 0);
+
+  const monthlyCompanyPurchases = companyPurchases.filter(purchase => purchase.date >= firstDayOfMonth && purchase.date <= lastDayOfMonth);
+  const totalMonthlyPurchases = monthlyCompanyPurchases.reduce((sum, purchase) => sum + Number(purchase.grand_total || 0), 0);
+
+  // Yearly Metrics (to match Reports & History page behavior)
+  const yearlyCompanySales = companySales.filter(sale => sale.date >= firstDayOfYear && sale.date <= lastDayOfYear);
+  const totalYearlySales = yearlyCompanySales.reduce((sum, sale) => sum + Number(sale.grand_total || 0), 0);
+
+  const yearlyCompanyExpenses = companyExpenses.filter(expense => expense.date >= firstDayOfYear && expense.date <= lastDayOfYear);
+  const totalYearlyExpenses = yearlyCompanyExpenses.reduce((sum, expense) => sum + Number(expense.amount || 0), 0);
+
+  const yearlyCompanyPurchases = companyPurchases.filter(purchase => purchase.date >= firstDayOfYear && purchase.date <= lastDayOfYear);
+  const totalYearlyPurchases = yearlyCompanyPurchases.reduce((sum, purchase) => sum + Number(purchase.grand_total || 0), 0);
+
+  // Profit calculations
+  const monthlyProfit = totalMonthlySales - totalMonthlyExpenses - totalMonthlyPurchases;
+  const yearlyProfit = totalYearlySales - totalYearlyExpenses - totalYearlyPurchases;
+
+  // Prepare chart data for company-wide view - last 7 days
   const last7Days = Array.from({ length: 7 }, (_, i) => {
     const date = new Date();
     date.setDate(date.getDate() - (6 - i));
@@ -108,7 +130,7 @@ export default function CompanyOverviewPage() {
   });
 
   const companyChartData = last7Days.map(date => {
-    const daySales = paidCompanySales
+    const daySales = companySales
       .filter(sale => sale.date === date)
       .reduce((sum, sale) => sum + Number(sale.grand_total || 0), 0);
     const dayExpenses = companyExpenses
@@ -155,47 +177,87 @@ export default function CompanyOverviewPage() {
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <MetricCard
-              title="Today's Company Sales"
+              title="Today's Sales"
               value={`QAR ${todayCompanySales.toFixed(2)}`}
               icon={DollarSign}
-              description="All sales made today across the company"
+              description="Today's sales (all users)"
             />
             <MetricCard
-              title="Monthly Company Sales"
-              value={`QAR ${totalCompanySales.toFixed(2)}`}
+              title="Monthly Sales"
+              value={`QAR ${totalMonthlySales.toFixed(2)}`}
               icon={TrendingUp}
-              description="Total sales this month across the company"
+              description="This month's sales (all users)"
             />
             <MetricCard
-              title="Monthly Company Expenses"
-              value={`QAR ${totalCompanyExpenses.toFixed(2)}`}
+              title="Monthly Expenses"
+              value={`QAR ${totalMonthlyExpenses.toFixed(2)}`}
               icon={TrendingDown}
-              description="Total expenses this month across the company"
+              description="This month's expenses (all users)"
             />
             <MetricCard
-              title="Monthly Company Purchases"
-              value={`QAR ${totalCompanyPurchases.toFixed(2)}`}
+              title="Monthly Purchases"
+              value={`QAR ${totalMonthlyPurchases.toFixed(2)}`}
               icon={TrendingDown}
-              description="Total purchases this month across the company"
+              description="This month's purchases (all users)"
             />
           </div>
+
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <MetricCard
+              title="Yearly Sales"
+              value={`QAR ${totalYearlySales.toFixed(2)}`}
+              icon={TrendingUp}
+              description="All sales this year across all users"
+            />
+            <MetricCard
+              title="Yearly Expenses"
+              value={`QAR ${totalYearlyExpenses.toFixed(2)}`}
+              icon={TrendingDown}
+              description="All expenses this year across all users"
+            />
+            <MetricCard
+              title="Yearly Purchases"
+              value={`QAR ${totalYearlyPurchases.toFixed(2)}`}
+              icon={TrendingDown}
+              description="All purchases this year across all users"
+            />
+            <MetricCard
+              className={
+                yearlyProfit >= 0
+                  ? "border-green-500/50 bg-green-50/30 dark:bg-green-950/10"
+                  : "border-red-500/50 bg-red-50/30 dark:bg-red-950/10"
+              }
+              title="Yearly Net Profit"
+              value={`QAR ${yearlyProfit.toFixed(2)}`}
+              icon={Wallet}
+              badge={{
+                text: yearlyProfit >= 0 ? "Profit" : "Loss",
+                variant: yearlyProfit >= 0 ? "success" : "destructive"
+              }}
+              trend={{
+                value: yearlyProfit >= 0 ? `+${yearlyProfit.toFixed(2)}` : yearlyProfit.toFixed(2),
+                isPositive: yearlyProfit >= 0,
+              }}
+            />
+          </div>
+
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <MetricCard
               className={
-                companyProfit >= 0
+                monthlyProfit >= 0
                   ? "lg:col-start-2 lg:col-span-2 border-green-500/50 bg-green-50/30 dark:bg-green-950/10"
                   : "lg:col-start-2 lg:col-span-2 border-red-500/50 bg-red-50/30 dark:bg-red-950/10"
               }
-              title="Company Net Profit"
-              value={`QAR ${companyProfit.toFixed(2)}`}
+              title="Current Month Net Profit"
+              value={`QAR ${monthlyProfit.toFixed(2)}`}
               icon={Wallet}
               badge={{
-                text: companyProfit >= 0 ? "Profit" : "Loss",
-                variant: companyProfit >= 0 ? "success" : "destructive"
+                text: monthlyProfit >= 0 ? "Profit" : "Loss",
+                variant: monthlyProfit >= 0 ? "success" : "destructive"
               }}
               trend={{
-                value: companyProfit >= 0 ? `+${companyProfit.toFixed(2)}` : companyProfit.toFixed(2),
-                isPositive: companyProfit >= 0,
+                value: monthlyProfit >= 0 ? `+${monthlyProfit.toFixed(2)}` : monthlyProfit.toFixed(2),
+                isPositive: monthlyProfit >= 0,
               }}
             />
           </div>

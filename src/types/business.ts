@@ -14,6 +14,7 @@ export interface Sale {
   salesman_name_footer: string | null;
   customer_phone_footer: string;
   user_id?: string;
+  user_name?: string | null;
   created_at?: string;
   updated_at?: string;
   invoice_no?: string;

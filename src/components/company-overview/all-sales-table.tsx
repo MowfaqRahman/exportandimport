@@ -175,7 +175,7 @@ export default function AllSalesTable({ initialSales, onRefresh }: AllSalesTable
                       <TableCell className="font-medium">
                         QAR {Number(sale.grand_total || 0).toFixed(2)}
                       </TableCell>
-                      <TableCell>{sale.salesman_name_footer || 'N/A'}</TableCell>
+                      <TableCell>{sale.salesman_name_footer || sale.user_name || 'N/A'}</TableCell>
                       <TableCell>{sale.invoice_no || 'N/A'}</TableCell>
                       <TableCell>
                         {sale.paid ? (
