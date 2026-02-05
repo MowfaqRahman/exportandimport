@@ -175,7 +175,8 @@ export default function CompanyOverviewPage() {
 
           {/* Tabs component moved to DashboardNavbar */}
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {/* Row 1: High Visibility Metrics */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <MetricCard
               title="Today's Sales"
               value={`QAR ${todayCompanySales.toFixed(2)}`}
@@ -183,49 +184,28 @@ export default function CompanyOverviewPage() {
               description="Today's sales (all users)"
             />
             <MetricCard
-              title="Monthly Sales"
-              value={`QAR ${totalMonthlySales.toFixed(2)}`}
-              icon={TrendingUp}
-              description="This month's sales (all users)"
-            />
-            <MetricCard
-              title="Monthly Expenses"
-              value={`QAR ${totalMonthlyExpenses.toFixed(2)}`}
-              icon={TrendingDown}
-              description="This month's expenses (all users)"
-            />
-            <MetricCard
-              title="Monthly Purchases"
-              value={`QAR ${totalMonthlyPurchases.toFixed(2)}`}
-              icon={TrendingDown}
-              description="This month's purchases (all users)"
-            />
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <MetricCard
-              title="Yearly Sales"
-              value={`QAR ${totalYearlySales.toFixed(2)}`}
-              icon={TrendingUp}
-              description="All sales this year across all users"
-            />
-            <MetricCard
-              title="Yearly Expenses"
-              value={`QAR ${totalYearlyExpenses.toFixed(2)}`}
-              icon={TrendingDown}
-              description="All expenses this year across all users"
-            />
-            <MetricCard
-              title="Yearly Purchases"
-              value={`QAR ${totalYearlyPurchases.toFixed(2)}`}
-              icon={TrendingDown}
-              description="All purchases this year across all users"
+              className={
+                monthlyProfit >= 0
+                  ? "border-green-500/50 bg-green-50/30 dark:bg-green-950/10 shadow-sm"
+                  : "border-red-500/50 bg-red-50/30 dark:bg-red-950/10 shadow-sm"
+              }
+              title="Current Month Net Profit"
+              value={`QAR ${monthlyProfit.toFixed(2)}`}
+              icon={Wallet}
+              badge={{
+                text: monthlyProfit >= 0 ? "Profit" : "Loss",
+                variant: monthlyProfit >= 0 ? "success" : "destructive"
+              }}
+              trend={{
+                value: monthlyProfit >= 0 ? `+${monthlyProfit.toFixed(2)}` : monthlyProfit.toFixed(2),
+                isPositive: monthlyProfit >= 0,
+              }}
             />
             <MetricCard
               className={
                 yearlyProfit >= 0
-                  ? "border-green-500/50 bg-green-50/30 dark:bg-green-950/10"
-                  : "border-red-500/50 bg-red-50/30 dark:bg-red-950/10"
+                  ? "border-green-500/50 bg-green-50/30 dark:bg-green-950/10 shadow-sm"
+                  : "border-red-500/50 bg-red-50/30 dark:bg-red-950/10 shadow-sm"
               }
               title="Yearly Net Profit"
               value={`QAR ${yearlyProfit.toFixed(2)}`}
@@ -241,24 +221,47 @@ export default function CompanyOverviewPage() {
             />
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {/* Row 2: Monthly Details */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <MetricCard
-              className={
-                monthlyProfit >= 0
-                  ? "lg:col-start-2 lg:col-span-2 border-green-500/50 bg-green-50/30 dark:bg-green-950/10"
-                  : "lg:col-start-2 lg:col-span-2 border-red-500/50 bg-red-50/30 dark:bg-red-950/10"
-              }
-              title="Current Month Net Profit"
-              value={`QAR ${monthlyProfit.toFixed(2)}`}
-              icon={Wallet}
-              badge={{
-                text: monthlyProfit >= 0 ? "Profit" : "Loss",
-                variant: monthlyProfit >= 0 ? "success" : "destructive"
-              }}
-              trend={{
-                value: monthlyProfit >= 0 ? `+${monthlyProfit.toFixed(2)}` : monthlyProfit.toFixed(2),
-                isPositive: monthlyProfit >= 0,
-              }}
+              title="Monthly Sales"
+              value={`QAR ${totalMonthlySales.toFixed(2)}`}
+              icon={TrendingUp}
+              description="This month's sales (all users)"
+            />
+            <MetricCard
+              title="Monthly Purchases"
+              value={`QAR ${totalMonthlyPurchases.toFixed(2)}`}
+              icon={TrendingDown}
+              description="This month's purchases (all users)"
+            />
+            <MetricCard
+              title="Monthly Expenses"
+              value={`QAR ${totalMonthlyExpenses.toFixed(2)}`}
+              icon={TrendingDown}
+              description="This month's expenses (all users)"
+            />
+          </div>
+
+          {/* Row 3: Yearly Details */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <MetricCard
+              title="Yearly Sales"
+              value={`QAR ${totalYearlySales.toFixed(2)}`}
+              icon={TrendingUp}
+              description="All sales this year across all users"
+            />
+            <MetricCard
+              title="Yearly Purchases"
+              value={`QAR ${totalYearlyPurchases.toFixed(2)}`}
+              icon={TrendingDown}
+              description="All purchases this year across all users"
+            />
+            <MetricCard
+              title="Yearly Expenses"
+              value={`QAR ${totalYearlyExpenses.toFixed(2)}`}
+              icon={TrendingDown}
+              description="All expenses this year across all users"
             />
           </div>
 

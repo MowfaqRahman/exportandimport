@@ -123,7 +123,8 @@ export default function DashboardContent({ initialSales, initialExpenses, initia
       </div>
 
       {/* Metrics Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {/* Row 1: Today's Performance & Profit */}
+      <div className="grid gap-4 md:grid-cols-2">
         <MetricCard
           title="Today's Sales"
           value={`QAR ${todaySales.toFixed(2)}`}
@@ -131,30 +132,10 @@ export default function DashboardContent({ initialSales, initialExpenses, initia
           description="Sales made today"
         />
         <MetricCard
-          title="Monthly Sales"
-          value={`QAR ${totalSales.toFixed(2)}`}
-          icon={TrendingUp}
-          description="Total sales this month"
-        />
-        <MetricCard
-          title="Monthly Expenses"
-          value={`QAR ${totalExpenses.toFixed(2)}`}
-          icon={TrendingDown}
-          description="Total expenses this month"
-        />
-        <MetricCard
-          title="Monthly Purchases"
-          value={`QAR ${totalPurchases.toFixed(2)}`}
-          icon={TrendingDown}
-          description="Total purchases this month"
-        />
-      </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <MetricCard
           className={
             profit >= 0
-              ? "lg:col-start-2 lg:col-span-2 border-green-500/50 bg-green-50/30 dark:bg-green-950/10"
-              : "lg:col-start-2 lg:col-span-2 border-red-500/50 bg-red-50/30 dark:bg-red-950/10"
+              ? "border-green-500/50 bg-green-50/30 dark:bg-green-950/10 shadow-sm"
+              : "border-red-500/50 bg-red-50/30 dark:bg-red-950/10 shadow-sm"
           }
           title="Net Profit"
           value={`QAR ${profit.toFixed(2)}`}
@@ -167,6 +148,28 @@ export default function DashboardContent({ initialSales, initialExpenses, initia
             value: profit >= 0 ? `+${profit.toFixed(2)}` : profit.toFixed(2),
             isPositive: profit >= 0,
           }}
+        />
+      </div>
+
+      {/* Row 2: Monthly Details */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <MetricCard
+          title="Monthly Sales"
+          value={`QAR ${totalSales.toFixed(2)}`}
+          icon={TrendingUp}
+          description="Total sales this month"
+        />
+        <MetricCard
+          title="Monthly Purchases"
+          value={`QAR ${totalPurchases.toFixed(2)}`}
+          icon={TrendingDown}
+          description="Total purchases this month"
+        />
+        <MetricCard
+          title="Monthly Expenses"
+          value={`QAR ${totalExpenses.toFixed(2)}`}
+          icon={TrendingDown}
+          description="Total expenses this month"
         />
       </div>
 
