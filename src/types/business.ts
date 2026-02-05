@@ -45,6 +45,7 @@ export interface Purchase {
   created_at?: string;
   updated_at?: string;
   user_name?: string | null;
+  purchase_no?: string;
 }
 
 export interface Expense {

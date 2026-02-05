@@ -46,6 +46,7 @@ export default function PurchaseTable({ initialPurchases, onDataChange }: Purcha
   const filteredPurchases = useMemo(() => {
     return initialPurchases.filter(purchase =>
       purchase.company_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      purchase.purchase_no?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       purchase.items?.some(item => item.productName?.toLowerCase().includes(searchTerm.toLowerCase()))
     ).sort((a, b) => {
       const dateA = new Date(a.date);
@@ -138,6 +139,7 @@ export default function PurchaseTable({ initialPurchases, onDataChange }: Purcha
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[50px]">No.</TableHead>
+                  <TableHead>Pur. No.</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead className="min-w-[200px]">Name of Item</TableHead>
                   <TableHead>Supplier</TableHead>
@@ -150,7 +152,7 @@ export default function PurchaseTable({ initialPurchases, onDataChange }: Purcha
               <TableBody>
                 {filteredPurchases.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                       No purchase transactions found.
                     </TableCell>
                   </TableRow>
@@ -158,6 +160,9 @@ export default function PurchaseTable({ initialPurchases, onDataChange }: Purcha
                   filteredPurchases.map((purchase, index) => (
                     <TableRow key={purchase.id}>
                       <TableCell>{index + 1}</TableCell>
+                      <TableCell className="font-medium text-emerald-600 dark:text-emerald-400">
+                        {purchase.purchase_no || "N/A"}
+                      </TableCell>
                       <TableCell>{purchase.date}</TableCell>
                       <TableCell className="font-medium">
                         {purchase.items?.[0]?.productName || "N/A"}

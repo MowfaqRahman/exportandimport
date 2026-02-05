@@ -53,9 +53,35 @@ export default function AddPurchaseDialog({ isOpen, onClose, onAddPurchase, onSu
   const [isPaid, setIsPaid] = useState<boolean>(false);
   const [paymentType, setPaymentType] = useState<'Cash' | 'Online' | 'Cheque'>('Cash');
   const [dueDate, setDueDate] = useState<string>("");
+  const [purchaseNo, setPurchaseNo] = useState<string | null>(null);
 
   const { toast } = useToast();
   const supabase = createClient();
+
+  const generateNextPurchaseNumber = async () => {
+    const { data, error } = await supabase
+      .from('purchases')
+      .select('purchase_no')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      console.error("Error fetching last purchase number:", error);
+      return "PUR-0001";
+    } else if (data && data.purchase_no) {
+      const lastNumberMatch = data.purchase_no.match(/PUR-(\d+)/);
+      if (lastNumberMatch) {
+        const lastNumber = parseInt(lastNumberMatch[1], 10);
+        const nextNumber = lastNumber + 1;
+        return `PUR-${String(nextNumber).padStart(4, '0')}`;
+      } else {
+        return "PUR-0001";
+      }
+    } else {
+      return "PUR-0001";
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -82,12 +108,17 @@ export default function AddPurchaseDialog({ isOpen, onClose, onAddPurchase, onSu
       } else {
         setPurchaseCustomers(custData || []);
       }
+
+      if (!purchase) {
+        const nextPurNum = await generateNextPurchaseNumber();
+        setPurchaseNo(nextPurNum);
+      }
     };
 
     if (isOpen) {
       fetchData();
       if (purchase) {
-        setPurchaseCustomer(purchase.company_name); // This might needs careful check if we want to separate name and company in future
+        setPurchaseCustomer(purchase.company_name);
         setCompanyName(purchase.company_name || "");
         setSupplierPhone(purchase.supplier_phone || "");
         setDate(purchase.date);
@@ -95,6 +126,7 @@ export default function AddPurchaseDialog({ isOpen, onClose, onAddPurchase, onSu
         setIsPaid(!!purchase.paid);
         setPaymentType(purchase.payment_type as 'Cash' | 'Online' | 'Cheque' || "Cash");
         setDueDate(purchase.due_date || "");
+        setPurchaseNo(purchase.purchase_no || "");
       } else {
         resetForm();
       }
@@ -168,6 +200,7 @@ export default function AddPurchaseDialog({ isOpen, onClose, onAddPurchase, onSu
         payment_type: isPaid ? paymentType : null,
         due_date: !isPaid ? dueDate : null,
         user_id: user.id,
+        purchase_no: purchaseNo,
       };
 
       if (purchase) {
@@ -209,6 +242,7 @@ export default function AddPurchaseDialog({ isOpen, onClose, onAddPurchase, onSu
     setIsPaid(false);
     setPaymentType("Cash");
     setDueDate("");
+    setPurchaseNo(null);
   };
 
   return (
@@ -220,6 +254,15 @@ export default function AddPurchaseDialog({ isOpen, onClose, onAddPurchase, onSu
         <div className="space-y-4 py-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
+              <Label htmlFor="purchase_no">Purchase No.</Label>
+              <Input
+                id="purchase_no"
+                placeholder="PUR-0001"
+                value={purchaseNo || ""}
+                onChange={(e) => setPurchaseNo(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="date">Date *</Label>
               <Input
                 id="date"
@@ -229,7 +272,9 @@ export default function AddPurchaseDialog({ isOpen, onClose, onAddPurchase, onSu
                 required
               />
             </div>
-            <div className="space-y-2">
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2 col-span-2">
               <Label htmlFor="purchaseCustomer">Purchase Customer *</Label>
               <Select
                 value={purchaseCustomer}
