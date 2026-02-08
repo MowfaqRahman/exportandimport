@@ -31,7 +31,7 @@ export function ReportsFilter({ selectedYear, setSelectedYear, selectedMonth, se
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+    <div className="flex flex-wrap items-center gap-4 mb-6">
       <Select defaultValue={String(currentYear)} onValueChange={setSelectedYear}>
         <SelectTrigger className="w-[180px]">
           <SelectValue placeholder="Select Year" />

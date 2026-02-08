@@ -11,7 +11,8 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search, Edit, Trash2 } from "lucide-react";
+import { Search, Edit, Trash2, Filter } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
 import { Expense, Purchase } from "@/types/business";
 import { Button } from "@/components/ui/button";
@@ -45,6 +46,7 @@ const formatDate = (dateString: string) => {
 export function AllPurchasesTable({ initialPurchases }: AllPurchasesTableProps) {
   const [purchases, setPurchases] = useState<Purchase[]>(initialPurchases);
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [editingPurchase, setEditingPurchase] = useState<Purchase | null>(null);
   const [deletingPurchaseId, setDeletingPurchaseId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -97,11 +99,19 @@ export function AllPurchasesTable({ initialPurchases }: AllPurchasesTableProps) 
     setDeletingPurchaseId(null);
   };
 
-  const filteredPurchases = purchases.filter(purchase =>
-    purchase.items?.some(item => item.productName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    purchase.company_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (purchase.user_name?.toLowerCase() || '').includes(searchTerm.toLowerCase())
-  ).sort((a, b) => {
+  const filteredPurchases = purchases.filter(purchase => {
+    const matchesSearch =
+      purchase.items?.some(item => item.productName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      purchase.company_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (purchase.user_name?.toLowerCase() || '').includes(searchTerm.toLowerCase());
+
+    const matchesStatus =
+      statusFilter === "all" ? true :
+        statusFilter === "paid" ? purchase.paid === true :
+          statusFilter === "unpaid" ? purchase.paid === false : true;
+
+    return matchesSearch && matchesStatus;
+  }).sort((a, b) => {
     const dateA = new Date(a.date);
     const dateB = new Date(b.date);
     return dateB.getTime() - dateA.getTime();
@@ -111,14 +121,29 @@ export function AllPurchasesTable({ initialPurchases }: AllPurchasesTableProps) 
     <Card>
       <CardHeader className="flex flex-row justify-between items-center space-y-0 pb-2">
         <CardTitle className="text-2xl font-bold">All User Purchases</CardTitle>
-        <div className="relative w-full max-w-sm sm:w-[250px]">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search purchases..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-8 w-full"
-          />
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <Filter className="h-4 w-4 text-muted-foreground" />
+            <Select defaultValue="all" onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[120px]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="paid">Paid</SelectItem>
+                <SelectItem value="unpaid">Unpaid</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="relative w-full max-sm:w-[250px]">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search purchases..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-8 w-full"
+            />
+          </div>
         </div>
       </CardHeader>
       <CardContent>
