@@ -44,57 +44,63 @@ export function ReportsFilter({
   ];
 
   return (
-    <div className="flex flex-wrap items-center gap-4 mb-6">
-      <Select defaultValue={String(currentYear)} value={selectedYear} onValueChange={setSelectedYear}>
-        <SelectTrigger className="w-[180px]">
-          <SelectValue placeholder="Select Year" />
-        </SelectTrigger>
-        <SelectContent>
-          {years.map((year) => (
-            <SelectItem key={year} value={String(year)}>
-              {year}
-            </SelectItem>
-          ))}
-          <SelectItem value="custom">Custom Range</SelectItem>
-        </SelectContent>
-      </Select>
-
-      {selectedYear !== "custom" && (
-        <Select defaultValue="all" value={selectedMonth} onValueChange={setSelectedMonth}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Select Month" />
+    <div className="flex flex-wrap items-end gap-4 mb-6">
+      <div className="flex flex-col">
+        <span className="text-[10px] uppercase font-bold text-muted-foreground ml-1 mb-1">Year</span>
+        <Select defaultValue={String(currentYear)} value={selectedYear} onValueChange={setSelectedYear}>
+          <SelectTrigger className="w-[180px] h-10">
+            <SelectValue placeholder="Select Year" />
           </SelectTrigger>
           <SelectContent>
-            {months.map((month) => (
-              <SelectItem key={month.value} value={month.value}>
-                {month.label}
+            {years.map((year) => (
+              <SelectItem key={year} value={String(year)}>
+                {year}
               </SelectItem>
             ))}
+            <SelectItem value="custom">Custom Range</SelectItem>
           </SelectContent>
         </Select>
+      </div>
+
+      {selectedYear !== "custom" && (
+        <div className="flex flex-col">
+          <span className="text-[10px] uppercase font-bold text-muted-foreground ml-1 mb-1">Month</span>
+          <Select defaultValue="all" value={selectedMonth} onValueChange={setSelectedMonth}>
+            <SelectTrigger className="w-[180px] h-10">
+              <SelectValue placeholder="Select Month" />
+            </SelectTrigger>
+            <SelectContent>
+              {months.map((month) => (
+                <SelectItem key={month.value} value={month.value}>
+                  {month.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       )}
 
       {selectedYear === "custom" && (
-        <div className="flex items-center gap-2">
+        <>
           <div className="flex flex-col">
-            <span className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Start Date</span>
+            <span className="text-[10px] uppercase font-bold text-muted-foreground ml-1 mb-1">Start Date</span>
             <input
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="px-3 py-2 border rounded-md text-sm bg-background h-10 w-[150px]"
+              className="px-3 py-2 border rounded-md text-sm bg-background h-10 w-[180px] focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
             />
           </div>
           <div className="flex flex-col">
-            <span className="text-[10px] uppercase font-bold text-muted-foreground ml-1">End Date</span>
+            <span className="text-[10px] uppercase font-bold text-muted-foreground ml-1 mb-1">End Date</span>
             <input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="px-3 py-2 border rounded-md text-sm bg-background h-10 w-[150px]"
+              className="px-3 py-2 border rounded-md text-sm bg-background h-10 w-[180px] focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
             />
           </div>
-        </div>
+        </>
       )}
     </div>
   );
