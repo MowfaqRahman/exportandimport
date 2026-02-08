@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search } from "lucide-react";
+import { Search, Filter } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sale } from "@/types/business";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2 } from "lucide-react";
@@ -29,18 +30,27 @@ const formatDate = (dateString: string) => {
 
 export default function AllSalesTable({ initialSales, onRefresh }: AllSalesTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editSale, setEditSale] = useState<Sale | null>(null);
   const { toast } = useToast();
   const [supabase] = useState(createClient());
 
   const filteredSales = initialSales
-    .filter(sale =>
-      sale.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      sale.items?.some(item => item.description?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (sale.salesman_name_footer?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-      (sale.invoice_no?.toLowerCase() || '').includes(searchTerm.toLowerCase())
-    )
+    .filter(sale => {
+      const matchesSearch =
+        sale.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        sale.items?.some(item => item.description?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (sale.salesman_name_footer?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+        (sale.invoice_no?.toLowerCase() || '').includes(searchTerm.toLowerCase());
+
+      const matchesStatus =
+        statusFilter === "all" ? true :
+          statusFilter === "paid" ? sale.paid === true :
+            statusFilter === "unpaid" ? sale.paid === false : true;
+
+      return matchesSearch && matchesStatus;
+    })
     .sort((a, b) => {
       const dateA = new Date(a.created_at || a.date);
       const dateB = new Date(b.created_at || b.date);
@@ -122,7 +132,20 @@ export default function AllSalesTable({ initialSales, onRefresh }: AllSalesTable
       <Card>
         <CardHeader className="flex flex-row justify-between items-center space-y-0 pb-2">
           <CardTitle className="text-2xl font-bold">All User Sales Transactions</CardTitle>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <Select defaultValue="all" onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="paid">Paid</SelectItem>
+                  <SelectItem value="unpaid">Unpaid</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div className="relative w-full max-w-sm sm:w-[250px]">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
