@@ -20,6 +20,8 @@ interface CustomerStatementTabProps {
   formatDate: (dateString: string) => string;
   selectedYear: string;
   selectedMonth: string;
+  startDate: string;
+  endDate: string;
   onPaymentStatusChange: (invoiceId: string, newStatus: boolean) => void;
   onPaymentMethodChange?: (invoiceId: string, method: string) => void;
 }
@@ -34,6 +36,8 @@ export function CustomerStatementTab({
   formatDate,
   selectedYear,
   selectedMonth,
+  startDate,
+  endDate,
   onPaymentStatusChange,
   onPaymentMethodChange
 }: CustomerStatementTabProps) {
@@ -51,7 +55,10 @@ export function CustomerStatementTab({
 
     const selectedCustomer = customers.find(c => c.customer_id === Number(selectedUser));
     const customerName = selectedCustomer ? selectedCustomer.customer_name : "Customer";
-    const fileName = `${customerName}_Statement_${selectedYear}${selectedMonth === "all" ? "" : `-${selectedMonth}`}.pdf`;
+    const rangeSuffix = selectedYear === "custom"
+      ? `${startDate}_to_${endDate}`
+      : `${selectedYear}${selectedMonth === "all" ? "" : `-${selectedMonth}`}`;
+    const fileName = `${customerName}_Statement_${rangeSuffix}.pdf`;
 
     const doc = new jsPDF();
 

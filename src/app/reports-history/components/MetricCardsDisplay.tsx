@@ -14,6 +14,7 @@ interface MetricCardsDisplayProps {
   monthlyPurchasesTotal: number;
   monthlyExpensesTotal: number;
   netProfit: number;
+  selectedYear: string;
 }
 
 export function MetricCardsDisplay({
@@ -25,7 +26,11 @@ export function MetricCardsDisplay({
   monthlyPurchasesTotal,
   monthlyExpensesTotal,
   netProfit,
+  selectedYear,
 }: MetricCardsDisplayProps) {
+  const isCustom = selectedYear === "custom";
+  const rangeLabel = isCustom ? "Custom Range" : "Monthly Company";
+  const rangeDesc = isCustom ? "selected range" : "this month";
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8 auto-rows-fr">
       <motion.div
@@ -101,10 +106,10 @@ export function MetricCardsDisplay({
         transition={{ duration: 0.3, delay: 0.4 }}
       >
         <MetricCard
-          title="Monthly Company Sales"
+          title={`${rangeLabel} Sales`}
           value={loadingAggregates ? "..." : `QAR ${monthlySalesTotal.toFixed(2)}`}
           icon={LineChartIcon}
-          description="Total sales this month across the company"
+          description={`Total sales ${rangeDesc} across the company`}
           className="h-full"
         />
       </motion.div>
@@ -114,10 +119,10 @@ export function MetricCardsDisplay({
         transition={{ duration: 0.3, delay: 0.5 }}
       >
         <MetricCard
-          title="Monthly Company Purchases"
+          title={`${rangeLabel} Purchases`}
           value={loadingAggregates ? "..." : `QAR ${monthlyPurchasesTotal.toFixed(2)}`}
           icon={LineChartIcon}
-          description="Total purchases this month across the company"
+          description={`Total purchases ${rangeDesc} across the company`}
           className="h-full"
         />
       </motion.div>
@@ -127,10 +132,10 @@ export function MetricCardsDisplay({
         transition={{ duration: 0.3, delay: 0.6 }}
       >
         <MetricCard
-          title="Monthly Company Expenses"
+          title={`${rangeLabel} Expenses`}
           value={loadingAggregates ? "..." : `QAR ${monthlyExpensesTotal.toFixed(2)}`}
           icon={LineChartIcon}
-          description="Total expenses this month across the company"
+          description={`Total expenses ${rangeDesc} across the company`}
           className="h-full"
         />
       </motion.div>

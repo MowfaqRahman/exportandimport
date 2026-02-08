@@ -19,6 +19,8 @@ export default function ReportsHistoryPage() {
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(String(currentYear));
   const [selectedMonth, setSelectedMonth] = useState("all");
+  const [startDate, setStartDate] = useState(new Date(currentYear, new Date().getMonth(), 1).toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
   const [sales, setSales] = useState<any[]>([]);
   const [loadingSales, setLoadingSales] = useState(false);
 
@@ -128,18 +130,22 @@ export default function ReportsHistoryPage() {
         }
 
         // Apply year filter
-        if (selectedYear !== "all") {
-          const startDate = `${selectedYear}-01-01`;
-          const endDate = `${selectedYear}-12-31`;
+        if (selectedYear === "custom") {
           query = query.gte('date', startDate).lte('date', endDate);
-        }
+        } else {
+          if (selectedYear !== "all") {
+            const startOfYear = `${selectedYear}-01-01`;
+            const endOfYear = `${selectedYear}-12-31`;
+            query = query.gte('date', startOfYear).lte('date', endOfYear);
+          }
 
-        // Apply month filter
-        if (selectedMonth !== "all") {
-          const monthNumber = parseInt(selectedMonth, 10);
-          const startDate = new Date(parseInt(selectedYear), monthNumber - 1, 1).toISOString().split('T')[0];
-          const endDate = new Date(parseInt(selectedYear), monthNumber, 0).toISOString().split('T')[0];
-          query = query.gte('date', startDate).lte('date', endDate);
+          // Apply month filter
+          if (selectedMonth !== "all") {
+            const monthNumber = parseInt(selectedMonth, 10);
+            const startOfMonth = new Date(parseInt(selectedYear), monthNumber - 1, 1).toISOString().split('T')[0];
+            const endOfMonth = new Date(parseInt(selectedYear), monthNumber, 0).toISOString().split('T')[0];
+            query = query.gte('date', startOfMonth).lte('date', endOfMonth);
+          }
         }
 
         const { data, error } = await query.order('created_at', { ascending: false }).order('date', { ascending: false });
@@ -155,7 +161,7 @@ export default function ReportsHistoryPage() {
 
       fetchSales();
     });
-  }, [selectedYear, selectedMonth, selectedUser, refreshTrigger]);
+  }, [selectedYear, selectedMonth, startDate, endDate, selectedUser, refreshTrigger]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -180,19 +186,22 @@ export default function ReportsHistoryPage() {
           query = query.eq('user_id', session.user.id);
         }
 
-        // Apply year filter
-        if (selectedYear !== "all") {
-          const startDate = `${selectedYear}-01-01`;
-          const endDate = `${selectedYear}-12-31`;
+        // Apply date filters
+        if (selectedYear === "custom") {
           query = query.gte('date', startDate).lte('date', endDate);
-        }
+        } else {
+          if (selectedYear !== "all") {
+            const startOfYear = `${selectedYear}-01-01`;
+            const endOfYear = `${selectedYear}-12-31`;
+            query = query.gte('date', startOfYear).lte('date', endOfYear);
+          }
 
-        // Apply month filter
-        if (selectedMonth !== "all") {
-          const monthNumber = parseInt(selectedMonth, 10);
-          const startDate = new Date(parseInt(selectedYear), monthNumber - 1, 1).toISOString().split('T')[0];
-          const endDate = new Date(parseInt(selectedYear), monthNumber, 0).toISOString().split('T')[0];
-          query = query.gte('date', startDate).lte('date', endDate);
+          if (selectedMonth !== "all") {
+            const monthNumber = parseInt(selectedMonth, 10);
+            const startOfMonth = new Date(parseInt(selectedYear), monthNumber - 1, 1).toISOString().split('T')[0];
+            const endOfMonth = new Date(parseInt(selectedYear), monthNumber, 0).toISOString().split('T')[0];
+            query = query.gte('date', startOfMonth).lte('date', endOfMonth);
+          }
         }
 
         const { data, error } = await query.order('created_at', { ascending: false }).order('date', { ascending: false });
@@ -208,7 +217,7 @@ export default function ReportsHistoryPage() {
 
       fetchExpenses();
     });
-  }, [selectedYear, selectedMonth, selectedUser]);
+  }, [selectedYear, selectedMonth, startDate, endDate, selectedUser, refreshTrigger]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -231,17 +240,21 @@ export default function ReportsHistoryPage() {
           query = query.eq('user_id', session.user.id);
         }
 
-        if (selectedYear !== "all") {
-          const startDate = `${selectedYear}-01-01`;
-          const endDate = `${selectedYear}-12-31`;
+        if (selectedYear === "custom") {
           query = query.gte('date', startDate).lte('date', endDate);
-        }
+        } else {
+          if (selectedYear !== "all") {
+            const startOfYear = `${selectedYear}-01-01`;
+            const endOfYear = `${selectedYear}-12-31`;
+            query = query.gte('date', startOfYear).lte('date', endOfYear);
+          }
 
-        if (selectedMonth !== "all") {
-          const monthNumber = parseInt(selectedMonth, 10);
-          const startDate = new Date(parseInt(selectedYear), monthNumber - 1, 1).toISOString().split('T')[0];
-          const endDate = new Date(parseInt(selectedYear), monthNumber, 0).toISOString().split('T')[0];
-          query = query.gte('date', startDate).lte('date', endDate);
+          if (selectedMonth !== "all") {
+            const monthNumber = parseInt(selectedMonth, 10);
+            const startOfMonth = new Date(parseInt(selectedYear), monthNumber - 1, 1).toISOString().split('T')[0];
+            const endOfMonth = new Date(parseInt(selectedYear), monthNumber, 0).toISOString().split('T')[0];
+            query = query.gte('date', startOfMonth).lte('date', endOfMonth);
+          }
         }
 
         const { data, error } = await query.order('created_at', { ascending: false }).order('date', { ascending: false });
@@ -257,7 +270,7 @@ export default function ReportsHistoryPage() {
 
       fetchPurchases();
     });
-  }, [selectedYear, selectedMonth, selectedUser]);
+  }, [selectedYear, selectedMonth, startDate, endDate, selectedUser, refreshTrigger]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -315,175 +328,87 @@ export default function ReportsHistoryPage() {
       const fetchAggregates = async () => {
         setLoadingAggregates(true);
 
-        const yearStart = `${selectedYear}-01-01`;
-        const yearEnd = `${selectedYear}-12-31`;
+        const isCustom = selectedYear === "custom";
+        const yearStart = isCustom ? null : `${selectedYear}-01-01`;
+        const yearEnd = isCustom ? null : `${selectedYear}-12-31`;
 
-        let salesQuery = supabase
-          .from('sales')
-          .select('grand_total');
+        const filterByUser = (query: any) => {
+          if (selectedUser && selectedUser !== "all") {
+            return query.eq('user_id', selectedUser);
+          } else if (session?.user?.id && selectedUser !== "all") {
+            return query.eq('user_id', session.user.id);
+          }
+          return query;
+        };
 
-        if (selectedUser && selectedUser !== "all") {
-          salesQuery = salesQuery.eq('user_id', selectedUser);
-        } else if (session?.user?.id && selectedUser !== "all") {
-          salesQuery = salesQuery.eq('user_id', session.user.id);
-        }
-        // Fetch yearly sales total
-        const { data: yearSalesData, error: yearSalesError } = await salesQuery
-          .gte('date', yearStart)
-          .lte('date', yearEnd);
+        // Fetch yearly totals (only if not custom)
+        let currentYearSalesTotal = 0;
+        let currentYearPurchasesTotal = 0;
+        let currentYearExpensesTotal = 0;
 
-        if (yearSalesError) {
-          console.error("Error fetching yearly sales:", yearSalesError);
-          setYearSalesTotal(0);
-        } else {
-          const total = yearSalesData?.reduce((sum, sale) => sum + Number(sale.grand_total || 0), 0) || 0;
-          setYearSalesTotal(total);
-        }
+        if (yearStart && yearEnd) {
+          const [{ data: ySales }, { data: yPurchases }, { data: yExpenses }] = await Promise.all([
+            filterByUser(supabase.from('sales').select('grand_total')).gte('date', yearStart).lte('date', yearEnd),
+            filterByUser(supabase.from('purchases').select('grand_total')).gte('date', yearStart).lte('date', yearEnd),
+            filterByUser(supabase.from('expenses').select('amount')).gte('date', yearStart).lte('date', yearEnd),
+          ]);
 
-        let purchasesQuery = supabase
-          .from('purchases')
-          .select('grand_total');
-
-        if (selectedUser && selectedUser !== "all") {
-          purchasesQuery = purchasesQuery.eq('user_id', selectedUser);
-        } else if (session?.user?.id && selectedUser !== "all") {
-          purchasesQuery = purchasesQuery.eq('user_id', session.user.id);
+          currentYearSalesTotal = ySales?.reduce((sum: number, sale: any) => sum + Number(sale.grand_total || 0), 0) || 0;
+          currentYearPurchasesTotal = yPurchases?.reduce((sum: number, purchase: any) => sum + Number(purchase.grand_total || 0), 0) || 0;
+          currentYearExpensesTotal = yExpenses?.reduce((sum: number, expense: any) => sum + Number(expense.amount || 0), 0) || 0;
         }
 
-        // Fetch yearly purchases total
-        const { data: yearPurchasesData, error: yearPurchasesError } = await purchasesQuery
-          .gte('date', yearStart)
-          .lte('date', yearEnd);
+        setYearSalesTotal(currentYearSalesTotal);
+        setYearPurchasesTotal(currentYearPurchasesTotal);
+        setYearExpensesTotal(currentYearExpensesTotal);
 
-        if (yearPurchasesError) {
-          console.error("Error fetching yearly purchases:", yearPurchasesError);
-          setYearPurchasesTotal(0);
-        } else {
-          const total = yearPurchasesData?.reduce((sum, purchase) => sum + Number(purchase.grand_total || 0), 0) || 0;
-          setYearPurchasesTotal(total);
-        }
-
-        let expensesQuery = supabase
-          .from('expenses')
-          .select('amount');
-
-        if (selectedUser && selectedUser !== "all") {
-          expensesQuery = expensesQuery.eq('user_id', selectedUser);
-        } else if (selectedUser === "all") {
-          // No user_id filter applied when "All Users" is selected
-        } else if (session?.user?.id && selectedUser !== "all") {
-          expensesQuery = expensesQuery.eq('user_id', session.user.id);
-        }
-
-        // Fetch yearly expenses total
-        const { data: yearExpensesData, error: yearExpensesError } = await expensesQuery
-          .gte('date', yearStart)
-          .lte('date', yearEnd);
-
-        if (yearExpensesError) {
-          console.error("Error fetching yearly expenses:", yearExpensesError);
-          setYearExpensesTotal(0);
-        } else {
-          const totalExpenses = yearExpensesData?.reduce((sum, expense) => sum + Number(expense.amount || 0), 0) || 0;
-          setYearExpensesTotal(totalExpenses);
-        }
-
-        // Fetch monthly sales total
+        // Fetch monthly/custom range totals
         let currentMonthlySalesTotal = 0;
         let currentMonthlyExpensesTotal = 0;
         let currentMonthlyPurchasesTotal = 0;
 
-        if (selectedMonth !== "all") {
-          const monthNumber = parseInt(selectedMonth, 10);
-          const monthStart = new Date(parseInt(selectedYear), monthNumber - 1, 1).toISOString().split('T')[0];
-          const monthEnd = new Date(parseInt(selectedYear), monthNumber, 0).toISOString().split('T')[0];
-
-          let monthlySalesQuery = supabase
-            .from('sales')
-            .select('grand_total');
-
-          if (selectedUser && selectedUser !== "all") {
-            monthlySalesQuery = monthlySalesQuery.eq('user_id', selectedUser);
-          } else if (selectedUser === "all") {
-            // No user_id filter applied when "All Users" is selected
-          } else if (session?.user?.id && selectedUser !== "all") {
-            monthlySalesQuery = monthlySalesQuery.eq('user_id', session.user.id);
-          }
-
-          const { data: monthlySalesData, error: monthlySalesError } = await monthlySalesQuery
-            .gte('date', monthStart)
-            .lte('date', monthEnd);
-
-          if (monthlySalesError) {
-            console.error("Error fetching monthly sales:", monthlySalesError);
+        if (isCustom || selectedMonth !== "all") {
+          let rangeStart, rangeEnd;
+          if (isCustom) {
+            rangeStart = startDate;
+            rangeEnd = endDate;
           } else {
-            currentMonthlySalesTotal = monthlySalesData?.reduce((sum, sale) => sum + Number(sale.grand_total || 0), 0) || 0;
+            const monthNumber = parseInt(selectedMonth, 10);
+            rangeStart = new Date(parseInt(selectedYear), monthNumber - 1, 1).toISOString().split('T')[0];
+            rangeEnd = new Date(parseInt(selectedYear), monthNumber, 0).toISOString().split('T')[0];
           }
 
-          let monthlyExpensesQuery = supabase
-            .from('expenses')
-            .select('amount');
+          const [{ data: mSales }, { data: mExpenses }, { data: mPurchases }] = await Promise.all([
+            filterByUser(supabase.from('sales').select('grand_total')).gte('date', rangeStart).lte('date', rangeEnd),
+            filterByUser(supabase.from('expenses').select('amount')).gte('date', rangeStart).lte('date', rangeEnd),
+            filterByUser(supabase.from('purchases').select('grand_total')).gte('date', rangeStart).lte('date', rangeEnd),
+          ]);
 
-          if (selectedUser && selectedUser !== "all") {
-            monthlyExpensesQuery = monthlyExpensesQuery.eq('user_id', selectedUser);
-          } else if (session?.user?.id && selectedUser !== "all") {
-            monthlyExpensesQuery = monthlyExpensesQuery.eq('user_id', session.user.id);
-          }
-
-          const { data: monthlyExpensesData, error: monthlyExpensesError } = await monthlyExpensesQuery
-            .gte('date', monthStart)
-            .lte('date', monthEnd);
-
-          if (monthlyExpensesError) {
-            console.error("Error fetching monthly expenses:", monthlyExpensesError);
-          } else {
-            currentMonthlyExpensesTotal = monthlyExpensesData?.reduce((sum, expense) => sum + Number(expense.amount || 0), 0) || 0;
-          }
-
-          let monthlyPurchasesQuery = supabase
-            .from('purchases')
-            .select('grand_total');
-
-          if (selectedUser && selectedUser !== "all") {
-            monthlyPurchasesQuery = monthlyPurchasesQuery.eq('user_id', selectedUser);
-          } else if (session?.user?.id && selectedUser !== "all") {
-            monthlyPurchasesQuery = monthlyPurchasesQuery.eq('user_id', session.user.id);
-          }
-
-          const { data: monthlyPurchasesData, error: monthlyPurchasesError } = await monthlyPurchasesQuery
-            .gte('date', monthStart)
-            .lte('date', monthEnd);
-
-          if (monthlyPurchasesError) {
-            console.error("Error fetching monthly purchases:", monthlyPurchasesError);
-          } else {
-            currentMonthlyPurchasesTotal = monthlyPurchasesData?.reduce((sum, purchase) => sum + Number(purchase.grand_total || 0), 0) || 0;
-          }
+          currentMonthlySalesTotal = mSales?.reduce((sum: number, sale: any) => sum + Number(sale.grand_total || 0), 0) || 0;
+          currentMonthlyExpensesTotal = mExpenses?.reduce((sum: number, expense: any) => sum + Number(expense.amount || 0), 0) || 0;
+          currentMonthlyPurchasesTotal = mPurchases?.reduce((sum: number, purchase: any) => sum + Number(purchase.grand_total || 0), 0) || 0;
         } else {
-          // When selectedMonth is "all", use the yearly totals calculated above for consistency
-          currentMonthlySalesTotal = yearSalesData?.reduce((sum, sale) => sum + Number(sale.grand_total || 0), 0) || 0;
-          currentMonthlyExpensesTotal = yearExpensesData?.reduce((sum, expense) => sum + Number(expense.amount || 0), 0) || 0;
-          currentMonthlyPurchasesTotal = yearPurchasesData?.reduce((sum, purchase) => sum + Number(purchase.grand_total || 0), 0) || 0;
+          currentMonthlySalesTotal = currentYearSalesTotal;
+          currentMonthlyExpensesTotal = currentYearExpensesTotal;
+          currentMonthlyPurchasesTotal = currentYearPurchasesTotal;
         }
 
         setMonthlySalesTotal(currentMonthlySalesTotal);
         setMonthlyExpensesTotal(currentMonthlyExpensesTotal);
         setMonthlyPurchasesTotal(currentMonthlyPurchasesTotal);
 
-        // Calculate net profit using the just-calculated yearly totals
-        const calculatedNetProfit = (
-          (yearSalesData?.reduce((sum, sale) => sum + Number(sale.grand_total || 0), 0) || 0) -
-          ((yearPurchasesData?.reduce((sum, purchase) => sum + Number(purchase.grand_total || 0), 0) || 0) +
-            (yearExpensesData?.reduce((sum, expense) => sum + Number(expense.amount || 0), 0) || 0))
-        );
+        // Calculate net profit
+        const calculatedNetProfit = isCustom || selectedMonth !== "all"
+          ? (currentMonthlySalesTotal - (currentMonthlyPurchasesTotal + currentMonthlyExpensesTotal))
+          : (currentYearSalesTotal - (currentYearPurchasesTotal + currentYearExpensesTotal));
         setNetProfit(calculatedNetProfit);
 
         setLoadingAggregates(false);
       };
 
-      return fetchAggregates();
+      fetchAggregates();
     });
-  }, [selectedYear, selectedMonth, selectedUser, sales, expenses, purchases, refreshTrigger]);
+  }, [selectedYear, selectedMonth, startDate, endDate, selectedUser, sales, expenses, purchases, refreshTrigger]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -527,12 +452,31 @@ export default function ReportsHistoryPage() {
           return;
         }
 
-        const filteredSales = allSales?.filter((sale: any) =>
-          sale.items && sale.items.some((item: any) => {
-            const matchesProduct = selectedProduct !== "all" ? (item.description === selectedProduct) : true;
-            return matchesProduct;
-          })
-        ) || [];
+        const filteredSales = allSales?.filter((sale: any) => {
+          // Filter by items description
+          const hasProduct = sale.items && sale.items.some((item: any) => {
+            return selectedProduct !== "all" ? (item.description === selectedProduct) : true;
+          });
+
+          if (!hasProduct) return false;
+
+          // Filter by date range
+          if (selectedYear === "custom") {
+            return sale.date >= startDate && sale.date <= endDate;
+          } else if (selectedYear !== "all") {
+            const startOfYear = `${selectedYear}-01-01`;
+            const endOfYear = `${selectedYear}-12-31`;
+            if (sale.date < startOfYear || sale.date > endOfYear) return false;
+
+            if (selectedMonth !== "all") {
+              const monthNumber = parseInt(selectedMonth, 10);
+              const startOfMonth = new Date(parseInt(selectedYear), monthNumber - 1, 1).toISOString().split('T')[0];
+              const endOfMonth = new Date(parseInt(selectedYear), monthNumber, 0).toISOString().split('T')[0];
+              if (sale.date < startOfMonth || sale.date > endOfMonth) return false;
+            }
+          }
+          return true;
+        }) || [];
 
         let totalUnitsSold = 0;
         let totalRevenue = 0;
@@ -602,7 +546,7 @@ export default function ReportsHistoryPage() {
 
       return () => clearTimeout(debounceTimeout);
     });
-  }, [selectedProduct, sales, selectedUser, refreshTrigger]);
+  }, [selectedProduct, sales, selectedYear, selectedMonth, startDate, endDate, selectedUser, refreshTrigger]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -684,21 +628,25 @@ export default function ReportsHistoryPage() {
       let salesQuery = supabase.from('sales').select('date, grand_total, customer_name, items, invoice_no, id, paid, payment_type, due_date, created_at').eq('customer_name', selectedCustomerName);
       let expensesQuery = supabase.from('expenses').select('date, amount, description, created_at').eq('customer_id', Number(selectedUser));
 
-      // Apply year filter
-      if (selectedYear !== "all") {
-        const startDate = `${selectedYear}-01-01`;
-        const endDate = `${selectedYear}-12-31`;
+      // Apply date filters
+      if (selectedYear === "custom") {
         salesQuery = salesQuery.gte('date', startDate).lte('date', endDate);
         expensesQuery = expensesQuery.gte('date', startDate).lte('date', endDate);
-      }
+      } else {
+        if (selectedYear !== "all") {
+          const startOfYear = `${selectedYear}-01-01`;
+          const endOfYear = `${selectedYear}-12-31`;
+          salesQuery = salesQuery.gte('date', startOfYear).lte('date', endOfYear);
+          expensesQuery = expensesQuery.gte('date', startOfYear).lte('date', endOfYear);
+        }
 
-      // Apply month filter
-      if (selectedMonth !== "all") {
-        const monthNumber = parseInt(selectedMonth, 10);
-        const startDate = new Date(parseInt(selectedYear), monthNumber - 1, 1).toISOString().split('T')[0];
-        const endDate = new Date(parseInt(selectedYear), monthNumber, 0).toISOString().split('T')[0];
-        salesQuery = salesQuery.gte('date', startDate).lte('date', endDate);
-        expensesQuery = expensesQuery.gte('date', startDate).lte('date', endDate);
+        if (selectedMonth !== "all") {
+          const monthNumber = parseInt(selectedMonth, 10);
+          const startOfMonth = new Date(parseInt(selectedYear), monthNumber - 1, 1).toISOString().split('T')[0];
+          const endOfMonth = new Date(parseInt(selectedYear), monthNumber, 0).toISOString().split('T')[0];
+          salesQuery = salesQuery.gte('date', startOfMonth).lte('date', endOfMonth);
+          expensesQuery = expensesQuery.gte('date', startOfMonth).lte('date', endOfMonth);
+        }
       }
 
       const [salesData, expensesData] = await Promise.all([
@@ -759,7 +707,7 @@ export default function ReportsHistoryPage() {
     };
 
     fetchSessionAndStatements();
-  }, [selectedUser, selectedYear, selectedMonth, refreshTrigger]);
+  }, [selectedUser, selectedYear, selectedMonth, startDate, endDate, refreshTrigger]);
 
   return (
     <>
@@ -775,6 +723,10 @@ export default function ReportsHistoryPage() {
             setSelectedYear={setSelectedYear}
             selectedMonth={selectedMonth}
             setSelectedMonth={setSelectedMonth}
+            startDate={startDate}
+            setStartDate={setStartDate}
+            endDate={endDate}
+            setEndDate={setEndDate}
           />
 
           <MetricCardsDisplay
@@ -786,6 +738,7 @@ export default function ReportsHistoryPage() {
             monthlyPurchasesTotal={monthlyPurchasesTotal}
             monthlyExpensesTotal={monthlyExpensesTotal}
             netProfit={netProfit}
+            selectedYear={selectedYear}
           />
 
           <Tabs defaultValue="sales" className="mt-8">
@@ -836,6 +789,8 @@ export default function ReportsHistoryPage() {
                 formatDate={formatDate}
                 selectedYear={selectedYear}
                 selectedMonth={selectedMonth}
+                startDate={startDate}
+                endDate={endDate}
                 onPaymentStatusChange={handlePaymentStatusChange}
                 onPaymentMethodChange={handlePaymentMethodChange}
               />
