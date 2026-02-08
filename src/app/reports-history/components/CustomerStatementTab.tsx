@@ -122,7 +122,13 @@ export function CustomerStatementTab({
     // Table Rows
     doc.setTextColor(0, 0, 0); // Black text for table rows
     yPos += 7; // Adjust for header height
-    customerStatements.forEach((statement) => {
+
+    // Sort statements by date in ascending order (oldest to newest)
+    const sortedStatements = [...customerStatements].sort((a, b) =>
+      new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+
+    sortedStatements.forEach((statement) => {
       const received = (statement.type === "Sale" && statement.paid) ? Number(statement.amount) : 0;
       const method = (statement.type === "Sale" && statement.paid) ? (statement.payment_type || "Cash") : "-";
       doc.text(formatDate(statement.date), 20, yPos);
