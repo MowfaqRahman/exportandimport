@@ -46,6 +46,7 @@ export default function ReportsHistoryPage() {
   const [selectedProduct, setSelectedProduct] = useState("all"); // "all" for all products or product.id
   const [users, setUsers] = useState<{ id: string; name: string, email: string }[]>([]);
   const [selectedUser, setSelectedUser] = useState("all"); // "all" for all users or user.id
+  const [selectedCustomer, setSelectedCustomer] = useState(""); // empty string for none by default
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [allExpensesWithUsers, setAllExpensesWithUsers] = useState<any[]>([]);
   const [allUsers, setAllUsers] = useState<{ id: string; name: string, email: string, full_name?: string }[]>([]);
@@ -609,13 +610,13 @@ export default function ReportsHistoryPage() {
         return;
       }
 
-      if (selectedUser === "all") {
+      if (!selectedCustomer) {
         setCustomerStatements([]);
         setLoadingCustomerStatements(false);
         return;
       }
 
-      const selectedCustomerName = customers.find(c => c.customer_id === Number(selectedUser))?.customer_name;
+      const selectedCustomerName = customers.find(c => c.customer_id === Number(selectedCustomer))?.customer_name;
       if (!selectedCustomerName) {
         console.error("Selected customer name not found.");
         setCustomerStatements([]);
@@ -626,7 +627,7 @@ export default function ReportsHistoryPage() {
       setLoadingCustomerStatements(true);
 
       let salesQuery = supabase.from('sales').select('date, grand_total, customer_name, items, invoice_no, id, paid, payment_type, due_date, created_at').eq('customer_name', selectedCustomerName);
-      let expensesQuery = supabase.from('expenses').select('date, amount, description, created_at').eq('customer_id', Number(selectedUser));
+      let expensesQuery = supabase.from('expenses').select('date, amount, description, created_at').eq('customer_id', Number(selectedCustomer));
 
       // Apply date filters
       if (selectedYear === "custom") {
@@ -707,7 +708,7 @@ export default function ReportsHistoryPage() {
     };
 
     fetchSessionAndStatements();
-  }, [selectedUser, selectedYear, selectedMonth, startDate, endDate, refreshTrigger]);
+  }, [selectedCustomer, selectedYear, selectedMonth, startDate, endDate, refreshTrigger]);
 
   return (
     <>
@@ -781,8 +782,8 @@ export default function ReportsHistoryPage() {
             <TabsContent value="customer-statement">
               <CustomerStatementTab
                 customers={customers}
-                selectedUser={selectedUser}
-                setSelectedUser={setSelectedUser}
+                selectedUser={selectedCustomer}
+                setSelectedUser={setSelectedCustomer}
                 loadingCustomers={loadingCustomers}
                 loadingCustomerStatements={loadingCustomerStatements}
                 customerStatements={customerStatements}
