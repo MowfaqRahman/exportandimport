@@ -320,8 +320,7 @@ export default function ReportsHistoryPage() {
 
         let salesQuery = supabase
           .from('sales')
-          .select('grand_total')
-          .eq('paid', true);
+          .select('grand_total');
 
         if (selectedUser && selectedUser !== "all") {
           salesQuery = salesQuery.eq('user_id', selectedUser);
@@ -401,8 +400,7 @@ export default function ReportsHistoryPage() {
 
           let monthlySalesQuery = supabase
             .from('sales')
-            .select('grand_total')
-            .eq('paid', true);
+            .select('grand_total');
 
           if (selectedUser && selectedUser !== "all") {
             monthlySalesQuery = monthlySalesQuery.eq('user_id', selectedUser);
@@ -462,10 +460,10 @@ export default function ReportsHistoryPage() {
             currentMonthlyPurchasesTotal = monthlyPurchasesData?.reduce((sum, purchase) => sum + Number(purchase.grand_total || 0), 0) || 0;
           }
         } else {
-          // When selectedMonth is "all", sum up all relevant data from the year
-          currentMonthlySalesTotal = sales?.reduce((sum, sale) => sum + Number(sale.grand_total || 0), 0) || 0;
-          currentMonthlyExpensesTotal = expenses?.reduce((sum, expense) => sum + Number(expense.amount || 0), 0) || 0;
-          currentMonthlyPurchasesTotal = purchases?.reduce((sum, purchase) => sum + Number(purchase.grand_total || 0), 0) || 0;
+          // When selectedMonth is "all", use the yearly totals calculated above for consistency
+          currentMonthlySalesTotal = yearSalesData?.reduce((sum, sale) => sum + Number(sale.grand_total || 0), 0) || 0;
+          currentMonthlyExpensesTotal = yearExpensesData?.reduce((sum, expense) => sum + Number(expense.amount || 0), 0) || 0;
+          currentMonthlyPurchasesTotal = yearPurchasesData?.reduce((sum, purchase) => sum + Number(purchase.grand_total || 0), 0) || 0;
         }
 
         setMonthlySalesTotal(currentMonthlySalesTotal);

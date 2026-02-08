@@ -1,6 +1,5 @@
 import { jsPDF } from 'jspdf';
 import logo from '@/assets/logowithqt.png';
-import headerBg from '@/assets/header_bg_grid.png';
 
 interface InvoiceItem {
   no: number;
@@ -55,18 +54,22 @@ export const generateSaleInvoicePDF = ({
   const primaryColor = "#6AA84F"; // Green for "Statement" and lines
   const secondaryColor = "#D9EAD3"; // Light green for table headers
 
-  // Company Header Background
-  try {
-    doc.addImage(headerBg.src, "PNG", 0, 0, 210, 50); 
-  } catch (e) {
-    console.error("Failed to load header background image", e);
-    // Fallback if image fails to load
-    doc.setFillColor(15, 30, 15); // Dark forest green fallback
-    doc.rect(0, 0, 210, 50, 'F');
-  }
+  // Company Header Background (Gray Theme with Slanted Design)
+  const lightGray = "#F5F5F5";
+  const mediumGray = "#E0E0E0";
+  const darkGray = "#333333";
+
+  // Base background
+  doc.setFillColor(lightGray);
+  doc.rect(0, 0, 210, 50, 'F');
+
+  // Slanted accent design
+  doc.setFillColor(mediumGray);
+  doc.triangle(0, 0, 120, 0, 0, 50, 'F'); // Left slanted part
+  doc.triangle(210, 0, 210, 50, 160, 50, 'F'); // Right slanted part
 
   // Company Header Text
-  doc.setTextColor(255, 255, 255); // White text for visibility on dark background
+  doc.setTextColor(darkGray); // Dark gray text for visibility on light background
   doc.setFontSize(10);
   doc.text(company_name, 20, 20);
   doc.text(`Tel: ${company_phone}`, 20, 25);
@@ -75,7 +78,7 @@ export const generateSaleInvoicePDF = ({
   doc.addImage(logo.src, "PNG", 160, 5, 40, 40); // 1:1 ratio, vertically centered
 
   // Invoice Title
-  doc.setTextColor(255, 255, 255);
+  doc.setTextColor(darkGray);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(22);
   doc.text("INVOICE", 105, 45, { align: "center" });
