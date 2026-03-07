@@ -4,6 +4,7 @@ import { createClient } from '../../supabase/server'
 import { Button } from './ui/button'
 import { User, UserCircle } from 'lucide-react'
 import UserProfile from './user-profile'
+import GradientText from './GradientText'
 
 export default async function Navbar() {
   const supabase = createClient()
@@ -14,7 +15,14 @@ export default async function Navbar() {
       <div className="container mx-auto px-4 h-20 flex justify-between items-center">
         <Link href="/" prefetch className="flex items-center gap-2">
           <Image src="/logo.png" alt="KTF Logo" width={40} height={40} className="h-10 w-auto" />
-          <span className="font-bold text-xl text-green-900 hidden sm:block">KTF Fruits & Veg</span>
+          <GradientText
+            colors={["#204628", "#3c9136", "#5dcb7e"]}
+            animationSpeed={8}
+            showBorder={false}
+            className="font-bold text-xl hidden sm:block"
+          >
+            KTF Vegetables & Fruits
+          </GradientText>
         </Link>
         <div className="flex gap-4 items-center">
           {user ? (

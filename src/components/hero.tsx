@@ -5,6 +5,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import circleLogo from "../../assets/circlelogo.png";
+import TiltedCard from "./TiltedCard";
 
 export default function Hero() {
   return (
@@ -67,21 +68,24 @@ export default function Hero() {
           >
             <div className="relative w-80 h-80 lg:w-[500px] lg:h-[500px] mx-auto">
               <div className="absolute inset-0 rounded-full border-[15px] border-white/10 animate-pulse" />
-              <div className="absolute inset-4 rounded-full overflow-hidden border-8 border-white bg-white shadow-2xl">
-                <Image
-                  src={circleLogo}
-                  alt="Premium Fresh Produce"
-                  fill
-                  className="object-cover"
+              <div className="absolute inset-4 flex items-center justify-center">
+                <TiltedCard
+                  imageSrc={circleLogo}
+                  altText="Premium Fresh Produce"
+                  captionText="KTF Vegetables & Fruits"
+                  containerHeight="100%"
+                  containerWidth="100%"
+                  imageHeight="100%"
+                  imageWidth="100%"
+                  rotateAmplitude={12}
+                  scaleOnHover={1.05}
+                  showMobileWarning={false}
+                  showTooltip={true}
+                  displayOverlayContent={false}
+                  imageClassName="rounded-full border-8 border-white bg-white shadow-2xl object-cover"
                 />
               </div>
-              {/* Decorative circle icon */}
-              <div className="absolute top-0 right-10 w-16 h-16 bg-white rounded-2xl shadow-xl flex items-center justify-center -rotate-12">
-                <div className="w-10 h-10 border-2 border-green-600 rounded-lg flex items-center justify-center">
-                  <div className="w-6 h-0.5 bg-green-600 rotate-45 absolute" />
-                  <div className="w-6 h-0.5 bg-green-600 -rotate-45 absolute" />
-                </div>
-              </div>
+
             </div>
           </motion.div>
         </div>

@@ -61,7 +61,6 @@ export default function LandingServices() {
                                 </div>
                                 <h3 className="text-xl font-bold text-green-900 mb-4">{service.title}</h3>
                                 <p className="text-gray-600 mb-6">{service.description}</p>
-                                <button className="text-green-700 font-semibold hover:underline">Read more</button>
                             </motion.div>
                         ))}
                     </div>
@@ -87,7 +86,6 @@ export default function LandingServices() {
                                 </div>
                                 <h3 className="text-xl font-bold mb-4">{service.title}</h3>
                                 <p className="text-green-100/70 mb-6">{service.description}</p>
-                                <button className="text-green-400 font-semibold hover:underline">Read more</button>
                             </motion.div>
                         ))}
                     </div>
