@@ -83,10 +83,14 @@ export default function CompanyOverviewPage() {
 
   // Calculate company-wide metrics
   const now = new Date();
-  const today = now.toISOString().split('T')[0];
+  const currentMonth = now.getMonth() + 1;
   const currentYear = now.getFullYear();
-  const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-  const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+  const currentDay = now.getDate();
+  const today = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`;
+  
+  const lastDay = new Date(currentYear, currentMonth, 0).getDate();
+  const firstDayOfMonth = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`;
+  const lastDayOfMonth = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
   const firstDayOfYear = `${currentYear}-01-01`;
   const lastDayOfYear = `${currentYear}-12-31`;
 
@@ -126,7 +130,10 @@ export default function CompanyOverviewPage() {
   const last7Days = Array.from({ length: 7 }, (_, i) => {
     const date = new Date();
     date.setDate(date.getDate() - (6 - i));
-    return date.toISOString().split('T')[0];
+    const dYear = date.getFullYear();
+    const dMonth = String(date.getMonth() + 1).padStart(2, '0');
+    const dDay = String(date.getDate()).padStart(2, '0');
+    return `${dYear}-${dMonth}-${dDay}`;
   });
 
   const companyChartData = last7Days.map(date => {

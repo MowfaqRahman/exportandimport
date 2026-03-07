@@ -29,8 +29,11 @@ export default function DashboardContent({ initialSales, initialExpenses, initia
   const refreshSales = async () => {
     try {
       const now = new Date();
-      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-      const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth() + 1;
+      const lastDayOfMonth = new Date(currentYear, currentMonth, 0).getDate();
+      const firstDay = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`;
+      const lastDay = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(lastDayOfMonth).padStart(2, '0')}`;
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -68,7 +71,8 @@ export default function DashboardContent({ initialSales, initialExpenses, initia
   const profit = totalSales - totalExpenses - totalPurchases;
 
   // Get today's sales
-  const today = new Date().toISOString().split('T')[0];
+  const nowLocal = new Date();
+  const today = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth() + 1).padStart(2, '0')}-${String(nowLocal.getDate()).padStart(2, '0')}`;
   const todaySales = paidSales
     .filter(sale => sale.date === today)
     .reduce((sum, sale) => sum + Number(sale.grand_total || 0), 0);
@@ -77,7 +81,10 @@ export default function DashboardContent({ initialSales, initialExpenses, initia
   const last7Days = Array.from({ length: 7 }, (_, i) => {
     const date = new Date();
     date.setDate(date.getDate() - (6 - i));
-    return date.toISOString().split('T')[0];
+    const dYear = date.getFullYear();
+    const dMonth = String(date.getMonth() + 1).padStart(2, '0');
+    const dDay = String(date.getDate()).padStart(2, '0');
+    return `${dYear}-${dMonth}-${dDay}`;
   });
 
   const chartData = last7Days.map(date => {

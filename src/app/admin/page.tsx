@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 
 
 import { SalesAuditTable } from "./sales-audit-table";
+import { ExportDataSection } from "./ExportDataSection";
 
 const AdminPage = () => {
 
@@ -143,6 +144,9 @@ const AdminPage = () => {
 
         {/* Sales Audit Log Section */}
         <SalesAuditTable />
+        
+        {/* Export Data Section */}
+        <ExportDataSection />
 
       </main>
     </div>

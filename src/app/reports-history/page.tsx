@@ -19,8 +19,12 @@ export default function ReportsHistoryPage() {
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(String(currentYear));
   const [selectedMonth, setSelectedMonth] = useState("all");
-  const [startDate, setStartDate] = useState(new Date(currentYear, new Date().getMonth(), 1).toISOString().split('T')[0]);
-  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+  const currentMonth = new Date().getMonth() + 1;
+  const initialStart = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`;
+  const initialEnd = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`;
+  
+  const [startDate, setStartDate] = useState(initialStart);
+  const [endDate, setEndDate] = useState(initialEnd);
   const [sales, setSales] = useState<any[]>([]);
   const [loadingSales, setLoadingSales] = useState(false);
 
@@ -143,8 +147,11 @@ export default function ReportsHistoryPage() {
           // Apply month filter
           if (selectedMonth !== "all") {
             const monthNumber = parseInt(selectedMonth, 10);
-            const startOfMonth = new Date(parseInt(selectedYear), monthNumber - 1, 1).toISOString().split('T')[0];
-            const endOfMonth = new Date(parseInt(selectedYear), monthNumber, 0).toISOString().split('T')[0];
+            const yearNum = parseInt(selectedYear, 10);
+            const monthStr = String(monthNumber).padStart(2, '0');
+            const lastDay = new Date(yearNum, monthNumber, 0).getDate();
+            const startOfMonth = `${yearNum}-${monthStr}-01`;
+            const endOfMonth = `${yearNum}-${monthStr}-${String(lastDay).padStart(2, '0')}`;
             query = query.gte('date', startOfMonth).lte('date', endOfMonth);
           }
         }
@@ -199,8 +206,11 @@ export default function ReportsHistoryPage() {
 
           if (selectedMonth !== "all") {
             const monthNumber = parseInt(selectedMonth, 10);
-            const startOfMonth = new Date(parseInt(selectedYear), monthNumber - 1, 1).toISOString().split('T')[0];
-            const endOfMonth = new Date(parseInt(selectedYear), monthNumber, 0).toISOString().split('T')[0];
+            const yearNum = parseInt(selectedYear, 10);
+            const monthStr = String(monthNumber).padStart(2, '0');
+            const lastDay = new Date(yearNum, monthNumber, 0).getDate();
+            const startOfMonth = `${yearNum}-${monthStr}-01`;
+            const endOfMonth = `${yearNum}-${monthStr}-${String(lastDay).padStart(2, '0')}`;
             query = query.gte('date', startOfMonth).lte('date', endOfMonth);
           }
         }
@@ -252,8 +262,11 @@ export default function ReportsHistoryPage() {
 
           if (selectedMonth !== "all") {
             const monthNumber = parseInt(selectedMonth, 10);
-            const startOfMonth = new Date(parseInt(selectedYear), monthNumber - 1, 1).toISOString().split('T')[0];
-            const endOfMonth = new Date(parseInt(selectedYear), monthNumber, 0).toISOString().split('T')[0];
+            const yearNum = parseInt(selectedYear, 10);
+            const monthStr = String(monthNumber).padStart(2, '0');
+            const lastDay = new Date(yearNum, monthNumber, 0).getDate();
+            const startOfMonth = `${yearNum}-${monthStr}-01`;
+            const endOfMonth = `${yearNum}-${monthStr}-${String(lastDay).padStart(2, '0')}`;
             query = query.gte('date', startOfMonth).lte('date', endOfMonth);
           }
         }
@@ -375,8 +388,11 @@ export default function ReportsHistoryPage() {
             rangeEnd = endDate;
           } else {
             const monthNumber = parseInt(selectedMonth, 10);
-            rangeStart = new Date(parseInt(selectedYear), monthNumber - 1, 1).toISOString().split('T')[0];
-            rangeEnd = new Date(parseInt(selectedYear), monthNumber, 0).toISOString().split('T')[0];
+            const yearNum = parseInt(selectedYear, 10);
+            const monthStr = String(monthNumber).padStart(2, '0');
+            const lastDay = new Date(yearNum, monthNumber, 0).getDate();
+            rangeStart = `${yearNum}-${monthStr}-01`;
+            rangeEnd = `${yearNum}-${monthStr}-${String(lastDay).padStart(2, '0')}`;
           }
 
           const [{ data: mSales }, { data: mExpenses }, { data: mPurchases }] = await Promise.all([
@@ -471,8 +487,11 @@ export default function ReportsHistoryPage() {
 
             if (selectedMonth !== "all") {
               const monthNumber = parseInt(selectedMonth, 10);
-              const startOfMonth = new Date(parseInt(selectedYear), monthNumber - 1, 1).toISOString().split('T')[0];
-              const endOfMonth = new Date(parseInt(selectedYear), monthNumber, 0).toISOString().split('T')[0];
+              const yearNum = parseInt(selectedYear, 10);
+              const monthStr = String(monthNumber).padStart(2, '0');
+              const lastDay = new Date(yearNum, monthNumber, 0).getDate();
+              const startOfMonth = `${yearNum}-${monthStr}-01`;
+              const endOfMonth = `${yearNum}-${monthStr}-${String(lastDay).padStart(2, '0')}`;
               if (sale.date < startOfMonth || sale.date > endOfMonth) return false;
             }
           }
@@ -643,8 +662,11 @@ export default function ReportsHistoryPage() {
 
         if (selectedMonth !== "all") {
           const monthNumber = parseInt(selectedMonth, 10);
-          const startOfMonth = new Date(parseInt(selectedYear), monthNumber - 1, 1).toISOString().split('T')[0];
-          const endOfMonth = new Date(parseInt(selectedYear), monthNumber, 0).toISOString().split('T')[0];
+          const yearNum = parseInt(selectedYear, 10);
+          const monthStr = String(monthNumber).padStart(2, '0');
+          const lastDay = new Date(yearNum, monthNumber, 0).getDate();
+          const startOfMonth = `${yearNum}-${monthStr}-01`;
+          const endOfMonth = `${yearNum}-${monthStr}-${String(lastDay).padStart(2, '0')}`;
           salesQuery = salesQuery.gte('date', startOfMonth).lte('date', endOfMonth);
           expensesQuery = expensesQuery.gte('date', startOfMonth).lte('date', endOfMonth);
         }

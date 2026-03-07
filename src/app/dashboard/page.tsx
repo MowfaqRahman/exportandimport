@@ -16,30 +16,34 @@ export default async function Dashboard() {
 
   // Fetch initial data
   const today = new Date();
-  const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-  const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  const currentMonth = today.getMonth() + 1;
+  const currentYear = today.getFullYear();
+  const lastDay = new Date(currentYear, currentMonth, 0).getDate();
+  
+  const firstDayStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`;
+  const lastDayStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
 
   const [salesData, expensesData, purchasesData] = await Promise.all([
     supabase
       .from('sales')
       .select('*')
       .eq('user_id', user.id)
-      .gte('date', firstDayOfMonth.toISOString().split('T')[0])
-      .lte('date', lastDayOfMonth.toISOString().split('T')[0])
+      .gte('date', firstDayStr)
+      .lte('date', lastDayStr)
       .order('date', { ascending: true }),
     supabase
       .from('expenses')
       .select('*')
       .eq('user_id', user.id)
-      .gte('date', firstDayOfMonth.toISOString().split('T')[0])
-      .lte('date', lastDayOfMonth.toISOString().split('T')[0])
+      .gte('date', firstDayStr)
+      .lte('date', lastDayStr)
       .order('date', { ascending: true }),
     supabase
       .from('purchases')
       .select('*')
       .eq('user_id', user.id)
-      .gte('date', firstDayOfMonth.toISOString().split('T')[0])
-      .lte('date', lastDayOfMonth.toISOString().split('T')[0])
+      .gte('date', firstDayStr)
+      .lte('date', lastDayStr)
       .order('date', { ascending: true }),
   ]);
 
