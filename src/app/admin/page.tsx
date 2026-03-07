@@ -7,6 +7,8 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 
+import { SalesAuditTable } from "./sales-audit-table";
+
 const AdminPage = () => {
 
   const supabase = createClient();
@@ -138,6 +140,10 @@ const AdminPage = () => {
             </Table>
           )}
         </section>
+
+        {/* Sales Audit Log Section */}
+        <SalesAuditTable />
+
       </main>
     </div>
   );
