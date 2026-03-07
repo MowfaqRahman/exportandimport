@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
+import ourMissionImage from "../../assets/Our Mission Image.png";
 
 export default function Mission() {
     return (
@@ -28,8 +29,8 @@ export default function Mission() {
                     >
                         <div className="relative rounded-3xl overflow-hidden shadow-2xl">
                             <Image
-                                src="/images/mission_farm.png"
-                                alt="Our Farm"
+                                src={ourMissionImage}
+                                alt="Our Mission"
                                 width={600}
                                 height={400}
                                 className="w-full aspect-[4/3] object-cover"

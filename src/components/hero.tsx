@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
+import circleLogo from "../../assets/circlelogo.png";
 
 export default function Hero() {
   return (
@@ -68,8 +69,8 @@ export default function Hero() {
               <div className="absolute inset-0 rounded-full border-[15px] border-white/10 animate-pulse" />
               <div className="absolute inset-4 rounded-full overflow-hidden border-8 border-white bg-white shadow-2xl">
                 <Image
-                  src="/images/hero_produce.png"
-                  alt="Fresh Produce"
+                  src={circleLogo}
+                  alt="Premium Fresh Produce"
                   fill
                   className="object-cover"
                 />
