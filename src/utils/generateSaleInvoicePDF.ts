@@ -24,6 +24,7 @@ interface GenerateSaleInvoicePDFProps {
   company_phone: string;
   company_email: string;
   isPaid: boolean;
+  paid_amount?: number | null;
   dueDate: string | null;
   paymentType?: string | null;
   disclaimer?: string;
@@ -45,6 +46,7 @@ export const generateSaleInvoicePDF = ({
   company_phone,
   company_email,
   isPaid,
+  paid_amount,
   dueDate,
   paymentType,
   disclaimer,
@@ -144,8 +146,23 @@ export const generateSaleInvoicePDF = ({
   // Grand Total
   yPos += 10;
   doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
   doc.text("GRAND TOTAL:", 140, yPos, { align: "right" });
   doc.text(`QAR ${grand_total.toFixed(2)}`, 180, yPos, { align: "right" });
+
+  const received = paid_amount ?? 0;
+  const balance = Math.max(0, grand_total - received);
+  
+  yPos += 7;
+  doc.setFont('helvetica', 'normal');
+  doc.text("TOTAL RECEIVED:", 140, yPos, { align: "right" });
+  doc.text(`QAR ${received.toFixed(2)}`, 180, yPos, { align: "right" });
+
+  yPos += 7;
+  doc.setFont('helvetica', 'bold');
+  doc.text("BALANCE AMOUNT:", 140, yPos, { align: "right" });
+  doc.text(`QAR ${balance.toFixed(2)}`, 180, yPos, { align: "right" });
+  doc.setFont('helvetica', 'normal');
 
   // Terms and Conditions / Payment Status
   const footerYStart = doc.internal.pageSize.height - 50;

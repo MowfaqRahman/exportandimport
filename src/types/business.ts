@@ -19,6 +19,7 @@ export interface Sale {
   updated_at?: string;
   invoice_no?: string;
   paid?: boolean;
+  paid_amount?: number | null;
   due_date?: string;
   payment_type?: 'Cash' | 'Online' | 'Cheque';
   disclaimer?: string;

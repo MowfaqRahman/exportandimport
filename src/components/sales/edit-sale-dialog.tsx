@@ -40,6 +40,8 @@ export default function EditSaleDialog({ sale, open, onClose, onSaleUpdated }: E
   const [customers, setCustomers] = useState<string[]>([]);
   const [selectedCustomerName, setSelectedCustomerName] = useState<string>(sale.customer_name || '');
   const [isPaid, setIsPaid] = useState<boolean>(sale.paid || false);
+  const [paidAmount, setPaidAmount] = useState<number | ''>(sale.paid_amount ?? '');
+  const [isPaidAmountEdited, setIsPaidAmountEdited] = useState(sale.paid_amount !== undefined && sale.paid_amount !== null);
   const [paymentType, setPaymentType] = useState<'Cash' | 'Online' | 'Cheque'>(sale.payment_type || 'Cash');
   const [dueDate, setDueDate] = useState<string | null>(sale.due_date || null);
   const [customerEmail, setCustomerEmail] = useState<string | null>(null);
@@ -54,6 +56,8 @@ export default function EditSaleDialog({ sale, open, onClose, onSaleUpdated }: E
       setInvoiceItems(sale.items || [{ no: 1, description: '', qty: 0, unitPrice: 0 }]);
       setSelectedCustomerName(sale.customer_name || '');
       setIsPaid(sale.paid || false);
+      setPaidAmount(sale.paid_amount ?? (sale.paid ? Number(sale.grand_total) : ''));
+      setIsPaidAmountEdited(sale.paid_amount !== undefined && sale.paid_amount !== null);
       setPaymentType(sale.payment_type || 'Cash');
       setDueDate(sale.due_date || null);
       setCustomerPhone(sale.customer_phone_footer || null);
@@ -174,6 +178,26 @@ export default function EditSaleDialog({ sale, open, onClose, onSaleUpdated }: E
     return grandTotal;
   };
 
+  const grandTotal = calculateGrandTotal();
+
+  useEffect(() => {
+    if (isPaid && !isPaidAmountEdited) {
+      setPaidAmount(grandTotal);
+    }
+  }, [grandTotal, isPaid, isPaidAmountEdited]);
+
+  const handleIsPaidToggle = () => {
+    const newIsPaid = !isPaid;
+    setIsPaid(newIsPaid);
+    if (!newIsPaid) {
+      setPaidAmount('');
+      setIsPaidAmountEdited(false);
+    } else {
+      setPaidAmount(grandTotal);
+      setIsPaidAmountEdited(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
@@ -188,6 +212,7 @@ export default function EditSaleDialog({ sale, open, onClose, onSaleUpdated }: E
       customer_phone_footer: customerPhone || '',
       updated_at: new Date().toISOString(),
       paid: isPaid,
+      paid_amount: isPaid ? (paidAmount === '' ? null : paidAmount) : null,
       payment_type: isPaid ? paymentType : null,
       due_date: !isPaid ? dueDate : null,
       disclaimer: disclaimer,
@@ -382,21 +407,49 @@ export default function EditSaleDialog({ sale, open, onClose, onSaleUpdated }: E
                   <TableCell colSpan={5} className="text-right text-base font-semibold">Grand Total</TableCell>
                   <TableCell className="text-right text-base font-semibold">QAR {calculateGrandTotal().toFixed(2)}</TableCell>
                 </TableRow>
+                <TableRow>
+                  <TableCell colSpan={5} className="text-right text-sm">TOTAL RECEIVED</TableCell>
+                  <TableCell className="text-right text-sm text-green-600">QAR {(paidAmount !== '' ? Number(paidAmount) : 0).toFixed(2)}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell colSpan={5} className="text-right text-sm font-semibold">BALANCE AMOUNT</TableCell>
+                  <TableCell className="text-right text-sm font-semibold text-red-600">QAR {Math.max(0, calculateGrandTotal() - (paidAmount !== '' ? Number(paidAmount) : 0)).toFixed(2)}</TableCell>
+                </TableRow>
               </TableFooter>
             </Table>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="paid_status">Payment Status</Label>
-              <Button
-                type="button"
-                variant={isPaid ? "default" : "outline"}
-                onClick={() => setIsPaid(!isPaid)}
-                className="w-full"
-              >
-                {isPaid ? "Paid" : "Not Paid"}
-              </Button>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="paid_status">Payment Status</Label>
+                <Button
+                  type="button"
+                  variant={isPaid ? "default" : "outline"}
+                  onClick={handleIsPaidToggle}
+                  className="w-full"
+                >
+                  {isPaid ? "Paid" : "Not Paid"}
+                </Button>
+              </div>
+              {isPaid && (
+                <div className="space-y-2">
+                  <Label htmlFor="paid_amount">Paid/Received Amount (QAR)</Label>
+                  <Input
+                    id="paid_amount"
+                    name="paid_amount"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={paidAmount}
+                    onChange={(e) => {
+                      setPaidAmount(e.target.value ? parseFloat(e.target.value) : '');
+                      setIsPaidAmountEdited(true);
+                    }}
+                    placeholder="Enter amount paid"
+                  />
+                </div>
+              )}
             </div>
             <div className="space-y-2">
               {isPaid ? (

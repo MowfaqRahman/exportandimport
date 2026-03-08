@@ -109,6 +109,7 @@ export default function SalesTable({ initialSales, onDataChange, onRefresh }: Sa
         company_phone: "(+974) 30933327",
         company_email: "ktf.co2025@gmail.com",
         isPaid: sale.paid || false,
+        paid_amount: sale.paid_amount,
         dueDate: sale.due_date || null,
         paymentType: sale.payment_type,
         disclaimer: sale.disclaimer,
@@ -156,6 +157,7 @@ export default function SalesTable({ initialSales, onDataChange, onRefresh }: Sa
                   <TableHead>Customer</TableHead>
                   <TableHead>Items</TableHead>
                   <TableHead className="text-right">Grand Total</TableHead>
+                  <TableHead className="text-right text-red-600">Balance Amount</TableHead>
                   <TableHead className="text-right">Invoice No</TableHead>
                   <TableHead>Payment Status</TableHead>
                   <TableHead>Payment Method</TableHead>
@@ -166,7 +168,7 @@ export default function SalesTable({ initialSales, onDataChange, onRefresh }: Sa
               <TableBody>
                 {filteredSales.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
                       No sales found. Add your first sale to get started.
                     </TableCell>
                   </TableRow>
@@ -186,6 +188,9 @@ export default function SalesTable({ initialSales, onDataChange, onRefresh }: Sa
                       </TableCell>
                       <TableCell className="text-right font-medium">
                         QAR {Number(sale.grand_total || 0).toFixed(2)}
+                      </TableCell>
+                      <TableCell className="text-right font-medium text-red-600">
+                        QAR {(Number(sale.grand_total || 0) - Number(sale.paid_amount || 0)).toFixed(2)}
                       </TableCell>
                       <TableCell className="text-right">
                         {sale.invoice_no}

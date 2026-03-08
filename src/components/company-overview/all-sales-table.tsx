@@ -109,6 +109,7 @@ export default function AllSalesTable({ initialSales, onRefresh }: AllSalesTable
         company_phone: "(+974) 30933327",
         company_email: "ktf.co2025@gmail.com",
         isPaid: sale.paid || false,
+        paid_amount: sale.paid_amount,
         dueDate: sale.due_date || null,
         paymentType: sale.payment_type,
         disclaimer: sale.disclaimer,
@@ -166,6 +167,7 @@ export default function AllSalesTable({ initialSales, onRefresh }: AllSalesTable
                   <TableHead>Customer</TableHead>
                   <TableHead>Items</TableHead>
                   <TableHead>Grand Total</TableHead>
+                  <TableHead className="text-red-600">Balance Amount</TableHead>
                   <TableHead>Salesman Name</TableHead>
                   <TableHead>Invoice No</TableHead>
                   <TableHead>Payment Status</TableHead>
@@ -177,7 +179,7 @@ export default function AllSalesTable({ initialSales, onRefresh }: AllSalesTable
               <TableBody>
                 {filteredSales.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
                       No sales found for all users.
                     </TableCell>
                   </TableRow>
@@ -197,6 +199,9 @@ export default function AllSalesTable({ initialSales, onRefresh }: AllSalesTable
                       </TableCell>
                       <TableCell className="font-medium">
                         QAR {Number(sale.grand_total || 0).toFixed(2)}
+                      </TableCell>
+                      <TableCell className="font-medium text-red-600">
+                        QAR {(Number(sale.grand_total || 0) - Number(sale.paid_amount || 0)).toFixed(2)}
                       </TableCell>
                       <TableCell>{sale.salesman_name_footer || sale.user_name || 'N/A'}</TableCell>
                       <TableCell>{sale.invoice_no || 'N/A'}</TableCell>

@@ -45,6 +45,8 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
   const [customerPhone, setCustomerPhone] = useState<string | null>(null); // New state for customer phone
   const [customerCompanyName, setCustomerCompanyName] = useState<string | null>(null); // New state for customer company name
   const [disclaimer, setDisclaimer] = useState<string>('');
+  const [paidAmount, setPaidAmount] = useState<number | ''>('');
+  const [isPaidAmountEdited, setIsPaidAmountEdited] = useState(false);
 
   const generateNextInvoiceNumber = async () => {
     const { data, error } = await supabase
@@ -190,6 +192,26 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
     return grandTotal;
   };
 
+  const grandTotal = calculateGrandTotal();
+
+  useEffect(() => {
+    if (isPaid && !isPaidAmountEdited) {
+      setPaidAmount(grandTotal);
+    }
+  }, [grandTotal, isPaid, isPaidAmountEdited]);
+
+  const handleIsPaidToggle = () => {
+    const newIsPaid = !isPaid;
+    setIsPaid(newIsPaid);
+    if (!newIsPaid) {
+      setPaidAmount('');
+      setIsPaidAmountEdited(false);
+    } else {
+      setPaidAmount(grandTotal);
+      setIsPaidAmountEdited(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
@@ -204,6 +226,7 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
       customer_phone_footer: customerPhone || '', // Use customerPhone state
       invoice_no: invoiceNo || '',
       paid: isPaid,
+      paid_amount: isPaid ? (paidAmount === '' ? null : paidAmount) : null,
       payment_type: isPaid ? paymentType : null,
       due_date: (!isPaid || (isPaid && paymentType === 'Cheque')) ? dueDate : null,
       disclaimer: disclaimer,
@@ -240,6 +263,7 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
           company_phone: "(+974) 30933327",
           company_email: "ktf.co2025@gmail.com",
           isPaid: data.paid,
+          paid_amount: data.paid_amount,
           dueDate: data.due_date,
           paymentType: data.payment_type,
           disclaimer: data.disclaimer,
@@ -261,6 +285,9 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
       onSaleAdded();
       (e.target as HTMLFormElement).reset();
       setDisclaimer('');
+      setPaidAmount('');
+      setIsPaidAmountEdited(false);
+      setIsPaid(false);
       setInvoiceItems([{ no: 1, description: '', qty: 0, unitPrice: 0 }]);
       const nextInvoiceNum = await generateNextInvoiceNumber();
       setInvoiceNo(nextInvoiceNum);
@@ -448,24 +475,52 @@ export default function AddSaleDialog({ onSaleAdded }: AddSaleDialogProps) {
               </TableBody>
               <TableFooter>
                 <TableRow>
-                  <TableCell colSpan={5} className="text-right text-base font-semibold">Grand Total</TableCell> {/* Changed colSpan from 4 to 5 */}
+                  <TableCell colSpan={5} className="text-right text-base font-semibold">Grand Total</TableCell>
                   <TableCell className="text-right text-base font-semibold">QAR {calculateGrandTotal().toFixed(2)}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell colSpan={5} className="text-right text-sm">TOTAL RECEIVED</TableCell>
+                  <TableCell className="text-right text-sm text-green-600">QAR {(paidAmount !== '' ? Number(paidAmount) : 0).toFixed(2)}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell colSpan={5} className="text-right text-sm font-semibold">BALANCE AMOUNT</TableCell>
+                  <TableCell className="text-right text-sm font-semibold text-red-600">QAR {Math.max(0, calculateGrandTotal() - (paidAmount !== '' ? Number(paidAmount) : 0)).toFixed(2)}</TableCell>
                 </TableRow>
               </TableFooter>
             </Table>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="paid_status">Payment Status</Label>
-              <Button
-                type="button"
-                variant={isPaid ? "default" : "outline"}
-                onClick={() => setIsPaid(!isPaid)}
-                className="w-full"
-              >
-                {isPaid ? "Paid" : "Not Paid"}
-              </Button>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="paid_status">Payment Status</Label>
+                <Button
+                  type="button"
+                  variant={isPaid ? "default" : "outline"}
+                  onClick={handleIsPaidToggle}
+                  className="w-full"
+                >
+                  {isPaid ? "Paid" : "Not Paid"}
+                </Button>
+              </div>
+              {isPaid && (
+                <div className="space-y-2">
+                  <Label htmlFor="paid_amount">Paid/Received Amount (QAR)</Label>
+                  <Input
+                    id="paid_amount"
+                    name="paid_amount"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={paidAmount}
+                    onChange={(e) => {
+                      setPaidAmount(e.target.value ? parseFloat(e.target.value) : '');
+                      setIsPaidAmountEdited(true);
+                    }}
+                    placeholder="Enter amount paid"
+                  />
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
