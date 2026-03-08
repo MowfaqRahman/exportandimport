@@ -666,7 +666,7 @@ export default function ReportsHistoryPage() {
 
       setLoadingCustomerStatements(true);
 
-      let salesQuery = supabase.from('sales').select('date, grand_total, customer_name, items, invoice_no, id, paid, payment_type, due_date, created_at').eq('customer_name', selectedCustomerName);
+      let salesQuery = supabase.from('sales').select('date, grand_total, paid_amount, customer_name, items, invoice_no, id, paid, payment_type, due_date, created_at').eq('customer_name', selectedCustomerName);
       let expensesQuery = supabase.from('expenses').select('date, amount, description, created_at').eq('customer_id', Number(selectedCustomer));
 
       // Apply date filters
@@ -710,6 +710,7 @@ export default function ReportsHistoryPage() {
         type: "Sale",
         description: sale.invoice_no || sale.id,
         amount: Number(sale.grand_total || 0),
+        paid_amount: Number(sale.paid_amount || 0),
         invoice_id: sale.id,
         paid: sale.paid, // Ensure paid status is passed here
         payment_type: sale.payment_type,
@@ -722,6 +723,7 @@ export default function ReportsHistoryPage() {
         type: "Expense",
         description: expense.description || "N/A",
         amount: -expense.amount, // Represent expenses as negative amounts
+        paid_amount: 0,
         created_at: expense.created_at
       })) || [];
 

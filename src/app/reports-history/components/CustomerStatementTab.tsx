@@ -8,7 +8,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { jsPDF } from 'jspdf';
-import logo from '@/assets/logo.png'; // Import the logo image
+import logo from '@/assets/logowithqt.png'; // Import the new logo image
 
 interface CustomerStatementTabProps {
   customers: { customer_id: number | string; customer_name: string; phone_number?: string; email?: string; address?: string; company_name?: string }[];
@@ -72,7 +72,7 @@ export function CustomerStatementTab({
     doc.text("Tel: (+974) 30933327", 20, 25);
     doc.text("Email: ktf.co2025@gmail.com", 20, 30);
     doc.text("Address: Umm Salal, Doha, Qatar", 20, 35);
-    doc.addImage(logo.src, "PNG", 140, 5, 50, 30); // Adjust logo position to top right
+    doc.addImage(logo.src, "PNG", 160, 5, 40, 40); // Standardized alignment for the logo (top right)
 
     // Statement Title
     doc.setTextColor(statementGreen);
@@ -129,8 +129,8 @@ export function CustomerStatementTab({
     );
 
     sortedStatements.forEach((statement) => {
-      const received = (statement.type === "Sale" && statement.paid) ? Number(statement.amount) : 0;
-      const method = (statement.type === "Sale" && statement.paid) ? (statement.payment_type || "Cash") : "-";
+      const received = Number(statement.paid_amount || 0);
+      const method = statement.type === "Sale" ? (statement.payment_type || "Cash") : "-";
       doc.text(formatDate(statement.date), 20, yPos);
       doc.text(statement.description, 60, yPos);
       doc.text(Number(statement.amount).toFixed(2), 130, yPos, { align: "right" });
@@ -143,7 +143,7 @@ export function CustomerStatementTab({
     yPos += 10; // Space after table
     const totalAmount = customerStatements.reduce((sum, statement) => sum + Number(statement.amount || 0), 0);
     const totalReceived = customerStatements.reduce((sum, statement) => {
-      return sum + ((statement.type === "Sale" && statement.paid) ? Number(statement.amount) : 0);
+      return sum + Number(statement.paid_amount || 0);
     }, 0);
     const balanceAmount = totalAmount - totalReceived;
 
@@ -218,6 +218,7 @@ export function CustomerStatementTab({
                 <TableHead>Invoice</TableHead>
                 <TableHead>Payment Status</TableHead>
                 <TableHead>Payment Method</TableHead>
+                <TableHead className="text-right">Received</TableHead>
                 <TableHead className="text-right">Amount</TableHead>
               </TableRow>
             </TableHeader>
@@ -247,7 +248,7 @@ export function CustomerStatementTab({
                     </TableCell>
                     <TableCell>
                       {statement.type === "Sale" ? (
-                        statement.paid ? (
+                        <div className="flex flex-col gap-1">
                           <Tabs defaultValue={statement.payment_type || "Cash"} onValueChange={(val) => onPaymentMethodChange?.(statement.invoice_id, val)}>
                             <TabsList className="h-8">
                               <TabsTrigger value="Cash" className="text-xs px-2 h-6">Cash</TabsTrigger>
@@ -255,15 +256,17 @@ export function CustomerStatementTab({
                               <TabsTrigger value="Cheque" className="text-xs px-2 h-6">Cheque</TabsTrigger>
                             </TabsList>
                           </Tabs>
-                        ) : (
-                          <span className="text-sm font-medium text-amber-600">
-                            Due: {statement.due_date ? formatDate(statement.due_date) : "N/A"}
-                          </span>
-                        )
+                          {!statement.paid && statement.due_date && (
+                            <span className="text-[10px] font-medium text-amber-600">
+                              Due: {formatDate(statement.due_date)}
+                            </span>
+                          )}
+                        </div>
                       ) : (
                         <span className="text-gray-400 text-sm">N/A</span>
                       )}
                     </TableCell>
+                    <TableCell className="text-right font-medium text-green-600">QAR {Number(statement.paid_amount || 0).toFixed(2)}</TableCell>
                     <TableCell className="text-right">QAR {Number(statement.amount).toFixed(2)}</TableCell>
                   </TableRow>
                 ))
