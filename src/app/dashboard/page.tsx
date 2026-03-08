@@ -19,7 +19,7 @@ export default async function Dashboard() {
   const currentMonth = today.getMonth() + 1;
   const currentYear = today.getFullYear();
   const lastDay = new Date(currentYear, currentMonth, 0).getDate();
-  
+
   const firstDayStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`;
   const lastDayStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
 

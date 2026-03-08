@@ -32,9 +32,6 @@ export const signUpAction = async (formData: FormData) => {
     },
   });
 
-  console.log("After signUp", error);
-
-
   if (error) {
     console.error(error.code + " " + error.message);
     return encodedRedirect("error", "/sign-up", error.message);
@@ -42,7 +39,7 @@ export const signUpAction = async (formData: FormData) => {
 
   if (user) {
     try {
-      const { error: updateError } = await supabase
+      await supabase
         .from('users')
         .insert({
           id: user.id,
@@ -51,12 +48,9 @@ export const signUpAction = async (formData: FormData) => {
           email: email,
           user_id: user.id,
           token_identifier: user.id,
+          is_blocked: false,
           created_at: new Date().toISOString()
         });
-
-      if (updateError) {
-        console.error('Error updating user profile:', updateError);
-      }
     } catch (err) {
       console.error('Error in user profile creation:', err);
     }
@@ -74,13 +68,30 @@ export const signInAction = async (formData: FormData) => {
   const password = formData.get("password") as string;
   const supabase = await createClient();
 
-  const { error } = await supabase.auth.signInWithPassword({
+  const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
 
   if (error) {
     return encodedRedirect("error", "/sign-in", error.message);
+  }
+
+  if (data?.user) {
+    const { data: userData } = await supabase
+      .from("users")
+      .select("is_blocked")
+      .eq("id", data.user.id)
+      .single();
+
+    if (userData?.is_blocked) {
+      await supabase.auth.signOut();
+      return encodedRedirect(
+        "error",
+        "/sign-in",
+        "Your account is blocked. Please contact the administrator.",
+      );
+    }
   }
 
   return redirect("/dashboard");

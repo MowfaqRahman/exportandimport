@@ -144,7 +144,7 @@ const AdminPage = () => {
 
         {/* Sales Audit Log Section */}
         <SalesAuditTable />
-        
+
         {/* Export Data Section */}
         <ExportDataSection />
 

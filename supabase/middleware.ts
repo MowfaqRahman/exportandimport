@@ -24,15 +24,15 @@ export const updateSession = async (request: NextRequest) => {
             }));
           },
           setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              request.cookies.set(name, value);
-              response = NextResponse.next({
-                request: {
-                  headers: request.headers,
-                },
-              });
-              response.cookies.set(name, value, options);
+            cookiesToSet.forEach(({ name, value, options }) =>
+              request.cookies.set(name, value)
+            );
+            response = NextResponse.next({
+              request,
             });
+            cookiesToSet.forEach(({ name, value, options }) =>
+              response.cookies.set(name, value, options)
+            );
           },
         },
       }
@@ -46,11 +46,37 @@ export const updateSession = async (request: NextRequest) => {
     const protectedRoutes = ["/dashboard", "/company-overview", "/reports-history", "/customers-products", "/admin"];
     const isProtectedRoute = protectedRoutes.some(route => request.nextUrl.pathname.startsWith(route));
 
+    if (user) {
+      const { data: userData } = await supabase
+        .from("users")
+        .select("is_blocked")
+        .eq("id", user.id)
+        .single();
+
+      if (userData?.is_blocked) {
+        await supabase.auth.signOut();
+        const url = new URL("/sign-in", request.url);
+        url.searchParams.set("error", "Your account is blocked");
+        const redirectResponse = NextResponse.redirect(url);
+
+        // Copy cookies (like session clearing ones) to the redirect response
+        response.cookies.getAll().forEach((c) =>
+          redirectResponse.cookies.set(c.name, c.value)
+        );
+        return redirectResponse;
+      }
+    }
+
     if (isProtectedRoute && error) {
       return NextResponse.redirect(new URL("/sign-in", request.url));
     }
 
-    if (request.nextUrl.pathname === "/" && !error && user) {
+    if (
+      (request.nextUrl.pathname === "/" ||
+        request.nextUrl.pathname === "/sign-in") &&
+      !error &&
+      user
+    ) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
 
