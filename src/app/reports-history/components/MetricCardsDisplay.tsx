@@ -13,6 +13,7 @@ interface MetricCardsDisplayProps {
   monthlySalesTotal: number;
   monthlyPurchasesTotal: number;
   monthlyExpensesTotal: number;
+  monthlyUnpaidTotal: number;
   netProfit: number;
   selectedYear: string;
 }
@@ -25,6 +26,7 @@ export function MetricCardsDisplay({
   monthlySalesTotal,
   monthlyPurchasesTotal,
   monthlyExpensesTotal,
+  monthlyUnpaidTotal,
   netProfit,
   selectedYear,
 }: MetricCardsDisplayProps) {
@@ -137,6 +139,19 @@ export function MetricCardsDisplay({
           icon={LineChartIcon}
           description={`Total expenses ${rangeDesc} across the company`}
           className="h-full"
+        />
+      </motion.div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.7 }}
+      >
+        <MetricCard
+          title="Total unpaid amount"
+          value={loadingAggregates ? "..." : `QAR ${monthlyUnpaidTotal.toFixed(2)}`}
+          icon={TrendingDown}
+          description={`Total outstanding balance ${rangeDesc}`}
+          className="h-full border-yellow-500/50 bg-yellow-50/30 dark:bg-yellow-950/10 shadow-sm"
         />
       </motion.div>
     </div>

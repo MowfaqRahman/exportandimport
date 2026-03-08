@@ -37,6 +37,8 @@ export default function ReportsHistoryPage() {
   const [monthlyExpensesTotal, setMonthlyExpensesTotal] = useState<number>(0);
   const [yearPurchasesTotal, setYearPurchasesTotal] = useState<number>(0);
   const [monthlyPurchasesTotal, setMonthlyPurchasesTotal] = useState<number>(0);
+  const [yearUnpaidTotal, setYearUnpaidTotal] = useState<number>(0);
+  const [monthlyUnpaidTotal, setMonthlyUnpaidTotal] = useState<number>(0);
   const [netProfit, setNetProfit] = useState<number>(0);
   const [loadingAggregates, setLoadingAggregates] = useState(false);
 
@@ -370,8 +372,15 @@ export default function ReportsHistoryPage() {
           const calculateReceived = (sale: any) => Number(sale.paid_amount || 0);
 
           currentYearSalesTotal = ySales?.reduce((sum: number, sale: any) => sum + calculateReceived(sale), 0) || 0;
+          const currentYearUnpaid = ySales?.reduce((sum: number, sale: any) => {
+            if (sale.paid === false) {
+              return sum + (Number(sale.grand_total || 0) - Number(sale.paid_amount || 0));
+            }
+            return sum;
+          }, 0) || 0;
           currentYearPurchasesTotal = yPurchases?.reduce((sum: number, purchase: any) => sum + Number(purchase.grand_total || 0), 0) || 0;
           currentYearExpensesTotal = yExpenses?.reduce((sum: number, expense: any) => sum + Number(expense.amount || 0), 0) || 0;
+          setYearUnpaidTotal(currentYearUnpaid);
         }
 
         setYearSalesTotal(currentYearSalesTotal);
@@ -406,12 +415,20 @@ export default function ReportsHistoryPage() {
           const calculateReceived = (sale: any) => Number(sale.paid_amount || 0);
 
           currentMonthlySalesTotal = mSales?.reduce((sum: number, sale: any) => sum + calculateReceived(sale), 0) || 0;
+          const currentMonthlyUnpaid = mSales?.reduce((sum: number, sale: any) => {
+            if (sale.paid === false) {
+              return sum + (Number(sale.grand_total || 0) - Number(sale.paid_amount || 0));
+            }
+            return sum;
+          }, 0) || 0;
           currentMonthlyExpensesTotal = mExpenses?.reduce((sum: number, expense: any) => sum + Number(expense.amount || 0), 0) || 0;
           currentMonthlyPurchasesTotal = mPurchases?.reduce((sum: number, purchase: any) => sum + Number(purchase.grand_total || 0), 0) || 0;
+          setMonthlyUnpaidTotal(currentMonthlyUnpaid);
         } else {
           currentMonthlySalesTotal = currentYearSalesTotal;
           currentMonthlyExpensesTotal = currentYearExpensesTotal;
           currentMonthlyPurchasesTotal = currentYearPurchasesTotal;
+          setMonthlyUnpaidTotal(yearUnpaidTotal);
         }
 
         setMonthlySalesTotal(currentMonthlySalesTotal);
@@ -764,6 +781,7 @@ export default function ReportsHistoryPage() {
             monthlySalesTotal={monthlySalesTotal}
             monthlyPurchasesTotal={monthlyPurchasesTotal}
             monthlyExpensesTotal={monthlyExpensesTotal}
+            monthlyUnpaidTotal={monthlyUnpaidTotal}
             netProfit={netProfit}
             selectedYear={selectedYear}
           />
