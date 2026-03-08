@@ -362,12 +362,14 @@ export default function ReportsHistoryPage() {
 
         if (yearStart && yearEnd) {
           const [{ data: ySales }, { data: yPurchases }, { data: yExpenses }] = await Promise.all([
-            filterByUser(supabase.from('sales').select('grand_total')).gte('date', yearStart).lte('date', yearEnd),
+            filterByUser(supabase.from('sales').select('grand_total, paid_amount, paid')).gte('date', yearStart).lte('date', yearEnd),
             filterByUser(supabase.from('purchases').select('grand_total')).gte('date', yearStart).lte('date', yearEnd),
             filterByUser(supabase.from('expenses').select('amount')).gte('date', yearStart).lte('date', yearEnd),
           ]);
 
-          currentYearSalesTotal = ySales?.reduce((sum: number, sale: any) => sum + Number(sale.grand_total || 0), 0) || 0;
+          const calculateReceived = (sale: any) => Number(sale.paid_amount || 0);
+
+          currentYearSalesTotal = ySales?.reduce((sum: number, sale: any) => sum + calculateReceived(sale), 0) || 0;
           currentYearPurchasesTotal = yPurchases?.reduce((sum: number, purchase: any) => sum + Number(purchase.grand_total || 0), 0) || 0;
           currentYearExpensesTotal = yExpenses?.reduce((sum: number, expense: any) => sum + Number(expense.amount || 0), 0) || 0;
         }
@@ -396,12 +398,14 @@ export default function ReportsHistoryPage() {
           }
 
           const [{ data: mSales }, { data: mExpenses }, { data: mPurchases }] = await Promise.all([
-            filterByUser(supabase.from('sales').select('grand_total')).gte('date', rangeStart).lte('date', rangeEnd),
+            filterByUser(supabase.from('sales').select('grand_total, paid_amount, paid')).gte('date', rangeStart).lte('date', rangeEnd),
             filterByUser(supabase.from('expenses').select('amount')).gte('date', rangeStart).lte('date', rangeEnd),
             filterByUser(supabase.from('purchases').select('grand_total')).gte('date', rangeStart).lte('date', rangeEnd),
           ]);
 
-          currentMonthlySalesTotal = mSales?.reduce((sum: number, sale: any) => sum + Number(sale.grand_total || 0), 0) || 0;
+          const calculateReceived = (sale: any) => Number(sale.paid_amount || 0);
+
+          currentMonthlySalesTotal = mSales?.reduce((sum: number, sale: any) => sum + calculateReceived(sale), 0) || 0;
           currentMonthlyExpensesTotal = mExpenses?.reduce((sum: number, expense: any) => sum + Number(expense.amount || 0), 0) || 0;
           currentMonthlyPurchasesTotal = mPurchases?.reduce((sum: number, purchase: any) => sum + Number(purchase.grand_total || 0), 0) || 0;
         } else {

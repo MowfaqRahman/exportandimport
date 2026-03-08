@@ -61,11 +61,10 @@ export default function DashboardContent({ initialSales, initialExpenses, initia
     }
   };
 
-  // Filter for paid sales
-  const paidSales = sales.filter(sale => sale.paid === true);
-
   // Calculate metrics
-  const totalSales = paidSales.reduce((sum, sale) => sum + Number(sale.grand_total || 0), 0);
+  const totalReceivedFromSales = (sale: Sale) => Number(sale.paid_amount || 0);
+
+  const totalSales = sales.reduce((sum, sale) => sum + totalReceivedFromSales(sale), 0);
   const totalExpenses = expenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
   const totalPurchases = purchases.reduce((sum, purchase) => sum + Number(purchase.grand_total || 0), 0);
   const profit = totalSales - totalExpenses - totalPurchases;
@@ -73,9 +72,9 @@ export default function DashboardContent({ initialSales, initialExpenses, initia
   // Get today's sales
   const nowLocal = new Date();
   const today = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth() + 1).padStart(2, '0')}-${String(nowLocal.getDate()).padStart(2, '0')}`;
-  const todaySales = paidSales
+  const todaySales = sales
     .filter(sale => sale.date === today)
-    .reduce((sum, sale) => sum + Number(sale.grand_total || 0), 0);
+    .reduce((sum, sale) => sum + totalReceivedFromSales(sale), 0);
 
   // Prepare chart data
   const last7Days = Array.from({ length: 7 }, (_, i) => {
@@ -88,9 +87,9 @@ export default function DashboardContent({ initialSales, initialExpenses, initia
   });
 
   const chartData = last7Days.map(date => {
-    const daySales = paidSales
+    const daySales = sales
       .filter(sale => sale.date === date)
-      .reduce((sum, sale) => sum + Number(sale.grand_total || 0), 0);
+      .reduce((sum, sale) => sum + totalReceivedFromSales(sale), 0);
     const dayExpenses = expenses
       .filter(expense => expense.date === date)
       .reduce((sum, expense) => sum + Number(expense.amount), 0);
@@ -133,7 +132,7 @@ export default function DashboardContent({ initialSales, initialExpenses, initia
       {/* Row 1: Today's Performance & Profit */}
       <div className="grid gap-4 md:grid-cols-2">
         <MetricCard
-          title="Today's Sales"
+          title="Today's Received Sales"
           value={`QAR ${todaySales.toFixed(2)}`}
           icon={DollarSign}
           description="Sales made today"
@@ -161,7 +160,7 @@ export default function DashboardContent({ initialSales, initialExpenses, initia
       {/* Row 2: Monthly Details */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <MetricCard
-          title="Monthly Sales"
+          title="Monthly Received Sales"
           value={`QAR ${totalSales.toFixed(2)}`}
           icon={TrendingUp}
           description="Total sales this month"

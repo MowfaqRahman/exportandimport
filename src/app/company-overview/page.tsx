@@ -98,13 +98,15 @@ export default function CompanyOverviewPage() {
   // We show ALL data (paid + unpaid) to match the bottom table as requested
 
   // Today's Sales
+  const calculateReceivedFromSale = (sale: Sale) => Number(sale.paid_amount || 0);
+
   const todayCompanySales = companySales
     .filter(sale => sale.date === today)
-    .reduce((sum, sale) => sum + Number(sale.grand_total || 0), 0);
+    .reduce((sum, sale) => sum + calculateReceivedFromSale(sale), 0);
 
   // Monthly Metrics
   const monthlyCompanySales = companySales.filter(sale => sale.date >= firstDayOfMonth && sale.date <= lastDayOfMonth);
-  const totalMonthlySales = monthlyCompanySales.reduce((sum, sale) => sum + Number(sale.grand_total || 0), 0);
+  const totalMonthlySales = monthlyCompanySales.reduce((sum, sale) => sum + calculateReceivedFromSale(sale), 0);
 
   const monthlyCompanyExpenses = companyExpenses.filter(expense => expense.date >= firstDayOfMonth && expense.date <= lastDayOfMonth);
   const totalMonthlyExpenses = monthlyCompanyExpenses.reduce((sum, expense) => sum + Number(expense.amount || 0), 0);
@@ -114,7 +116,7 @@ export default function CompanyOverviewPage() {
 
   // Yearly Metrics (to match Reports & History page behavior)
   const yearlyCompanySales = companySales.filter(sale => sale.date >= firstDayOfYear && sale.date <= lastDayOfYear);
-  const totalYearlySales = yearlyCompanySales.reduce((sum, sale) => sum + Number(sale.grand_total || 0), 0);
+  const totalYearlySales = yearlyCompanySales.reduce((sum, sale) => sum + calculateReceivedFromSale(sale), 0);
 
   const yearlyCompanyExpenses = companyExpenses.filter(expense => expense.date >= firstDayOfYear && expense.date <= lastDayOfYear);
   const totalYearlyExpenses = yearlyCompanyExpenses.reduce((sum, expense) => sum + Number(expense.amount || 0), 0);
@@ -139,7 +141,7 @@ export default function CompanyOverviewPage() {
   const companyChartData = last7Days.map(date => {
     const daySales = companySales
       .filter(sale => sale.date === date)
-      .reduce((sum, sale) => sum + Number(sale.grand_total || 0), 0);
+      .reduce((sum, sale) => sum + calculateReceivedFromSale(sale), 0);
     const dayExpenses = companyExpenses
       .filter(expense => expense.date === date)
       .reduce((sum, expense) => sum + Number(expense.amount || 0), 0);
@@ -185,7 +187,7 @@ export default function CompanyOverviewPage() {
           {/* Row 1: High Visibility Metrics */}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <MetricCard
-              title="Today's Sales"
+              title="Today's Received Sales"
               value={`QAR ${todayCompanySales.toFixed(2)}`}
               icon={DollarSign}
               description="Today's sales (all users)"
@@ -231,7 +233,7 @@ export default function CompanyOverviewPage() {
           {/* Row 2: Monthly Details */}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <MetricCard
-              title="Monthly Sales"
+              title="Monthly Received Sales"
               value={`QAR ${totalMonthlySales.toFixed(2)}`}
               icon={TrendingUp}
               description="This month's sales (all users)"
@@ -253,7 +255,7 @@ export default function CompanyOverviewPage() {
           {/* Row 3: Yearly Details */}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <MetricCard
-              title="Yearly Sales"
+              title="Yearly Received Sales"
               value={`QAR ${totalYearlySales.toFixed(2)}`}
               icon={TrendingUp}
               description="All sales this year across all users"

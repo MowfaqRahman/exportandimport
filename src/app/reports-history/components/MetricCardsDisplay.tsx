@@ -39,7 +39,7 @@ export function MetricCardsDisplay({
         transition={{ duration: 0.3, delay: 0.1 }}
       >
         <MetricCard
-          title="Year's Company Sales"
+          title="Year's Received Company Sales"
           value={loadingAggregates ? "..." : `QAR ${yearSalesTotal.toFixed(2)}`}
           icon={DollarSign}
           description="All sales made this year across the company"
@@ -106,7 +106,7 @@ export function MetricCardsDisplay({
         transition={{ duration: 0.3, delay: 0.4 }}
       >
         <MetricCard
-          title={`${rangeLabel} Sales`}
+          title={`${rangeLabel} Received Sales`}
           value={loadingAggregates ? "..." : `QAR ${monthlySalesTotal.toFixed(2)}`}
           icon={LineChartIcon}
           description={`Total sales ${rangeDesc} across the company`}
