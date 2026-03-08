@@ -33,6 +33,7 @@ import { useToast } from "@/components/ui/use-toast";
 
 interface AllPurchasesTableProps {
   initialPurchases: Purchase[];
+  onRefresh?: () => void;
 }
 
 const formatDate = (dateString: string) => {
@@ -43,7 +44,7 @@ const formatDate = (dateString: string) => {
   return `${day}/${month}/${year}`;
 };
 
-export function AllPurchasesTable({ initialPurchases }: AllPurchasesTableProps) {
+export function AllPurchasesTable({ initialPurchases, onRefresh }: AllPurchasesTableProps) {
   const [purchases, setPurchases] = useState<Purchase[]>(initialPurchases);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -51,6 +52,10 @@ export function AllPurchasesTable({ initialPurchases }: AllPurchasesTableProps) 
   const [deletingPurchaseId, setDeletingPurchaseId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  React.useEffect(() => {
+    setPurchases(initialPurchases);
+  }, [initialPurchases]);
 
   const supabase = createClient();
   const { toast } = useToast();
@@ -94,6 +99,7 @@ export function AllPurchasesTable({ initialPurchases }: AllPurchasesTableProps) 
         description: "Purchase deleted successfully.",
       });
       fetchPurchases();
+      if (onRefresh) onRefresh();
     }
     setIsDeleting(false);
     setDeletingPurchaseId(null);
@@ -216,7 +222,10 @@ export function AllPurchasesTable({ initialPurchases }: AllPurchasesTableProps) 
           setIsDialogOpen(false);
           setEditingPurchase(null);
         }}
-        onSuccess={fetchPurchases}
+        onSuccess={() => {
+          fetchPurchases();
+          if (onRefresh) onRefresh();
+        }}
         purchase={editingPurchase || undefined}
       />
 

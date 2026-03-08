@@ -796,10 +796,10 @@ export default function ReportsHistoryPage() {
             </TabsList>
 
             <TabsContent value="sales">
-              <AllSalesTable initialSales={sales} />
+              <AllSalesTable initialSales={sales} onRefresh={() => setRefreshTrigger(prev => prev + 1)} />
             </TabsContent>
             <TabsContent value="purchase">
-              <AllPurchasesTable initialPurchases={purchases} />
+              <AllPurchasesTable initialPurchases={purchases} onRefresh={() => setRefreshTrigger(prev => prev + 1)} />
             </TabsContent>
             <TabsContent value="expenses">
               <AllExpensesTable initialExpenses={expenses} />
