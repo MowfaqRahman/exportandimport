@@ -157,6 +157,7 @@ export function AllPurchasesTable({ initialPurchases, onRefresh }: AllPurchasesT
           <Table className="min-w-full divide-y divide-gray-200">
             <TableHeader>
               <TableRow>
+                <TableHead>Pur. No.</TableHead>
                 <TableHead className="w-[50px]">No.</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead className="min-w-[200px]">Name of Item</TableHead>
@@ -171,13 +172,14 @@ export function AllPurchasesTable({ initialPurchases, onRefresh }: AllPurchasesT
             <TableBody>
               {filteredPurchases.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
                     No purchases found for all users.
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredPurchases.map((purchase, index) => (
                   <TableRow key={purchase.id}>
+                    <TableCell className="font-medium text-emerald-600 dark:text-emerald-400">{purchase.purchase_no || '-'}</TableCell>
                     <TableCell>{index + 1}</TableCell>
                     <TableCell>{format(new Date(purchase.date), "dd/MM/yyyy")}</TableCell>
                     <TableCell className="font-medium max-w-[200px] truncate">

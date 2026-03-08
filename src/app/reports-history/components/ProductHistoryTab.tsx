@@ -124,13 +124,13 @@ export function ProductHistoryTab({
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead>Invoice</TableHead>
             <TableHead>Date</TableHead>
             <TableHead>Customer</TableHead>
             <TableHead>Quantity</TableHead>
             <TableHead>Price</TableHead>
             <TableHead>Total</TableHead>
             <TableHead>Payment Status</TableHead>
-            <TableHead>Invoice</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -141,6 +141,7 @@ export function ProductHistoryTab({
           ) : (
             productSalesHistory.map((sale) => (
               <TableRow key={sale.id}>
+                <TableCell className="font-medium text-emerald-600 dark:text-emerald-400">{sale.invoice_id}</TableCell>
                 <TableCell>{formatDate(sale.date)}</TableCell>
                 <TableCell>{sale.customer_name}</TableCell>
                 <TableCell>{sale.quantity}</TableCell>
@@ -153,7 +154,6 @@ export function ProductHistoryTab({
                     <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-800">Unpaid</span>
                   )}
                 </TableCell>
-                <TableCell>{sale.invoice_id}</TableCell>
               </TableRow>
             ))
           )}

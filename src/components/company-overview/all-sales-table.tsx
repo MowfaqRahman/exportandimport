@@ -163,13 +163,13 @@ export default function AllSalesTable({ initialSales, onRefresh }: AllSalesTable
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Invoice No</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Customer</TableHead>
                   <TableHead>Items</TableHead>
                   <TableHead>Grand Total</TableHead>
                   <TableHead className="text-red-600">Balance Amount</TableHead>
                   <TableHead>Salesman Name</TableHead>
-                  <TableHead>Invoice No</TableHead>
                   <TableHead>Payment Status</TableHead>
                   <TableHead>Payment Method</TableHead>
                   <TableHead className="text-right">Invoice</TableHead>
@@ -186,6 +186,7 @@ export default function AllSalesTable({ initialSales, onRefresh }: AllSalesTable
                 ) : (
                   filteredSales.map((sale) => (
                     <TableRow key={sale.id}>
+                      <TableCell className="font-medium">{sale.invoice_no || 'N/A'}</TableCell>
                       <TableCell>{formatDate(sale.date)}</TableCell>
                       <TableCell>{sale.customer_name || '-'}</TableCell>
                       <TableCell>
@@ -204,7 +205,6 @@ export default function AllSalesTable({ initialSales, onRefresh }: AllSalesTable
                         QAR {(Number(sale.grand_total || 0) - Number(sale.paid_amount || 0)).toFixed(2)}
                       </TableCell>
                       <TableCell>{sale.salesman_name_footer || sale.user_name || 'N/A'}</TableCell>
-                      <TableCell>{sale.invoice_no || 'N/A'}</TableCell>
                       <TableCell>
                         {sale.paid ? (
                           <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">Paid</span>

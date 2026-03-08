@@ -153,12 +153,12 @@ export default function SalesTable({ initialSales, onDataChange, onRefresh }: Sa
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Invoice No</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Customer</TableHead>
                   <TableHead>Items</TableHead>
                   <TableHead className="text-right">Grand Total</TableHead>
                   <TableHead className="text-right text-red-600">Balance Amount</TableHead>
-                  <TableHead className="text-right">Invoice No</TableHead>
                   <TableHead>Payment Status</TableHead>
                   <TableHead>Payment Method</TableHead>
                   <TableHead className="text-right">Invoice</TableHead>
@@ -175,6 +175,7 @@ export default function SalesTable({ initialSales, onDataChange, onRefresh }: Sa
                 ) : (
                   filteredSales.map((sale) => (
                     <TableRow key={sale.id}>
+                      <TableCell className="font-medium">{sale.invoice_no}</TableCell>
                       <TableCell>{formatDate(sale.date)}</TableCell>
                       <TableCell>{sale.customer_name || '-'}</TableCell>
                       <TableCell>
@@ -191,9 +192,6 @@ export default function SalesTable({ initialSales, onDataChange, onRefresh }: Sa
                       </TableCell>
                       <TableCell className="text-right font-medium text-red-600">
                         QAR {(Number(sale.grand_total || 0) - Number(sale.paid_amount || 0)).toFixed(2)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {sale.invoice_no}
                       </TableCell>
                       <TableCell>
                         {sale.paid ? (

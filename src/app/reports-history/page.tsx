@@ -114,6 +114,25 @@ export default function ReportsHistoryPage() {
     }
   };
 
+  const handlePaidAmountChange = async (invoiceId: string, newAmount: number) => {
+    const supabase = createClient();
+    const { error } = await supabase
+      .from('sales')
+      .update({ paid_amount: newAmount })
+      .eq('id', invoiceId);
+
+    if (error) {
+      console.error("Error updating paid amount:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update paid amount.",
+        variant: "destructive",
+      });
+    } else {
+      setRefreshTrigger(prev => prev + 1); // Trigger refresh
+    }
+  };
+
 
   useEffect(() => {
     const supabase = createClient();
@@ -840,6 +859,7 @@ export default function ReportsHistoryPage() {
                 endDate={endDate}
                 onPaymentStatusChange={handlePaymentStatusChange}
                 onPaymentMethodChange={handlePaymentMethodChange}
+                onPaidAmountChange={handlePaidAmountChange}
               />
             </TabsContent>
           </Tabs>

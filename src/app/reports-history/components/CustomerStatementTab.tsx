@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
 import { jsPDF } from 'jspdf';
 import logo from '@/assets/logowithqt.png'; // Import the new logo image
 
@@ -24,6 +25,7 @@ interface CustomerStatementTabProps {
   endDate: string;
   onPaymentStatusChange: (invoiceId: string, newStatus: boolean) => void;
   onPaymentMethodChange?: (invoiceId: string, method: string) => void;
+  onPaidAmountChange?: (invoiceId: string, amount: number) => void;
 }
 
 export function CustomerStatementTab({
@@ -39,7 +41,8 @@ export function CustomerStatementTab({
   startDate,
   endDate,
   onPaymentStatusChange,
-  onPaymentMethodChange
+  onPaymentMethodChange,
+  onPaidAmountChange
 }: CustomerStatementTabProps) {
   const { toast } = useToast();
 
@@ -130,7 +133,7 @@ export function CustomerStatementTab({
 
     sortedStatements.forEach((statement) => {
       const received = Number(statement.paid_amount || 0);
-      const method = statement.type === "Sale" ? (statement.payment_type || "Cash") : "-";
+      const method = (statement.type === "Sale" && statement.paid) ? (statement.payment_type || "Cash") : "-";
       doc.text(formatDate(statement.date), 20, yPos);
       doc.text(statement.description, 60, yPos);
       doc.text(Number(statement.amount).toFixed(2), 130, yPos, { align: "right" });
@@ -213,9 +216,9 @@ export function CustomerStatementTab({
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>Invoice</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>Type</TableHead>
-                <TableHead>Invoice</TableHead>
                 <TableHead>Payment Status</TableHead>
                 <TableHead>Payment Method</TableHead>
                 <TableHead className="text-right">Received</TableHead>
@@ -230,9 +233,9 @@ export function CustomerStatementTab({
               ) : (
                 customerStatements.map((statement, index) => (
                   <TableRow key={index}>
+                    <TableCell className="font-medium">{statement.description}</TableCell>
                     <TableCell>{formatDate(statement.date)}</TableCell>
                     <TableCell>{statement.type}</TableCell>
-                    <TableCell>{statement.description}</TableCell>
                     <TableCell>
                       {statement.type === "Sale" ? (
                         <div className="flex items-center space-x-2">
@@ -240,7 +243,11 @@ export function CustomerStatementTab({
                             checked={statement.paid}
                             onCheckedChange={(checked) => onPaymentStatusChange(statement.invoice_id, checked)}
                           />
-                          <span className="text-sm text-gray-500">{statement.paid ? "Paid" : "Unpaid"}</span>
+                          {statement.paid ? (
+                            <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">Paid</span>
+                          ) : (
+                            <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-800">Unpaid</span>
+                          )}
                         </div>
                       ) : (
                         <span className="text-gray-400 text-sm">N/A</span>
@@ -249,24 +256,50 @@ export function CustomerStatementTab({
                     <TableCell>
                       {statement.type === "Sale" ? (
                         <div className="flex flex-col gap-1">
-                          <Tabs defaultValue={statement.payment_type || "Cash"} onValueChange={(val) => onPaymentMethodChange?.(statement.invoice_id, val)}>
-                            <TabsList className="h-8">
-                              <TabsTrigger value="Cash" className="text-xs px-2 h-6">Cash</TabsTrigger>
-                              <TabsTrigger value="Online" className="text-xs px-2 h-6">Online</TabsTrigger>
-                              <TabsTrigger value="Cheque" className="text-xs px-2 h-6">Cheque</TabsTrigger>
-                            </TabsList>
-                          </Tabs>
-                          {!statement.paid && statement.due_date && (
-                            <span className="text-[10px] font-medium text-amber-600">
-                              Due: {formatDate(statement.due_date)}
-                            </span>
+                          {statement.paid ? (
+                            <Tabs value={statement.payment_type || "Cash"} onValueChange={(val) => onPaymentMethodChange?.(statement.invoice_id, val)}>
+                              <TabsList className="h-8">
+                                <TabsTrigger value="Cash" className="text-xs px-2 h-6">Cash</TabsTrigger>
+                                <TabsTrigger value="Online" className="text-xs px-2 h-6">Online</TabsTrigger>
+                                <TabsTrigger value="Cheque" className="text-xs px-2 h-6">Cheque</TabsTrigger>
+                              </TabsList>
+                            </Tabs>
+                          ) : (
+                            <span className="text-sm text-gray-400">-</span>
                           )}
                         </div>
                       ) : (
                         <span className="text-gray-400 text-sm">N/A</span>
                       )}
                     </TableCell>
-                    <TableCell className="text-right font-medium text-green-600">QAR {Number(statement.paid_amount || 0).toFixed(2)}</TableCell>
+                    <TableCell className="text-right">
+                      {statement.type === "Sale" ? (
+                        statement.paid ? (
+                          <div className="flex justify-end">
+                            <Input
+                              type="number"
+                              className="w-24 text-right h-8"
+                              defaultValue={Number(statement.paid_amount || 0).toFixed(2)}
+                              onBlur={(e) => {
+                                const val = parseFloat(e.target.value);
+                                if (!isNaN(val)) {
+                                  onPaidAmountChange?.(statement.invoice_id, val);
+                                }
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  (e.target as HTMLInputElement).blur();
+                                }
+                              }}
+                            />
+                          </div>
+                        ) : (
+                          <span className="text-sm text-gray-400">-</span>
+                        )
+                      ) : (
+                        <span className="font-medium text-green-600">QAR {Number(statement.paid_amount || 0).toFixed(2)}</span>
+                      )}
+                    </TableCell>
                     <TableCell className="text-right">QAR {Number(statement.amount).toFixed(2)}</TableCell>
                   </TableRow>
                 ))
