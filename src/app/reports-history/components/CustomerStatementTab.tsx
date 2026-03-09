@@ -65,29 +65,55 @@ export function CustomerStatementTab({
 
     const doc = new jsPDF();
 
-    // Define colors
-    const statementGreen = "#6AA84F"; // Green for "Statement"
-    const tableHeaderGreen = "#D9EAD3"; // Light green for table headers
+    // Colors — same palette as generateSaleInvoicePDF
+    const lightGray  = "#F5F5F5";
+    const mediumGray = "#E0E0E0";
+    const darkGray   = "#333333";
+    const accentGreen     = "#6AA84F";
+    const tableHeaderGreen = "#D9EAD3";
 
-    // Company Header
+    // ── HEADER: same slanted design as Invoice ────────────────────────────────
+    // Light gray base
+    doc.setFillColor(lightGray);
+    doc.rect(0, 0, 210, 50, 'F');
+
+    // Left slant — medium gray
+    doc.setFillColor(mediumGray);
+    doc.triangle(0, 0, 120, 0, 0, 50, 'F');
+
+    // Right slant — light green (lighter than accentGreen)
+    doc.setFillColor("#C8E6B8");
+    doc.triangle(210, 0, 210, 50, 160, 50, 'F');
+
+    // Company info — dark gray text, left side
+    doc.setTextColor(darkGray);
+    doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
-    doc.text("KTF Vegetable and Fruit", 20, 20);
-    doc.text("Tel: (+974) 30933327", 20, 25);
+    doc.text("KTF Vegetable and Fruit", 20, 18);
+    doc.text("Tel: (+974) 30933327", 20, 24);
     doc.text("Email: ktf.co2025@gmail.com", 20, 30);
-    doc.text("Address: Umm Salal, Doha, Qatar", 20, 35);
-    doc.addImage(logo.src, "PNG", 160, 5, 40, 40); // Standardized alignment for the logo (top right)
+    doc.text("Address: Umm Salal, Doha, Qatar", 20, 36);
 
-    // Statement Title
-    doc.setTextColor(statementGreen);
-    doc.setFontSize(18);
-    doc.text("Statement", 20, 50);
+    // Logo — top-right, increased size
+    doc.addImage(logo.src, "PNG", 155, 2, 54, 48);
 
-    // TO section
-    doc.setTextColor(0, 0, 0); // Black text for TO section
+    // Title — "CUSTOMER STATEMENT" bold centered, light green color
+    doc.setTextColor(accentGreen);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(20);
+    doc.text("CUSTOMER STATEMENT", 105, 47, { align: "center" });
+    doc.setFont('helvetica', 'normal');
+
+    // ── DOCUMENT DATE (right) & TO SECTION (left) ────────────────────────────
+    doc.setTextColor(0, 0, 0);
     doc.setFontSize(10);
-    doc.text("TO", 20, 70);
-    doc.text(`${selectedCustomer?.customer_name || ""}`, 20, 75);
-    let detailYPos = 80;
+    doc.text(`Date: ${formatDate(new Date().toISOString().split('T')[0])}`, 195, 62, { align: "right" });
+
+    doc.setFont('helvetica', 'bold');
+    doc.text("TO:", 20, 62);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`${selectedCustomer?.customer_name || ""}`, 20, 68);
+    let detailYPos = 73;
     if (selectedCustomer?.company_name) {
       doc.text(selectedCustomer.company_name, 20, detailYPos);
       detailYPos += 5;
@@ -103,11 +129,6 @@ export function CustomerStatementTab({
     if (selectedCustomer?.phone_number) {
       doc.text(`Tel. No: ${selectedCustomer.phone_number}`, 20, detailYPos);
     }
-
-    // Statement Details (right side)
-    doc.setTextColor(0, 0, 0); // Black text for Statement Details
-    doc.setFontSize(10);
-    doc.text(`DATE ${formatDate(new Date().toISOString().split('T')[0])}`, 150, 80);
 
     // Table Headers
     let yPos = 100;
@@ -164,16 +185,19 @@ export function CustomerStatementTab({
     doc.text(`QAR ${totalReceived.toFixed(2)}`, 155, yPos, { align: "right" });
     doc.text(`QAR ${balanceAmount.toFixed(2)}`, 195, yPos, { align: "right" });
 
-    // Terms Footer
-    // Calculate yPos for the very bottom
-    yPos = doc.internal.pageSize.height - 30; // 30 units from the bottom of the page
-    doc.setTextColor(0, 0, 0); // Black text for footer
+    // Terms Footer - inside a light gray box
+    const termsYStart = doc.internal.pageSize.height - 30;
+    // Light gray box for terms
+    doc.setFillColor(242, 242, 242);
+    doc.rect(15, termsYStart - 5, 180, 22, 'F');
+
+    doc.setTextColor(0, 0, 0);
     doc.setFontSize(8);
-    doc.text("TERMS:", 20, yPos);
-    yPos += 5;
-    doc.text("All Payments to be made in favour of \"KTF Vegetable and Fruit\"", 20, yPos);
-    yPos += 4;
-    doc.text("OR by Bank Transfer as per Purchase & Sales Agreement", 20, yPos);
+    doc.setFont('helvetica', 'bold');
+    doc.text("TERMS:", 20, termsYStart);
+    doc.setFont('helvetica', 'normal');
+    doc.text("All Payments to be made in favour of \"KTF Vegetable and Fruit\"", 20, termsYStart + 5);
+    doc.text("OR by Bank Transfer as per Purchase & Sales Agreement", 20, termsYStart + 10);
 
     // Save the PDF
     doc.save(fileName);
