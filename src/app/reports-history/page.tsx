@@ -392,10 +392,8 @@ export default function ReportsHistoryPage() {
 
           currentYearSalesTotal = ySales?.reduce((sum: number, sale: any) => sum + calculateReceived(sale), 0) || 0;
           const currentYearUnpaid = ySales?.reduce((sum: number, sale: any) => {
-            if (sale.paid === false) {
-              return sum + (Number(sale.grand_total || 0) - Number(sale.paid_amount || 0));
-            }
-            return sum;
+            const balance = Number(sale.grand_total || 0) - Number(sale.paid_amount || 0);
+            return sum + (balance > 0 ? balance : 0);
           }, 0) || 0;
           currentYearPurchasesTotal = yPurchases?.reduce((sum: number, purchase: any) => sum + Number(purchase.grand_total || 0), 0) || 0;
           currentYearExpensesTotal = yExpenses?.reduce((sum: number, expense: any) => sum + Number(expense.amount || 0), 0) || 0;
@@ -434,12 +432,10 @@ export default function ReportsHistoryPage() {
           const calculateReceived = (sale: any) => Number(sale.paid_amount || 0);
 
           currentMonthlySalesTotal = mSales?.reduce((sum: number, sale: any) => sum + calculateReceived(sale), 0) || 0;
-          const currentMonthlyUnpaid = mSales?.reduce((sum: number, sale: any) => {
-            if (sale.paid === false) {
-              return sum + (Number(sale.grand_total || 0) - Number(sale.paid_amount || 0));
-            }
-            return sum;
-          }, 0) || 0;
+            const currentMonthlyUnpaid = mSales?.reduce((sum: number, sale: any) => {
+              const balance = Number(sale.grand_total || 0) - Number(sale.paid_amount || 0);
+              return sum + (balance > 0 ? balance : 0);
+            }, 0) || 0;
           currentMonthlyExpensesTotal = mExpenses?.reduce((sum: number, expense: any) => sum + Number(expense.amount || 0), 0) || 0;
           currentMonthlyPurchasesTotal = mPurchases?.reduce((sum: number, purchase: any) => sum + Number(purchase.grand_total || 0), 0) || 0;
           setMonthlyUnpaidTotal(currentMonthlyUnpaid);
