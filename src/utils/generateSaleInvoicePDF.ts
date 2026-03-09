@@ -189,11 +189,15 @@ export const generateSaleInvoicePDF = ({
       doc.text("Payment terms: To be discussed.", 20, yPos); // Fallback if no due date
     }
     yPos += 4;
-    doc.text(`Please make cheque payable to: ${company_name}`, 20, yPos);
+    doc.text("This document is system generated, does not required stamp or signature.", 20, yPos);
   } else {
-    doc.text(`Payment received in full on ${date}.`, 20, yPos);
+    if (balance > 0) {
+      doc.text(`Payment not received in full. Balance amount: QAR ${balance.toFixed(2)}.`, 20, yPos);
+    } else {
+      doc.text(`Payment received in full on ${date}.`, 20, yPos);
+    }
     yPos += 4;
-    doc.text("No further payment is required.", 20, yPos);
+    doc.text("This document is system generated, does not required stamp or signature.", 20, yPos);
   }
 
   // Disclaimer (Aligned on right side of payment status, above salesman)
