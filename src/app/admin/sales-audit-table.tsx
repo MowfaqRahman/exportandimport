@@ -68,7 +68,10 @@ export function SalesAuditTable() {
       editor: usersData.find(u => u.id === log.editor_user_id),
     }));
 
-    setLogs(mergedLogs as AuditLog[]);
+    // Exclude creation events where old_data is null (i.e., a new sale was inserted)
+    const filteredLogs = mergedLogs.filter((log: any) => !(log.old_data === null && log.new_data !== null));
+
+    setLogs(filteredLogs as AuditLog[]);
     setLoading(false);
   };
 
@@ -77,6 +80,23 @@ export function SalesAuditTable() {
   }, []);
 
   const renderChanges = (oldData: any, newData: any) => {
+    if (!newData) {
+      return (
+        <div className="bg-red-50 p-4 rounded-md border border-red-200">
+          <div className="flex items-center gap-2 text-red-800 font-semibold mb-3">
+            <span className="bg-red-600 text-white px-2 py-0.5 rounded text-[10px] uppercase tracking-wider">Deletion Event</span>
+            <p>Record Permanently Removed</p>
+          </div>
+          <div className="text-xs text-red-700">
+            <p className="mb-2">The following data represents the final state of the record before it was deleted:</p>
+            <div className="bg-white/70 p-3 rounded border border-red-100 shadow-sm max-h-[400px] overflow-y-auto">
+              <pre className="whitespace-pre-wrap font-mono">{JSON.stringify(oldData, null, 2)}</pre>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     const changes: JSX.Element[] = [];
     
     // Simple top-level diff
@@ -142,12 +162,19 @@ export function SalesAuditTable() {
             <span className="font-semibold">Failed to fetch data from Supabase: </span>
             <span>{errorMsg}</span>
           </div>
-          <p className="text-xs text-red-500 mt-1 max-w-sm">This is likely because Supabase cannot automatically join the "users" table. We may need to use a simpler query or check the database permissions.</p>
+          <p className="text-xs text-red-500 mt-1 max-w-sm">This is likely because the "sales_audit" table does not exist or Supabase cannot automatically join the "users" table. Check your database schema.</p>
         </div>
       ) : loading && logs.length === 0 ? (
         <p className="text-gray-500">Loading audit logs...</p>
       ) : logs.length === 0 ? (
-        <p className="text-gray-500">No edits have been made to any sales yet.</p>
+        <div className="bg-amber-50 p-6 rounded-lg text-amber-800 border border-amber-200">
+          <p className="font-semibold text-lg mb-2">No audit records found.</p>
+          <p className="text-sm">Audit records are created when a sale is Edited or Deleted.</p>
+          <div className="mt-4 p-3 bg-white/50 rounded text-xs border border-amber-100">
+            <p className="font-bold mb-1">Tip for Deletions:</p>
+            <p>If history disappears when you delete a sale, your database might have a "Cascade Delete" constraint on the <code>sales_audit</code> table. Please run the provided SQL migration scripts in your Supabase Dashboard to fix this.</p>
+          </div>
+        </div>
       ) : (
         <div className="rounded-md border">
           <Table>
@@ -176,14 +203,25 @@ export function SalesAuditTable() {
                     )}
                   </TableCell>
                   <TableCell>
-                    {log.sale ? (
-                      <div>
-                        <p className="font-medium">Inv: {log.sale.invoice_no}</p>
-                        <p className="text-xs text-gray-500">{log.sale.customer_name}</p>
-                      </div>
-                    ) : (
-                      <span className="text-gray-500">{log.sale_id.slice(0, 8)}...</span>
-                    )}
+                    <div className="flex flex-col gap-1.5">
+                      {log.sale ? (
+                        <div>
+                          <p className="font-medium">Inv: {log.sale.invoice_no}</p>
+                          <p className="text-xs text-gray-500">{log.sale.customer_name}</p>
+                        </div>
+                      ) : (
+                        <div className="text-gray-500">
+                          <p className="font-medium text-red-600">Deleted Sale</p>
+                        <p className="text-xs">Inv: {log.old_data?.invoice_no || log.new_data?.invoice_no || (log.sale_id ? log.sale_id.slice(0, 8) + '...' : 'Unknown ID')}</p>
+                          <p className="text-xs italic">{log.old_data?.customer_name || log.new_data?.customer_name || 'N/A'}</p>
+                        </div>
+                      )}
+                      {!log.new_data ? (
+                        <span className="inline-flex w-fit items-center rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-bold text-red-700 uppercase tracking-tighter">Deletion</span>
+                      ) : (
+                        <span className="inline-flex w-fit items-center rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700 uppercase tracking-tighter">Edit</span>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell className="text-right">
                     <Dialog>
@@ -192,7 +230,9 @@ export function SalesAuditTable() {
                       </DialogTrigger>
                       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                         <DialogHeader>
-                          <DialogTitle>Changes for Invoice {log.sale?.invoice_no || log.sale_id.slice(0,8)}</DialogTitle>
+                          <DialogTitle>
+                            {log.sale ? `Changes for Invoice ${log.sale.invoice_no}` : `Changes for Deleted Invoice ${log.old_data?.invoice_no || log.new_data?.invoice_no || log.sale_id.slice(0, 8)}`}
+                          </DialogTitle>
                         </DialogHeader>
                         <div className="mt-4">
                           {renderChanges(log.old_data, log.new_data)}

@@ -51,6 +51,25 @@ export default function SalesTable({ initialSales, onDataChange, onRefresh }: Sa
   const handleDelete = async () => {
     if (!deleteId) return;
 
+    // Fetch the sale to be deleted to store its final state in the audit log
+    const saleToDelete = initialSales.find(s => s.id === deleteId);
+
+    // Create audit log manually BEFORE deletion if we have the data
+    if (saleToDelete) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        await supabase.from('sales_audit').insert({
+          sale_id: saleToDelete.id,
+          editor_user_id: user?.id,
+          old_data: saleToDelete,
+          new_data: null, // Indicates deletion
+          changed_at: new Date().toISOString()
+        });
+      } catch (auditError) {
+        console.error("Failed to create audit log for deletion:", auditError);
+      }
+    }
+
     const { error } = await supabase
       .from('sales')
       .delete()

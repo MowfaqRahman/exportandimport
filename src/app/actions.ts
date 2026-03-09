@@ -168,6 +168,43 @@ export const resetPasswordAction = async (formData: FormData) => {
   encodedRedirect("success", "/protected/reset-password", "Password updated");
 };
 
+export const deleteUserAction = async (userId: string) => {
+  const supabase = await createClient();
+
+  // First, check if the current user is an admin
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const { data: adminData } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (adminData?.role !== "admin") {
+    return { error: "Not authorized. Only admins can delete users." };
+  }
+
+  // Perform the delete from public.users
+  const { error } = await supabase.from("users").delete().eq("id", userId);
+
+  if (error) {
+    console.error("Error deleting user:", error);
+    // Handle foreign key constraint error specifically
+    if (error.code === "23503") {
+      return {
+        error:
+          "Cannot delete user because they have associated records (sales, purchases, or expenses). Please delete those first.",
+      };
+    }
+    return { error: error.message };
+  }
+
+  return { success: true };
+};
+
 export const signOutAction = async () => {
   const supabase = await createClient();
   await supabase.auth.signOut();

@@ -219,18 +219,20 @@ export default function EditSaleDialog({ sale, open, onClose, onSaleUpdated }: E
       invoice_no: invoiceNo,
     };
 
-    const { error } = await supabase
+    const { error: updateError } = await supabase
       .from('sales')
       .update(data)
       .eq('id', sale.id);
 
-    if (error) {
+    if (updateError) {
       toast({
         title: "Error",
-        description: error.message,
+        description: updateError.message,
         variant: "destructive",
       });
     } else {
+      // Audit log is handled by the database trigger; no manual insert needed.
+
       toast({
         title: "Success",
         description: "Sale updated successfully",

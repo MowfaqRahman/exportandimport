@@ -9,8 +9,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 
 import { SalesAuditTable } from "./sales-audit-table";
 import { ExportDataSection } from "./ExportDataSection";
+import { Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
+import { deleteUserAction } from "@/app/actions";
 
 const AdminPage = () => {
+  const { toast } = useToast();
 
   const supabase = createClient();
 
@@ -69,6 +74,26 @@ const AdminPage = () => {
     // Implement navigation to a user detail page or open a modal
   };
 
+  const handleDeleteUser = async (userId: string) => {
+    if (window.confirm("Are you sure you want to delete this user? This action cannot be undone.")) {
+      const result = await deleteUserAction(userId);
+
+      if (result.error) {
+        toast({
+          title: "Error",
+          description: result.error,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: "User deleted successfully.",
+        });
+        fetchManagedUsers();
+      }
+    }
+  };
+
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* Sidebar - Placeholder for potential future use or if a common layout exists */}
@@ -107,6 +132,7 @@ const AdminPage = () => {
                   <TableHead>Email</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead className="text-center">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -134,6 +160,18 @@ const AdminPage = () => {
                           </TabsTrigger>
                         </TabsList>
                       </Tabs>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {user.role === 'user' && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => handleDeleteUser(user.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}

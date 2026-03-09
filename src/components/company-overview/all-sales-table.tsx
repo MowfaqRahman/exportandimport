@@ -60,6 +60,26 @@ export default function AllSalesTable({ initialSales, onRefresh }: AllSalesTable
   const handleDelete = async () => {
     if (!deleteId) return;
 
+    // Fetch the sale to be deleted to store its PRE-DELETION state
+    const saleToDelete = initialSales.find(s => s.id === deleteId);
+
+    // Create a manual audit log record before the sale is gone.
+    // This is a safety measure in case the DB trigger can't access the Auth context.
+    if (saleToDelete) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        await supabase.from('sales_audit').insert({
+          sale_id: saleToDelete.id,
+          editor_user_id: user?.id,
+          old_data: saleToDelete,
+          new_data: null, // This explicitly marks it as a deletion in our UI logic
+          changed_at: new Date().toISOString()
+        });
+      } catch (auditError) {
+        console.error("Manual audit log before delete failed:", auditError);
+      }
+    }
+
     const { error } = await supabase
       .from('sales')
       .delete()
